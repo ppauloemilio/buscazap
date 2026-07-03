@@ -1,0 +1,54 @@
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import type { Advertisement } from "@/domain/entities";
+import { AdvertisementCard } from "./advertisement-card";
+
+interface AdvertisementSectionProps {
+  readonly title: string;
+  readonly description?: string;
+  readonly advertisements: readonly Advertisement[];
+  readonly viewAllHref?: string;
+}
+
+export function AdvertisementSection({
+  title,
+  description,
+  advertisements,
+  viewAllHref,
+}: AdvertisementSectionProps) {
+  if (advertisements.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="py-12">
+      <div className="container mx-auto px-4">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+            {description && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {description}
+              </p>
+            )}
+          </div>
+          {viewAllHref && (
+            <Link
+              href={viewAllHref}
+              className="flex items-center gap-1 text-sm font-medium text-whatsapp hover:underline"
+            >
+              Ver todos
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {advertisements.map((ad) => (
+            <AdvertisementCard key={ad.id} advertisement={ad} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

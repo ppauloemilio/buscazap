@@ -1,0 +1,10 @@
+export const PRICING = {
+  SUBSCRIPTION_AMOUNT: 10,
+  PREMIUM_BOOST_AMOUNT: 5,
+  SUBSCRIPTION_DAYS: 30,
+  PREMIUM_BOOST_DAYS: 30,
+  PAYMENT_EXPIRATION_MINUTES: 30,
+  PIX_KEY: "buscazap@pagamentos.com.br",
+} as const;
+
+export const PROVIDER_SESSION_COOKIE = "buscazap_provider_id";

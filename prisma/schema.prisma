@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Provider {
+  id                    String          @id @default(cuid())
+  name                  String
+  email                 String          @unique
+  whatsapp              String
+  passwordHash          String
+  subscriptionExpiresAt DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  advertisements        Advertisement[]
+  payments              Payment[]
+  subscriptions         Subscription[]
+}
+
+model Advertisement {
+  id               String         @id @default(cuid())
+  providerId       String
+  provider         Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  title            String
+  description      String
+  type             String
+  status           String         @default("APPROVED")
+  category         String
+  city             String
+  state            String
+  neighborhood     String?
+  whatsappNumber   String
+  rating           Float          @default(0)
+  reviewCount      Int            @default(0)
+  premiumExpiresAt DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  premiumBoosts    PremiumBoost[]
+}
+
+model Subscription {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  amount     Float
+  startsAt   DateTime
+  expiresAt  DateTime
+  paymentId  String   @unique
+  payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
+
+model PremiumBoost {
+  id              String        @id @default(cuid())
+  advertisementId String
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+  providerId      String
+  amount          Float
+  startsAt        DateTime
+  expiresAt       DateTime
+  paymentId       String        @unique
+  payment         Payment       @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  providerId   String
+  provider     Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  type         String
+  amount       Float
+  status       String        @default("PENDING")
+  pixTxId      String        @unique
+  pixCopyPaste String
+  referenceId  String?
+  paidAt       DateTime?
+  expiresAt    DateTime
+  createdAt    DateTime      @default(now())
+  subscription Subscription?
+  premiumBoost PremiumBoost?
+}

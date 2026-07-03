@@ -1,0 +1,140 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createAdvertisementAction } from "@/actions/provider-actions";
+import { getCurrentProvider, hasActiveSubscription } from "@/lib/provider-session";
+import { PanelLayout } from "@/features/panel/components/panel-layout";
+import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
+import { AdvertisementType } from "@/domain/enums";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PRICING } from "@/config/pricing";
+
+export default async function NewAdvertisementPage() {
+  const provider = await getCurrentProvider();
+  if (!provider) redirect("/entrar");
+
+  if (!hasActiveSubscription(provider.subscriptionExpiresAt)) {
+    redirect("/painel/assinatura");
+  }
+
+  return (
+    <PanelLayout>
+      <h2 className="mb-6 text-xl font-semibold">Novo anúncio</h2>
+
+      <form action={createAdvertisementAction} className="max-w-xl space-y-4">
+        <div>
+          <label htmlFor="title" className="mb-1.5 block text-sm font-medium">
+            Título
+          </label>
+          <Input id="title" name="title" required />
+        </div>
+
+        <div>
+          <label htmlFor="description" className="mb-1.5 block text-sm font-medium">
+            Descrição
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            required
+            rows={4}
+            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="type" className="mb-1.5 block text-sm font-medium">
+              Tipo
+            </label>
+            <select
+              id="type"
+              name="type"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              required
+            >
+              {Object.values(AdvertisementType).map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="category" className="mb-1.5 block text-sm font-medium">
+              Categoria
+            </label>
+            <select
+              id="category"
+              name="category"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              required
+            >
+              {CATEGORIES.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="sm:col-span-2">
+            <label htmlFor="city" className="mb-1.5 block text-sm font-medium">
+              Cidade
+            </label>
+            <Input id="city" name="city" required />
+          </div>
+          <div>
+            <label htmlFor="state" className="mb-1.5 block text-sm font-medium">
+              UF
+            </label>
+            <Input id="state" name="state" maxLength={2} required />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="neighborhood" className="mb-1.5 block text-sm font-medium">
+            Bairro (opcional)
+          </label>
+          <Input id="neighborhood" name="neighborhood" />
+        </div>
+
+        <div>
+          <label htmlFor="whatsappNumber" className="mb-1.5 block text-sm font-medium">
+            WhatsApp
+          </label>
+          <Input
+            id="whatsappNumber"
+            name="whatsappNumber"
+            defaultValue={provider.whatsapp}
+            required
+          />
+        </div>
+
+        <label className="flex items-start gap-3 rounded-lg border p-4">
+          <input type="checkbox" name="withPremium" className="mt-1" />
+          <div>
+            <p className="text-sm font-medium">
+              Destacar este anúncio (+ R${" "}
+              {PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")} / 30 dias)
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Badge premium, seção de destaques e prioridade na busca.
+            </p>
+          </div>
+        </label>
+
+        <div className="flex gap-3">
+          <Button type="submit" variant="whatsapp">
+            Publicar anúncio
+          </Button>
+          <Button type="button" variant="outline" asChild>
+            <Link href="/painel/anuncios">Cancelar</Link>
+          </Button>
+        </div>
+      </form>
+    </PanelLayout>
+  );
+}
