@@ -1,5 +1,11 @@
 import { PRICING } from "@/config/pricing";
-import { PIX_CONFIG, isMercadoPagoTestToken } from "@/config/pix";
+import {
+  getMercadoPagoAccessToken,
+  getMercadoPagoTestPayerEmail,
+  getPixAppUrl,
+  isMercadoPagoTestToken,
+  isValidMercadoPagoAccessToken,
+} from "@/config/pix";
 import type { PixChargeInput, PixChargeResult, PixProvider } from "./types";
 
 interface MercadoPagoPaymentResponse {
@@ -48,26 +54,41 @@ function splitPayerName(fullName: string): { firstName: string; lastName: string
   };
 }
 
-function resolvePayerEmail(payerEmail: string): string {
-  if (
-    isMercadoPagoTestToken(PIX_CONFIG.mercadoPagoAccessToken) &&
-    PIX_CONFIG.testPayerEmail
-  ) {
-    return PIX_CONFIG.testPayerEmail;
+function resolvePayerEmail(
+  accessToken: string,
+  payerEmail: string
+): string {
+  const testPayerEmail = getMercadoPagoTestPayerEmail();
+
+  if (isMercadoPagoTestToken(accessToken) && testPayerEmail) {
+    return testPayerEmail;
   }
 
   return payerEmail;
 }
 
-export class MercadoPagoPixProvider implements PixProvider {
-  constructor(
-    private readonly accessToken: string,
-    private readonly appUrl: string
-  ) {}
+function assertAccessToken(accessToken: string): void {
+  if (!accessToken) {
+    throw new Error(
+      "MERCADOPAGO_ACCESS_TOKEN não está configurado na Vercel. Copie o Access Token TEST-... e faça redeploy."
+    );
+  }
 
+  if (!isValidMercadoPagoAccessToken(accessToken)) {
+    throw new Error(
+      "MERCADOPAGO_ACCESS_TOKEN inválido. Na Vercel, use o Access Token (não a Public Key) das credenciais de teste do Mercado Pago."
+    );
+  }
+}
+
+export class MercadoPagoPixProvider implements PixProvider {
   async createCharge(input: PixChargeInput): Promise<PixChargeResult> {
+    const accessToken = getMercadoPagoAccessToken();
+    const appUrl = getPixAppUrl();
+    assertAccessToken(accessToken);
+
     const { firstName, lastName } = splitPayerName(input.payerName);
-    const payerEmail = resolvePayerEmail(input.payerEmail);
+    const payerEmail = resolvePayerEmail(accessToken, input.payerEmail);
     const expiresAt = new Date(
       Date.now() + PRICING.PAYMENT_EXPIRATION_MINUTES * 60 * 1000
     );
@@ -75,7 +96,7 @@ export class MercadoPagoPixProvider implements PixProvider {
     const response = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${this.accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
         "X-Idempotency-Key": input.externalReference,
       },
@@ -85,7 +106,7 @@ export class MercadoPagoPixProvider implements PixProvider {
         payment_method_id: "pix",
         external_reference: input.externalReference,
         date_of_expiration: expiresAt.toISOString(),
-        notification_url: `${this.appUrl}/api/webhooks/mercadopago`,
+        notification_url: `${appUrl}/api/webhooks/mercadopago`,
         payer: {
           email: payerEmail,
           first_name: firstName,
@@ -103,12 +124,15 @@ export class MercadoPagoPixProvider implements PixProvider {
     if (!response.ok || !data.id) {
       const detail = extractMercadoPagoError(data);
 
-      if (
-        isMercadoPagoTestToken(this.accessToken) &&
-        !PIX_CONFIG.testPayerEmail
-      ) {
+      if (isMercadoPagoTestToken(accessToken) && !getMercadoPagoTestPayerEmail()) {
         throw new Error(
           `${detail}. Em modo teste, configure MERCADOPAGO_TEST_PAYER_EMAIL na Vercel com o e-mail do comprador de teste do Mercado Pago.`
+        );
+      }
+
+      if (detail.toLowerCase().includes("authorization")) {
+        throw new Error(
+          `${detail}. Verifique se copiou o Access Token (TEST-...) e não a Public Key nas credenciais do Mercado Pago.`
         );
       }
 
@@ -129,11 +153,14 @@ export class MercadoPagoPixProvider implements PixProvider {
 }
 
 export async function fetchMercadoPagoPayment(paymentId: string) {
+  const accessToken = getMercadoPagoAccessToken();
+  assertAccessToken(accessToken);
+
   const response = await fetch(
     `https://api.mercadopago.com/v1/payments/${paymentId}`,
     {
       headers: {
-        Authorization: `Bearer ${PIX_CONFIG.mercadoPagoAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       cache: "no-store",
     }

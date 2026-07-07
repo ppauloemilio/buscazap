@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
-import { PIX_CONFIG } from "@/config/pix";
+import {
+  getMercadoPagoAccessToken,
+  getMercadoPagoTestPayerEmail,
+  getPixAppUrl,
+  getPixProviderName,
+  isValidMercadoPagoAccessToken,
+  verifyMercadoPagoAccessToken,
+} from "@/config/pix";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const token = PIX_CONFIG.mercadoPagoAccessToken;
+  const token = getMercadoPagoAccessToken();
+  const verification = await verifyMercadoPagoAccessToken(token);
 
   return NextResponse.json({
     ok: true,
-    pixProvider: PIX_CONFIG.provider,
+    pixProvider: getPixProviderName(),
     mercadoPagoTokenConfigured: token.length > 0,
+    mercadoPagoTokenFormatValid: isValidMercadoPagoAccessToken(token),
+    mercadoPagoTokenValid: verification.valid,
+    mercadoPagoVerifyError: verification.error ?? null,
     mercadoPagoTokenType: token.startsWith("TEST-")
       ? "test"
       : token.startsWith("APP_USR-")
@@ -18,7 +29,7 @@ export async function GET() {
         : token.length > 0
           ? "unknown"
           : "missing",
-    testPayerEmailConfigured: PIX_CONFIG.testPayerEmail.length > 0,
-    appUrl: PIX_CONFIG.appUrl,
+    testPayerEmailConfigured: getMercadoPagoTestPayerEmail().length > 0,
+    appUrl: getPixAppUrl(),
   });
 }
