@@ -30,6 +30,7 @@ export async function GET() {
           ? "unknown"
           : "missing",
     testPayerEmailConfigured: getMercadoPagoTestPayerEmail().length > 0,
+    testPayerEmailLooksValid: getMercadoPagoTestPayerEmail().endsWith("@testuser.com"),
     appUrl: getPixAppUrl(),
   });
 }

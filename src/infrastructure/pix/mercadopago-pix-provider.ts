@@ -130,6 +130,12 @@ export class MercadoPagoPixProvider implements PixProvider {
         );
       }
 
+      if (detail.toLowerCase().includes("invalid users involved")) {
+        throw new Error(
+          "Invalid users involved: em modo teste, MERCADOPAGO_TEST_PAYER_EMAIL na Vercel deve ser o e-mail do COMPRADOR de teste (test_user_...@testuser.com), não do vendedor nem demo@buscazap.com.br."
+        );
+      }
+
       if (detail.toLowerCase().includes("authorization")) {
         throw new Error(
           `${detail}. Verifique se copiou o Access Token (TEST-...) e não a Public Key nas credenciais do Mercado Pago.`
