@@ -1,23 +1,33 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Crown, Plus } from "lucide-react";
-import { boostAdvertisementAction } from "@/actions/provider-actions";
 import { findProviderAdvertisements } from "@/application/services/advertisement-service";
 import { getCurrentProvider, hasActiveSubscription } from "@/lib/provider-session";
+import { BoostAdvertisementForm } from "@/features/panel/components/boost-advertisement-form";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PRICING } from "@/config/pricing";
 
-export default async function ProviderAdsPage() {
+interface ProviderAdsPageProps {
+  readonly searchParams: Promise<{
+    readonly error?: string;
+  }>;
+}
+
+export default async function ProviderAdsPage({
+  searchParams,
+}: ProviderAdsPageProps) {
   const provider = await getCurrentProvider();
   if (!provider) redirect("/entrar");
 
+  const params = await searchParams;
   const subscriptionActive = hasActiveSubscription(
     provider.subscriptionExpiresAt
   );
   const advertisements = await findProviderAdvertisements(provider.id);
+  const boostLabel = `Destacar R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}`;
 
   return (
     <PanelLayout>
@@ -36,6 +46,12 @@ export default async function ProviderAdsPage() {
           </Button>
         )}
       </div>
+
+      {params.error && (
+        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {params.error}
+        </div>
+      )}
 
       {advertisements.length === 0 ? (
         <Card>
@@ -74,13 +90,10 @@ export default async function ProviderAdsPage() {
                     <Link href={`/anuncio/${ad.id}`}>Ver</Link>
                   </Button>
                   {!ad.premiumActive && subscriptionActive && (
-                    <form action={boostAdvertisementAction}>
-                      <input type="hidden" name="advertisementId" value={ad.id} />
-                      <Button type="submit" variant="whatsapp" size="sm">
-                        Destacar R${" "}
-                        {PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}
-                      </Button>
-                    </form>
+                    <BoostAdvertisementForm
+                      advertisementId={ad.id}
+                      label={boostLabel}
+                    />
                   )}
                 </div>
               </CardContent>

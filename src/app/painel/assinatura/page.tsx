@@ -36,7 +36,14 @@ export default async function SubscriptionPage({
         <CardContent className="space-y-4">
           {params.error && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {params.error}
+              <p>{params.error}</p>
+              {params.error.toLowerCase().includes("authorization") && (
+                <p className="mt-2 text-xs">
+                  Confira na Vercel se <strong>MERCADOPAGO_ACCESS_TOKEN</strong>{" "}
+                  está preenchido com o token <strong>TEST-...</strong> do
+                  Mercado Pago (ambiente Production) e faça redeploy.
+                </p>
+              )}
             </div>
           )}
 

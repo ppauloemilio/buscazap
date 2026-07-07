@@ -4,16 +4,16 @@ import { StaticPixProvider } from "./static-pix-provider";
 import type { PixProvider } from "./types";
 
 export function getPixProvider(): PixProvider {
-  if (PIX_CONFIG.provider === "mercadopago") {
-    if (!PIX_CONFIG.mercadoPagoAccessToken) {
-      throw new Error(
-        "MERCADOPAGO_ACCESS_TOKEN não está configurado na Vercel. Adicione o token TEST-... ou APP_USR-... e faça redeploy."
-      );
-    }
-
+  if (PIX_CONFIG.mercadoPagoAccessToken) {
     return new MercadoPagoPixProvider(
       PIX_CONFIG.mercadoPagoAccessToken,
       PIX_CONFIG.appUrl
+    );
+  }
+
+  if (PIX_CONFIG.provider === "mercadopago") {
+    throw new Error(
+      "MERCADOPAGO_ACCESS_TOKEN não está configurado na Vercel. Copie o token TEST-... em Credenciais de teste do Mercado Pago, salve na Vercel e faça redeploy."
     );
   }
 
