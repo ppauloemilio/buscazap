@@ -130,6 +130,12 @@ export class MercadoPagoPixProvider implements PixProvider {
         );
       }
 
+      if (detail.toLowerCase().includes("payer email forbidden")) {
+        throw new Error(
+          "Payer email forbidden: o e-mail do comprador de teste está incorreto. Crie um comprador via API (node scripts/create-mp-test-buyer.mjs) e use o e-mail exato retornado em MERCADOPAGO_TEST_PAYER_EMAIL na Vercel."
+        );
+      }
+
       if (detail.toLowerCase().includes("invalid users involved")) {
         throw new Error(
           "Invalid users involved: em modo teste, MERCADOPAGO_TEST_PAYER_EMAIL na Vercel deve ser o e-mail do COMPRADOR de teste (test_user_...@testuser.com), não do vendedor nem demo@buscazap.com.br."
