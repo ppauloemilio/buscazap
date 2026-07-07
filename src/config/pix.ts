@@ -2,7 +2,7 @@ export type PixProviderName = "static" | "mercadopago";
 
 export const PIX_CONFIG = {
   provider: (process.env.PIX_PROVIDER ?? "static") as PixProviderName,
-  mercadoPagoAccessToken: process.env.MERCADOPAGO_ACCESS_TOKEN ?? "",
+  mercadoPagoAccessToken: (process.env.MERCADOPAGO_ACCESS_TOKEN ?? "").trim(),
   appUrl:
     process.env.APP_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??
