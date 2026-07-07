@@ -5,6 +5,7 @@ import {
   generatePaymentQrCode,
   getPaymentById,
 } from "@/application/services/payment-service";
+import { PIX_CONFIG } from "@/config/pix";
 import { getCurrentProvider } from "@/lib/provider-session";
 import { PageHeader } from "@/components/layout/page-header";
 import { PixPayment } from "@/features/payment/components/pix-payment";
@@ -49,7 +50,8 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
           qrCodeDataUrl={qrCodeDataUrl}
           typeLabel={TYPE_LABELS[payment.type] ?? payment.type}
           status={payment.status}
-          allowSimulate={process.env.NODE_ENV !== "production"}
+          allowSimulate={PIX_CONFIG.enableSimulate}
+          enablePolling={!PIX_CONFIG.enableSimulate && payment.status === "PENDING"}
         />
 
         {payment.status === "PAID" && (

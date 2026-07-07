@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { confirmPayment } from "@/application/services/payment-service";
+import { PIX_CONFIG } from "@/config/pix";
 
 interface PixWebhookPayload {
   readonly pixTxId: string;
@@ -8,7 +9,7 @@ interface PixWebhookPayload {
 
 export async function POST(request: Request) {
   const secret = request.headers.get("x-webhook-secret");
-  const expectedSecret = process.env.PIX_WEBHOOK_SECRET;
+  const expectedSecret = PIX_CONFIG.webhookSecret;
 
   if (!expectedSecret || secret !== expectedSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

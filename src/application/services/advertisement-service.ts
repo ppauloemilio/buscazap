@@ -3,6 +3,7 @@ import type { SearchFilters } from "@/domain/entities";
 import { AdvertisementStatus } from "@/domain/enums";
 import { mapAdvertisementToEntity } from "@/infrastructure/mappers/advertisement-mapper";
 import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
+import { markDataFetchDynamic } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { isPremiumActive } from "@/lib/provider-session";
 
@@ -20,6 +21,8 @@ export async function findPublicAdvertisements(
     readonly sort?: string;
   } = { query: "" }
 ) {
+  markDataFetchDynamic();
+
   const advertisements = await prisma.advertisement.findMany({
     where: {
       status: { in: ["APPROVED", "PREMIUM"] },
@@ -75,6 +78,8 @@ export async function findPublicAdvertisements(
 }
 
 export async function findAdvertisementById(id: string) {
+  markDataFetchDynamic();
+
   const advertisement = await prisma.advertisement.findUnique({
     where: { id },
   });

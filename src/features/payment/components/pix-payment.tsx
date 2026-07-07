@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Copy, Check, Loader2 } from "lucide-react";
-import { simulatePixPaymentAction } from "@/actions/payment-actions";
+import {
+  checkPaymentStatusAction,
+  simulatePixPaymentAction,
+} from "@/actions/payment-actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -15,6 +18,7 @@ interface PixPaymentProps {
   readonly typeLabel: string;
   readonly status: string;
   readonly allowSimulate?: boolean;
+  readonly enablePolling?: boolean;
 }
 
 export function PixPayment({
@@ -25,10 +29,27 @@ export function PixPayment({
   typeLabel,
   status,
   allowSimulate = false,
+  enablePolling = false,
 }: PixPaymentProps) {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!enablePolling || status === "PAID") {
+      return;
+    }
+
+    const interval = setInterval(async () => {
+      const result = await checkPaymentStatusAction(paymentId);
+
+      if (result.status === "PAID") {
+        window.location.reload();
+      }
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [enablePolling, paymentId, status]);
 
   async function handleCopy() {
     await navigator.clipboard.writeText(pixCopyPaste);
@@ -118,6 +139,12 @@ export function PixPayment({
               </Button>
             )}
           </div>
+
+          {enablePolling && (
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              Após pagar, a confirmação é automática em alguns segundos.
+            </p>
+          )}
 
           {error && (
             <p className="mt-3 text-center text-sm text-destructive">{error}</p>

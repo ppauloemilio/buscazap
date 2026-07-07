@@ -2,35 +2,84 @@ import { randomBytes } from "crypto";
 import QRCode from "qrcode";
 import { PRICING } from "@/config/pricing";
 import { PaymentStatus, PaymentType } from "@/domain/enums";
+import { getPixProvider } from "@/infrastructure/pix";
 import { prisma } from "@/lib/prisma";
 import { activatePremiumBoost } from "@/application/services/premium-service";
 import { activateSubscription } from "@/application/services/subscription-service";
 
-function generatePixTxId(): string {
+function generatePlaceholderPixTxId(): string {
   return `BZ${Date.now()}${randomBytes(4).toString("hex").toUpperCase()}`;
 }
 
-function generatePixCopyPaste(amount: number, txId: string): string {
-  return `00020126580014BR.GOV.BCB.PIX0136${PRICING.PIX_KEY}520400005303986540${amount.toFixed(2)}5802BR5913BuscaZap Pag6009SAO PAULO62070503***6304${txId.slice(-4)}`;
-}
-
-export async function createSubscriptionPayment(providerId: string) {
-  const amount = PRICING.SUBSCRIPTION_AMOUNT;
-  const pixTxId = generatePixTxId();
+async function initiatePayment(input: {
+  providerId: string;
+  providerEmail: string;
+  type: PaymentType;
+  amount: number;
+  description: string;
+  referenceId?: string;
+}) {
   const expiresAt = new Date(
     Date.now() + PRICING.PAYMENT_EXPIRATION_MINUTES * 60 * 1000
   );
 
-  return prisma.payment.create({
+  const payment = await prisma.payment.create({
     data: {
-      providerId,
-      type: PaymentType.SUBSCRIPTION,
-      amount,
+      providerId: input.providerId,
+      type: input.type,
+      amount: input.amount,
       status: PaymentStatus.PENDING,
-      pixTxId,
-      pixCopyPaste: generatePixCopyPaste(amount, pixTxId),
+      pixTxId: generatePlaceholderPixTxId(),
+      pixCopyPaste: "pending",
+      referenceId: input.referenceId,
       expiresAt,
     },
+  });
+
+  try {
+    const charge = await getPixProvider().createCharge({
+      amount: input.amount,
+      description: input.description,
+      payerEmail: input.providerEmail,
+      externalReference: payment.id,
+    });
+
+    return prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        pixTxId: charge.pixTxId,
+        pixCopyPaste: charge.pixCopyPaste,
+      },
+    });
+  } catch (error) {
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { status: PaymentStatus.CANCELLED },
+    });
+    throw error;
+  }
+}
+
+async function getProviderEmail(providerId: string): Promise<string> {
+  const provider = await prisma.provider.findUnique({
+    where: { id: providerId },
+    select: { email: true },
+  });
+
+  if (!provider) {
+    throw new Error("PROVIDER_NOT_FOUND");
+  }
+
+  return provider.email;
+}
+
+export async function createSubscriptionPayment(providerId: string) {
+  return initiatePayment({
+    providerId,
+    providerEmail: await getProviderEmail(providerId),
+    type: PaymentType.SUBSCRIPTION,
+    amount: PRICING.SUBSCRIPTION_AMOUNT,
+    description: "Assinatura mensal BuscaZap",
   });
 }
 
@@ -46,23 +95,13 @@ export async function createPremiumBoostPayment(
     throw new Error("ADVERTISEMENT_NOT_FOUND");
   }
 
-  const amount = PRICING.PREMIUM_BOOST_AMOUNT;
-  const pixTxId = generatePixTxId();
-  const expiresAt = new Date(
-    Date.now() + PRICING.PAYMENT_EXPIRATION_MINUTES * 60 * 1000
-  );
-
-  return prisma.payment.create({
-    data: {
-      providerId,
-      type: PaymentType.PREMIUM_BOOST,
-      amount,
-      status: PaymentStatus.PENDING,
-      pixTxId,
-      pixCopyPaste: generatePixCopyPaste(amount, pixTxId),
-      referenceId: advertisementId,
-      expiresAt,
-    },
+  return initiatePayment({
+    providerId,
+    providerEmail: await getProviderEmail(providerId),
+    type: PaymentType.PREMIUM_BOOST,
+    amount: PRICING.PREMIUM_BOOST_AMOUNT,
+    description: `Destaque premium: ${advertisement.title}`,
+    referenceId: advertisementId,
   });
 }
 
