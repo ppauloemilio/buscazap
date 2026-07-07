@@ -115,13 +115,15 @@ export async function logoutProviderAction() {
 
 export async function createSubscriptionPaymentAction() {
   const provider = await requireCurrentProvider();
+  let payment;
 
   try {
-    const payment = await createSubscriptionPayment(provider.id);
-    redirect(`/pagamento/${payment.id}`);
+    payment = await createSubscriptionPayment(provider.id);
   } catch (error) {
     redirectWithPaymentError("/painel/assinatura", error);
   }
+
+  redirect(`/pagamento/${payment.id}`);
 }
 
 export async function createPremiumPaymentAction(advertisementId: string) {
@@ -131,12 +133,15 @@ export async function createPremiumPaymentAction(advertisementId: string) {
     redirect("/painel/assinatura");
   }
 
+  let payment;
+
   try {
-    const payment = await createPremiumBoostPayment(provider.id, advertisementId);
-    redirect(`/pagamento/${payment.id}`);
+    payment = await createPremiumBoostPayment(provider.id, advertisementId);
   } catch (error) {
     redirectWithPaymentError("/painel/anuncios", error);
   }
+
+  redirect(`/pagamento/${payment.id}`);
 }
 
 export async function boostAdvertisementAction(formData: FormData) {
@@ -184,15 +189,18 @@ export async function createAdvertisementAction(formData: FormData) {
   revalidatePath("/");
 
   if (result.requiresPremiumPayment) {
+    let payment;
+
     try {
-      const payment = await createPremiumBoostPayment(
+      payment = await createPremiumBoostPayment(
         provider.id,
         result.advertisement.id
       );
-      redirect(`/pagamento/${payment.id}`);
     } catch (error) {
       redirectWithPaymentError("/painel/anuncios", error);
     }
+
+    redirect(`/pagamento/${payment.id}`);
   }
 
   redirect("/painel/anuncios");
