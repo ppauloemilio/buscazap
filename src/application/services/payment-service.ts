@@ -14,6 +14,7 @@ function generatePlaceholderPixTxId(): string {
 async function initiatePayment(input: {
   providerId: string;
   providerEmail: string;
+  providerName: string;
   type: PaymentType;
   amount: number;
   description: string;
@@ -41,6 +42,7 @@ async function initiatePayment(input: {
       amount: input.amount,
       description: input.description,
       payerEmail: input.providerEmail,
+      payerName: input.providerName,
       externalReference: payment.id,
     });
 
@@ -60,23 +62,26 @@ async function initiatePayment(input: {
   }
 }
 
-async function getProviderEmail(providerId: string): Promise<string> {
+async function getProviderPaymentProfile(providerId: string) {
   const provider = await prisma.provider.findUnique({
     where: { id: providerId },
-    select: { email: true },
+    select: { email: true, name: true },
   });
 
   if (!provider) {
     throw new Error("PROVIDER_NOT_FOUND");
   }
 
-  return provider.email;
+  return provider;
 }
 
 export async function createSubscriptionPayment(providerId: string) {
+  const provider = await getProviderPaymentProfile(providerId);
+
   return initiatePayment({
     providerId,
-    providerEmail: await getProviderEmail(providerId),
+    providerEmail: provider.email,
+    providerName: provider.name,
     type: PaymentType.SUBSCRIPTION,
     amount: PRICING.SUBSCRIPTION_AMOUNT,
     description: "Assinatura mensal BuscaZap",
@@ -95,9 +100,12 @@ export async function createPremiumBoostPayment(
     throw new Error("ADVERTISEMENT_NOT_FOUND");
   }
 
+  const provider = await getProviderPaymentProfile(providerId);
+
   return initiatePayment({
     providerId,
-    providerEmail: await getProviderEmail(providerId),
+    providerEmail: provider.email,
+    providerName: provider.name,
     type: PaymentType.PREMIUM_BOOST,
     amount: PRICING.PREMIUM_BOOST_AMOUNT,
     description: `Destaque premium: ${advertisement.title}`,

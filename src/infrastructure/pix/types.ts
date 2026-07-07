@@ -2,6 +2,7 @@ export interface PixChargeInput {
   readonly amount: number;
   readonly description: string;
   readonly payerEmail: string;
+  readonly payerName: string;
   readonly externalReference: string;
 }
 

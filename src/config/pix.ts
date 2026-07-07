@@ -11,7 +11,12 @@ export const PIX_CONFIG = {
       : "http://localhost:3000"),
   webhookSecret: process.env.PIX_WEBHOOK_SECRET ?? "",
   enableSimulate: process.env.PIX_ENABLE_SIMULATE === "true",
+  testPayerEmail: process.env.MERCADOPAGO_TEST_PAYER_EMAIL ?? "",
 } as const;
+
+export function isMercadoPagoTestToken(token: string): boolean {
+  return token.startsWith("TEST-");
+}
 
 export function isMercadoPagoPixEnabled(): boolean {
   return (

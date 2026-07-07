@@ -9,10 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PRICING } from "@/config/pricing";
 
-export default async function SubscriptionPage() {
+interface SubscriptionPageProps {
+  readonly searchParams: Promise<{
+    readonly error?: string;
+  }>;
+}
+
+export default async function SubscriptionPage({
+  searchParams,
+}: SubscriptionPageProps) {
   const provider = await getCurrentProvider();
   if (!provider) redirect("/entrar");
 
+  const params = await searchParams;
   const status = await getSubscriptionStatus(provider.id);
 
   return (
@@ -25,6 +34,12 @@ export default async function SubscriptionPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {params.error && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {params.error}
+            </div>
+          )}
+
           <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
             <div>
               <p className="font-medium">Plano Anunciante</p>

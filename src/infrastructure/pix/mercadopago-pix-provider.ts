@@ -1,4 +1,5 @@
-import { PIX_CONFIG } from "@/config/pix";
+import { PRICING } from "@/config/pricing";
+import { PIX_CONFIG, isMercadoPagoTestToken } from "@/config/pix";
 import type { PixChargeInput, PixChargeResult, PixProvider } from "./types";
 
 interface MercadoPagoPaymentResponse {
@@ -10,7 +11,52 @@ interface MercadoPagoPaymentResponse {
     };
   };
   readonly message?: string;
+  readonly error?: string;
   readonly cause?: ReadonlyArray<{ readonly description?: string }>;
+}
+
+function extractMercadoPagoError(data: MercadoPagoPaymentResponse): string {
+  const causes = data.cause
+    ?.map((item) => item.description)
+    .filter((item): item is string => Boolean(item));
+
+  if (causes?.length) {
+    return causes.join("; ");
+  }
+
+  return (
+    data.message ??
+    data.error ??
+    "Falha ao criar cobrança PIX no Mercado Pago"
+  );
+}
+
+function splitPayerName(fullName: string): { firstName: string; lastName: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length === 0) {
+    return { firstName: "Cliente", lastName: "BuscaZap" };
+  }
+
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: "BuscaZap" };
+  }
+
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
+function resolvePayerEmail(payerEmail: string): string {
+  if (
+    isMercadoPagoTestToken(PIX_CONFIG.mercadoPagoAccessToken) &&
+    PIX_CONFIG.testPayerEmail
+  ) {
+    return PIX_CONFIG.testPayerEmail;
+  }
+
+  return payerEmail;
 }
 
 export class MercadoPagoPixProvider implements PixProvider {
@@ -20,6 +66,12 @@ export class MercadoPagoPixProvider implements PixProvider {
   ) {}
 
   async createCharge(input: PixChargeInput): Promise<PixChargeResult> {
+    const { firstName, lastName } = splitPayerName(input.payerName);
+    const payerEmail = resolvePayerEmail(input.payerEmail);
+    const expiresAt = new Date(
+      Date.now() + PRICING.PAYMENT_EXPIRATION_MINUTES * 60 * 1000
+    );
+
     const response = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
       headers: {
@@ -32,18 +84,34 @@ export class MercadoPagoPixProvider implements PixProvider {
         description: input.description,
         payment_method_id: "pix",
         external_reference: input.externalReference,
+        date_of_expiration: expiresAt.toISOString(),
         notification_url: `${this.appUrl}/api/webhooks/mercadopago`,
-        payer: { email: input.payerEmail },
+        payer: {
+          email: payerEmail,
+          first_name: firstName,
+          last_name: lastName,
+          identification: {
+            type: "CPF",
+            number: "19119119100",
+          },
+        },
       }),
     });
 
     const data = (await response.json()) as MercadoPagoPaymentResponse;
 
     if (!response.ok || !data.id) {
-      const detail =
-        data.cause?.[0]?.description ??
-        data.message ??
-        "Falha ao criar cobrança PIX no Mercado Pago";
+      const detail = extractMercadoPagoError(data);
+
+      if (
+        isMercadoPagoTestToken(this.accessToken) &&
+        !PIX_CONFIG.testPayerEmail
+      ) {
+        throw new Error(
+          `${detail}. Em modo teste, configure MERCADOPAGO_TEST_PAYER_EMAIL na Vercel com o e-mail do comprador de teste do Mercado Pago.`
+        );
+      }
+
       throw new Error(detail);
     }
 

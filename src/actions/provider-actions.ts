@@ -22,6 +22,14 @@ import {
 } from "@/schemas/provider-schemas";
 import { createAdvertisement } from "@/application/services/advertisement-service";
 
+function redirectWithPaymentError(returnPath: string, error: unknown): never {
+  const message =
+    error instanceof Error
+      ? error.message
+      : "Não foi possível gerar o pagamento PIX";
+  redirect(`${returnPath}?error=${encodeURIComponent(message)}`);
+}
+
 export async function registerProviderAction(formData: FormData) {
   const parsed = registerProviderSchema.safeParse({
     name: formData.get("name"),
@@ -107,8 +115,13 @@ export async function logoutProviderAction() {
 
 export async function createSubscriptionPaymentAction() {
   const provider = await requireCurrentProvider();
-  const payment = await createSubscriptionPayment(provider.id);
-  redirect(`/pagamento/${payment.id}`);
+
+  try {
+    const payment = await createSubscriptionPayment(provider.id);
+    redirect(`/pagamento/${payment.id}`);
+  } catch (error) {
+    redirectWithPaymentError("/painel/assinatura", error);
+  }
 }
 
 export async function createPremiumPaymentAction(advertisementId: string) {
@@ -118,8 +131,12 @@ export async function createPremiumPaymentAction(advertisementId: string) {
     redirect("/painel/assinatura");
   }
 
-  const payment = await createPremiumBoostPayment(provider.id, advertisementId);
-  redirect(`/pagamento/${payment.id}`);
+  try {
+    const payment = await createPremiumBoostPayment(provider.id, advertisementId);
+    redirect(`/pagamento/${payment.id}`);
+  } catch (error) {
+    redirectWithPaymentError("/painel/anuncios", error);
+  }
 }
 
 export async function boostAdvertisementAction(formData: FormData) {
@@ -167,11 +184,15 @@ export async function createAdvertisementAction(formData: FormData) {
   revalidatePath("/");
 
   if (result.requiresPremiumPayment) {
-    const payment = await createPremiumBoostPayment(
-      provider.id,
-      result.advertisement.id
-    );
-    redirect(`/pagamento/${payment.id}`);
+    try {
+      const payment = await createPremiumBoostPayment(
+        provider.id,
+        result.advertisement.id
+      );
+      redirect(`/pagamento/${payment.id}`);
+    } catch (error) {
+      redirectWithPaymentError("/painel/anuncios", error);
+    }
   }
 
   redirect("/painel/anuncios");
