@@ -35,6 +35,10 @@ export function validateImageFile(file: File, label: string): string | null {
   return null;
 }
 
+function canUseVercelBlob(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+}
+
 export async function uploadAdvertisementImage(
   file: File,
   advertisementId: string,
@@ -43,7 +47,7 @@ export async function uploadAdvertisementImage(
   const extension = sanitizeExtension(file.name);
   const storagePath = `ads/${advertisementId}/${filenamePrefix}-${Date.now()}${extension}`;
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  if (canUseVercelBlob()) {
     const blob = await put(storagePath, file, {
       access: "public",
       addRandomSuffix: true,
@@ -54,7 +58,7 @@ export async function uploadAdvertisementImage(
 
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "Upload de imagens não configurado. Configure BLOB_READ_WRITE_TOKEN na Vercel."
+      "Upload de imagens não configurado. Conecte um Blob Store ao projeto na Vercel."
     );
   }
 
