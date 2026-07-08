@@ -19,6 +19,8 @@ import {
   createAdvertisementSchema,
   loginProviderSchema,
   registerProviderSchema,
+  updateProviderProfileSchema,
+  updateProviderPasswordSchema,
 } from "@/schemas/provider-schemas";
 import { createAdvertisement } from "@/application/services/advertisement-service";
 
@@ -217,4 +219,100 @@ export async function getProviderSessionAction() {
     hasSubscription: hasActiveSubscription(provider.subscriptionExpiresAt),
     subscriptionExpiresAt: provider.subscriptionExpiresAt?.toISOString() ?? null,
   };
+}
+
+export async function updateProviderProfileAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+
+  const parsed = updateProviderProfileSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    whatsapp: formData.get("whatsapp"),
+    age: formData.get("age"),
+    state: formData.get("state"),
+    city: formData.get("city"),
+    neighborhood: formData.get("neighborhood"),
+    bio: formData.get("bio"),
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `/painel/perfil?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
+    );
+  }
+
+  if (parsed.data.email !== provider.email) {
+    const existing = await prisma.provider.findUnique({
+      where: { email: parsed.data.email },
+    });
+
+    if (existing && existing.id !== provider.id) {
+      redirect(
+        `/painel/perfil?error=${encodeURIComponent("Este e-mail já está em uso")}`
+      );
+    }
+  }
+
+  await prisma.provider.update({
+    where: { id: provider.id },
+    data: {
+      name: parsed.data.name,
+      email: parsed.data.email,
+      whatsapp: parsed.data.whatsapp,
+      age: parsed.data.age ?? null,
+      state: parsed.data.state ?? null,
+      city: parsed.data.city ?? null,
+      neighborhood: parsed.data.neighborhood ?? null,
+      bio: parsed.data.bio ?? null,
+    },
+  });
+
+  revalidatePath("/painel");
+  revalidatePath("/painel/perfil");
+
+  redirect("/painel/perfil?saved=1");
+}
+
+export async function updateProviderPasswordAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+
+  const parsed = updateProviderPasswordSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `/painel/perfil?passwordError=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
+    );
+  }
+
+  const validCurrent = await bcrypt.compare(
+    parsed.data.currentPassword,
+    provider.passwordHash
+  );
+
+  if (!validCurrent) {
+    redirect(
+      `/painel/perfil?passwordError=${encodeURIComponent("Senha atual incorreta")}`
+    );
+  }
+
+  if (parsed.data.currentPassword === parsed.data.newPassword) {
+    redirect(
+      `/painel/perfil?passwordError=${encodeURIComponent("A nova senha deve ser diferente da atual")}`
+    );
+  }
+
+  const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
+
+  await prisma.provider.update({
+    where: { id: provider.id },
+    data: { passwordHash },
+  });
+
+  revalidatePath("/painel/perfil");
+
+  redirect("/painel/perfil?passwordSaved=1");
 }

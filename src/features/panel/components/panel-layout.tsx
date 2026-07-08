@@ -6,6 +6,7 @@ import {
   Megaphone,
   Receipt,
   LogOut,
+  User,
 } from "lucide-react";
 import { logoutProviderAction } from "@/actions/provider-actions";
 import { getCurrentProvider, hasActiveSubscription } from "@/lib/provider-session";
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { href: "/painel", label: "Visão geral", icon: LayoutDashboard },
+  { href: "/painel/perfil", label: "Meu perfil", icon: User },
   { href: "/painel/assinatura", label: "Assinatura", icon: CreditCard },
   { href: "/painel/anuncios", label: "Meus anúncios", icon: Megaphone },
   { href: "/painel/pagamentos", label: "Pagamentos", icon: Receipt },

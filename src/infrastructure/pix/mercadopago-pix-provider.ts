@@ -130,9 +130,15 @@ export class MercadoPagoPixProvider implements PixProvider {
         );
       }
 
+      if (detail.toLowerCase().includes("unauthorized use of live credentials")) {
+        throw new Error(
+          "Unauthorized use of live credentials: use o Access Token APP_USR- das Credenciais de produção da SUA conta (não de conta de teste). Remova MERCADOPAGO_TEST_PAYER_EMAIL na Vercel, cadastre uma chave PIX no Mercado Pago e faça redeploy."
+        );
+      }
+
       if (detail.toLowerCase().includes("payer email forbidden")) {
         throw new Error(
-          "Payer email forbidden: o e-mail do comprador de teste está incorreto. Crie um comprador via API (node scripts/create-mp-test-buyer.mjs) e use o e-mail exato retornado em MERCADOPAGO_TEST_PAYER_EMAIL na Vercel."
+          "Payer email forbidden: o sandbox do Mercado Pago (token TEST-...) não aceita PIX com comprador de teste. Troque MERCADOPAGO_ACCESS_TOKEN na Vercel pelo Access Token de produção (APP_USR-...) e remova MERCADOPAGO_TEST_PAYER_EMAIL. Depois faça redeploy."
         );
       }
 

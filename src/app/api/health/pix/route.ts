@@ -31,6 +31,8 @@ export async function GET() {
           : "missing",
     testPayerEmailConfigured: getMercadoPagoTestPayerEmail().length > 0,
     testPayerEmailLooksValid: getMercadoPagoTestPayerEmail().endsWith("@testuser.com"),
+    testPayerEmailConflictsWithProductionToken:
+      token.startsWith("APP_USR-") && getMercadoPagoTestPayerEmail().length > 0,
     appUrl: getPixAppUrl(),
   });
 }

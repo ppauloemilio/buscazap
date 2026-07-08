@@ -14,6 +14,11 @@ async function main() {
       email: "demo@buscazap.com.br",
       whatsapp: "5511999999999",
       passwordHash,
+      age: 32,
+      state: "SP",
+      city: "São Paulo",
+      neighborhood: "Centro",
+      bio: "Prestador de demonstração do BuscaZap.",
       subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     },
   });
