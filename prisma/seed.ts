@@ -5,15 +5,29 @@ const prisma = new PrismaClient();
 
 async function main() {
   const passwordHash = await bcrypt.hash("123456", 10);
+  const adminPasswordHash = await bcrypt.hash("admin123456", 10);
+
+  await prisma.provider.upsert({
+    where: { email: "admin@buscazap.com.br" },
+    update: { role: "ADMIN" },
+    create: {
+      name: "Administrador BuscaZap",
+      email: "admin@buscazap.com.br",
+      whatsapp: "5511999999998",
+      passwordHash: adminPasswordHash,
+      role: "ADMIN",
+    },
+  });
 
   const provider = await prisma.provider.upsert({
     where: { email: "demo@buscazap.com.br" },
-    update: {},
+    update: { role: "PROVIDER" },
     create: {
       name: "Demo Prestador",
       email: "demo@buscazap.com.br",
       whatsapp: "5511999999999",
       passwordHash,
+      role: "PROVIDER",
       age: 32,
       state: "SP",
       city: "São Paulo",
@@ -117,7 +131,9 @@ async function main() {
     });
   }
 
-  console.log("Seed concluído. Login demo: demo@buscazap.com.br / 123456");
+  console.log("Seed concluído.");
+  console.log("Login demo: demo@buscazap.com.br / 123456");
+  console.log("Login admin: admin@buscazap.com.br / admin123456");
 }
 
 main()

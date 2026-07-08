@@ -25,7 +25,7 @@ export async function findPublicAdvertisements(
 
   const advertisements = await prisma.advertisement.findMany({
     where: {
-      status: { in: ["APPROVED", "PREMIUM"] },
+      status: AdvertisementStatus.APPROVED,
       ...(filters.city
         ? { city: { contains: filters.city } }
         : {}),

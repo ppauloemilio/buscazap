@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { MessageCircle, Search, Menu, User, LayoutDashboard } from "lucide-react";
+import { MessageCircle, Search, Menu, User, LayoutDashboard, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCurrentProvider } from "@/lib/provider-session";
+import { isAdminRole } from "@/lib/admin-session";
 
 export async function Header() {
   const provider = await getCurrentProvider();
+  const isAdmin = provider ? isAdminRole(provider.role) : false;
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -43,11 +45,15 @@ export async function Header() {
             <Menu className="h-5 w-5" />
           </Button>
           <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
-            <Link href={provider ? "/painel" : "/entrar"}>
+            <Link href={provider ? (isAdmin ? "/admin" : "/painel") : "/entrar"}>
               {provider ? (
                 <>
-                  <LayoutDashboard className="h-4 w-4" />
-                  Painel
+                  {isAdmin ? (
+                    <Shield className="h-4 w-4" />
+                  ) : (
+                    <LayoutDashboard className="h-4 w-4" />
+                  )}
+                  {isAdmin ? "Admin" : "Painel"}
                 </>
               ) : (
                 <>

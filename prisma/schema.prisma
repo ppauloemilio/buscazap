@@ -14,6 +14,7 @@ model Provider {
   email                 String          @unique
   whatsapp              String
   passwordHash          String
+  role                  String          @default("PROVIDER")
   age                   Int?
   state                 String?
   city                  String?
@@ -25,6 +26,7 @@ model Provider {
   advertisements        Advertisement[]
   payments              Payment[]
   subscriptions         Subscription[]
+  auditLogs             AuditLog[]
 }
 
 model Advertisement {
@@ -88,4 +90,25 @@ model Payment {
   createdAt    DateTime      @default(now())
   subscription Subscription?
   premiumBoost PremiumBoost?
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      Provider @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action     String
+  entityType String
+  entityId   String?
+  metadata   String?
+  createdAt  DateTime @default(now())
+}
+
+model Report {
+  id               String   @id @default(cuid())
+  advertisementRef String
+  reason           String
+  details          String?
+  status           String   @default("OPEN")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

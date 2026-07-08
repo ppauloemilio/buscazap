@@ -64,6 +64,7 @@ export async function registerProviderAction(formData: FormData) {
     data: {
       ...parsed.data,
       passwordHash,
+      role: "PROVIDER",
     },
   });
 
@@ -109,6 +110,10 @@ export async function loginProviderAction(formData: FormData) {
     sameSite: "lax",
     path: "/",
   });
+
+  if (provider.role === "ADMIN") {
+    redirect("/admin");
+  }
 
   redirect("/painel");
 }

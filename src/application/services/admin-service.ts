@@ -1,0 +1,273 @@
+import { AdvertisementStatus } from "@/domain/enums";
+import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
+import { prisma } from "@/lib/prisma";
+import { hasActiveSubscription, isPremiumActive } from "@/lib/provider-session";
+
+const PUBLIC_AD_STATUSES = [AdvertisementStatus.APPROVED] as const;
+
+export async function logAdminAction(input: {
+  readonly adminId: string;
+  readonly action: string;
+  readonly entityType: string;
+  readonly entityId?: string;
+  readonly metadata?: Record<string, unknown>;
+}) {
+  await prisma.auditLog.create({
+    data: {
+      adminId: input.adminId,
+      action: input.action,
+      entityType: input.entityType,
+      entityId: input.entityId,
+      metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+    },
+  });
+}
+
+export async function getAdminDashboardStats() {
+  const [
+    providersCount,
+    advertisementsCount,
+    premiumActiveCount,
+    openReportsCount,
+    paidPayments,
+  ] = await Promise.all([
+    prisma.provider.count({ where: { role: "PROVIDER" } }),
+    prisma.advertisement.count(),
+    prisma.advertisement.count({
+      where: {
+        premiumExpiresAt: { gt: new Date() },
+        status: AdvertisementStatus.APPROVED,
+      },
+    }),
+    prisma.report.count({ where: { status: "OPEN" } }),
+    prisma.payment.count({ where: { status: "PAID" } }),
+  ]);
+
+  const activeSubscriptions = await prisma.provider.count({
+    where: {
+      role: "PROVIDER",
+      subscriptionExpiresAt: { gt: new Date() },
+    },
+  });
+
+  return {
+    providersCount,
+    advertisementsCount,
+    premiumActiveCount,
+    openReportsCount,
+    paidPayments,
+    activeSubscriptions,
+  };
+}
+
+export async function listAdminProviders() {
+  const providers = await prisma.provider.findMany({
+    where: { role: "PROVIDER" },
+    orderBy: { createdAt: "desc" },
+    include: {
+      _count: {
+        select: { advertisements: true, payments: true },
+      },
+    },
+  });
+
+  return providers.map((provider) => ({
+    id: provider.id,
+    name: provider.name,
+    email: provider.email,
+    whatsapp: provider.whatsapp,
+    city: provider.city,
+    state: provider.state,
+    subscriptionActive: hasActiveSubscription(provider.subscriptionExpiresAt),
+    subscriptionExpiresAt: provider.subscriptionExpiresAt,
+    advertisementsCount: provider._count.advertisements,
+    paymentsCount: provider._count.payments,
+    createdAt: provider.createdAt,
+  }));
+}
+
+export async function listAdminAdvertisements(filters?: {
+  readonly status?: string;
+  readonly premium?: boolean;
+  readonly providerId?: string;
+}) {
+  const advertisements = await prisma.advertisement.findMany({
+    where: {
+      ...(filters?.status ? { status: filters.status } : {}),
+      ...(filters?.providerId ? { providerId: filters.providerId } : {}),
+      ...(filters?.premium
+        ? { premiumExpiresAt: { gt: new Date() } }
+        : {}),
+    },
+    orderBy: { createdAt: "desc" },
+    include: {
+      provider: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      premiumBoosts: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          amount: true,
+          expiresAt: true,
+          startsAt: true,
+        },
+      },
+    },
+  });
+
+  return advertisements.map((ad) => ({
+    id: ad.id,
+    title: ad.title,
+    category: ad.category,
+    city: ad.city,
+    state: ad.state,
+    status: ad.status,
+    premiumActive: isPremiumActive(ad.premiumExpiresAt),
+    premiumExpiresAt: ad.premiumExpiresAt,
+    lastBoost: ad.premiumBoosts[0] ?? null,
+    provider: ad.provider,
+    createdAt: ad.createdAt,
+  }));
+}
+
+export async function updateAdvertisementStatusAsAdmin(input: {
+  readonly adminId: string;
+  readonly advertisementId: string;
+  readonly status: string;
+}) {
+  if (!PUBLIC_AD_STATUSES.includes(input.status as (typeof PUBLIC_AD_STATUSES)[number]) &&
+      !["PENDING", "REJECTED", "BLOCKED", "INACTIVE"].includes(input.status)) {
+    throw new Error("Status inválido");
+  }
+
+  const advertisement = await prisma.advertisement.update({
+    where: { id: input.advertisementId },
+    data: { status: input.status },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "UPDATE_ADVERTISEMENT_STATUS",
+    entityType: "Advertisement",
+    entityId: advertisement.id,
+    metadata: { status: input.status, title: advertisement.title },
+  });
+
+  return advertisement;
+}
+
+export async function deleteAdvertisementAsAdmin(input: {
+  readonly adminId: string;
+  readonly advertisementId: string;
+}) {
+  const advertisement = await prisma.advertisement.findUnique({
+    where: { id: input.advertisementId },
+  });
+
+  if (!advertisement) {
+    throw new Error("Anúncio não encontrado");
+  }
+
+  await prisma.advertisement.delete({
+    where: { id: input.advertisementId },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "DELETE_ADVERTISEMENT",
+    entityType: "Advertisement",
+    entityId: advertisement.id,
+    metadata: { title: advertisement.title, providerId: advertisement.providerId },
+  });
+}
+
+export async function listAdminAuditLogs(limit = 50) {
+  return prisma.auditLog.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    include: {
+      admin: {
+        select: { name: true, email: true },
+      },
+    },
+  });
+}
+
+export async function listAdminReports(status?: string) {
+  return prisma.report.findMany({
+    where: status ? { status } : undefined,
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function updateReportStatusAsAdmin(input: {
+  readonly adminId: string;
+  readonly reportId: string;
+  readonly status: string;
+}) {
+  if (!["OPEN", "REVIEWED", "DISMISSED"].includes(input.status)) {
+    throw new Error("Status inválido");
+  }
+
+  const report = await prisma.report.update({
+    where: { id: input.reportId },
+    data: { status: input.status },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "UPDATE_REPORT_STATUS",
+    entityType: "Report",
+    entityId: report.id,
+    metadata: { status: input.status },
+  });
+
+  return report;
+}
+
+export async function createReport(input: {
+  readonly advertisementRef: string;
+  readonly reason: string;
+  readonly details?: string;
+}) {
+  return prisma.report.create({
+    data: input,
+  });
+}
+
+export async function getAdminCategoryStats() {
+  const grouped = await prisma.advertisement.groupBy({
+    by: ["category"],
+    _count: { category: true },
+    where: { status: AdvertisementStatus.APPROVED },
+    orderBy: { _count: { category: "desc" } },
+  });
+
+  const knownCategories = new Map(
+    CATEGORIES.map((category) => [category.name, category])
+  );
+
+  return grouped.map((item) => ({
+    name: item.category,
+    slug: knownCategories.get(item.category)?.slug ?? item.category.toLowerCase(),
+    advertisementsCount: item._count.category,
+    isKnown: knownCategories.has(item.category),
+  }));
+}
+
+export async function listAdminPayments(limit = 30) {
+  return prisma.payment.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    include: {
+      provider: {
+        select: { name: true, email: true },
+      },
+    },
+  });
+}
