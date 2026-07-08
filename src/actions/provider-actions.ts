@@ -19,6 +19,7 @@ import {
   createAdvertisementSchema,
   loginProviderSchema,
   registerProviderSchema,
+  resolveAdvertisementCategory,
   updateProviderProfileSchema,
   updateProviderPasswordSchema,
 } from "@/schemas/provider-schemas";
@@ -168,6 +169,7 @@ export async function createAdvertisementAction(formData: FormData) {
     description: formData.get("description"),
     type: formData.get("type"),
     category: formData.get("category"),
+    customCategory: formData.get("customCategory"),
     city: formData.get("city"),
     state: formData.get("state"),
     neighborhood: formData.get("neighborhood") || undefined,
@@ -181,9 +183,12 @@ export async function createAdvertisementAction(formData: FormData) {
     );
   }
 
+  const { customCategory: _customCategory, ...advertisementData } = parsed.data;
+
   const result = await createAdvertisement({
     providerId: provider.id,
-    ...parsed.data,
+    ...advertisementData,
+    category: resolveAdvertisementCategory(parsed.data),
   });
 
   revalidatePath("/painel/anuncios");

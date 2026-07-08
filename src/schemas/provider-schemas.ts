@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { AdvertisementType } from "@/domain/enums";
+import { CATEGORY_OTHER_VALUE } from "@/config/advertisement-form";
 
 export const registerProviderSchema = z.object({
   name: z.string().min(3, "Nome deve ter ao menos 3 caracteres"),
@@ -75,17 +76,46 @@ export const updateProviderPasswordSchema = z
     path: ["confirmPassword"],
   });
 
-export const createAdvertisementSchema = z.object({
-  title: z.string().min(5, "Título deve ter ao menos 5 caracteres"),
-  description: z.string().min(20, "Descrição deve ter ao menos 20 caracteres"),
-  type: z.nativeEnum(AdvertisementType),
-  category: z.string().min(2, "Selecione uma categoria"),
-  city: z.string().min(2, "Informe a cidade"),
-  state: z.string().length(2, "UF deve ter 2 letras"),
-  neighborhood: z.string().optional(),
-  whatsappNumber: z.string().min(10, "WhatsApp inválido"),
-  withPremium: z.boolean().optional(),
-});
+export const createAdvertisementSchema = z
+  .object({
+    title: z.string().min(5, "Título deve ter ao menos 5 caracteres"),
+    description: z.string().min(20, "Descrição deve ter ao menos 20 caracteres"),
+    type: z.nativeEnum(AdvertisementType),
+    category: z.string().min(1, "Selecione uma categoria"),
+    customCategory: z.preprocess(
+      (value) => {
+        if (typeof value !== "string") return undefined;
+        const trimmed = value.trim();
+        return trimmed.length === 0 ? undefined : trimmed;
+      },
+      z.string().min(2, "Categoria deve ter ao menos 2 caracteres").max(50).optional()
+    ),
+    city: z.string().min(2, "Informe a cidade"),
+    state: z.string().length(2, "UF deve ter 2 letras"),
+    neighborhood: z.string().optional(),
+    whatsappNumber: z.string().min(10, "WhatsApp inválido"),
+    withPremium: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.category === CATEGORY_OTHER_VALUE && !data.customCategory) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe a categoria desejada",
+        path: ["customCategory"],
+      });
+    }
+  });
+
+export function resolveAdvertisementCategory(input: {
+  readonly category: string;
+  readonly customCategory?: string;
+}): string {
+  if (input.category === CATEGORY_OTHER_VALUE) {
+    return input.customCategory ?? "";
+  }
+
+  return input.category;
+}
 
 export type RegisterProviderInput = z.infer<typeof registerProviderSchema>;
 export type LoginProviderInput = z.infer<typeof loginProviderSchema>;

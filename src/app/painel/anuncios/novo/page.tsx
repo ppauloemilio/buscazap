@@ -1,15 +1,22 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdvertisementAction } from "@/actions/provider-actions";
-import { getCurrentProvider, hasActiveSubscription } from "@/lib/provider-session";
+import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
+import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
+import { getCurrentProvider, hasActiveSubscription } from "@/lib/provider-session";
 import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
-import { AdvertisementType } from "@/domain/enums";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PRICING } from "@/config/pricing";
 
-export default async function NewAdvertisementPage() {
+interface NewAdvertisementPageProps {
+  readonly searchParams: Promise<{ readonly error?: string }>;
+}
+
+export default async function NewAdvertisementPage({
+  searchParams,
+}: NewAdvertisementPageProps) {
   const provider = await getCurrentProvider();
   if (!provider) redirect("/entrar");
 
@@ -17,9 +24,17 @@ export default async function NewAdvertisementPage() {
     redirect("/painel/assinatura");
   }
 
+  const params = await searchParams;
+
   return (
     <PanelLayout>
       <h2 className="mb-6 text-xl font-semibold">Novo anúncio</h2>
+
+      {params.error && (
+        <p className="mb-4 max-w-xl rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+          {params.error}
+        </p>
+      )}
 
       <form action={createAdvertisementAction} className="max-w-xl space-y-4">
         <div>
@@ -52,31 +67,17 @@ export default async function NewAdvertisementPage() {
               name="type"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               required
+              defaultValue={ADVERTISEMENT_TYPE_OPTIONS[0].value}
             >
-              {Object.values(AdvertisementType).map((type) => (
-                <option key={type} value={type}>
-                  {type}
+              {ADVERTISEMENT_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
           </div>
-          <div>
-            <label htmlFor="category" className="mb-1.5 block text-sm font-medium">
-              Categoria
-            </label>
-            <select
-              id="category"
-              name="category"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              required
-            >
-              {CATEGORIES.map((category) => (
-                <option key={category.id} value={category.name}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
+
+          <AdvertisementCategoryFields categories={CATEGORIES} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
