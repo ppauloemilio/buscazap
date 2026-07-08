@@ -1,7 +1,12 @@
 import { cookies } from "next/headers";
 import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
-import { ProviderStatus } from "@/domain/enums";
+import { ProviderStatus, UserRole } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
+
+type ProviderAccessProfile = {
+  readonly role: string;
+  readonly subscriptionExpiresAt: Date | null;
+};
 
 export async function getCurrentProvider() {
   const cookieStore = await cookies();
@@ -26,12 +31,24 @@ export async function requireCurrentProvider() {
   return provider;
 }
 
+export function isAdminProvider(provider: ProviderAccessProfile): boolean {
+  return provider.role === UserRole.ADMIN;
+}
+
 export function hasActiveSubscription(subscriptionExpiresAt: Date | null): boolean {
   if (!subscriptionExpiresAt) {
     return false;
   }
 
   return subscriptionExpiresAt.getTime() > Date.now();
+}
+
+export function canProviderPublish(provider: ProviderAccessProfile): boolean {
+  return isAdminProvider(provider) || hasActiveSubscription(provider.subscriptionExpiresAt);
+}
+
+export function canProviderUsePaidFeatures(provider: ProviderAccessProfile): boolean {
+  return canProviderPublish(provider);
 }
 
 export function isPremiumActive(premiumExpiresAt: Date | null): boolean {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Crown, Plus } from "lucide-react";
 import { findProviderAdvertisements } from "@/application/services/advertisement-service";
-import { getCurrentProvider, hasActiveSubscription } from "@/lib/provider-session";
+import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
 import { BoostAdvertisementForm } from "@/features/panel/components/boost-advertisement-form";
 import { DeleteAdvertisementForm } from "@/features/panel/components/delete-advertisement-form";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
@@ -15,6 +15,7 @@ interface ProviderAdsPageProps {
   readonly searchParams: Promise<{
     readonly error?: string;
     readonly deleted?: string;
+    readonly boosted?: string;
   }>;
 }
 
@@ -25,11 +26,12 @@ export default async function ProviderAdsPage({
   if (!provider) redirect("/entrar");
 
   const params = await searchParams;
-  const subscriptionActive = hasActiveSubscription(
-    provider.subscriptionExpiresAt
-  );
+  const subscriptionActive = canProviderPublish(provider);
+  const isAdmin = isAdminProvider(provider);
   const advertisements = await findProviderAdvertisements(provider.id);
-  const boostLabel = `Destacar R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}`;
+  const boostLabel = isAdmin
+    ? "Destacar grátis"
+    : `Destacar R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}`;
   const premiumAmountLabel = `R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}`;
 
   return (
@@ -59,6 +61,12 @@ export default async function ProviderAdsPage({
       {params.deleted === "1" && (
         <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp">
           Anúncio excluído com sucesso.
+        </div>
+      )}
+
+      {params.boosted === "1" && (
+        <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp">
+          Destaque premium ativado com sucesso.
         </div>
       )}
 

@@ -9,7 +9,7 @@ import {
   User,
 } from "lucide-react";
 import { logoutProviderAction } from "@/actions/provider-actions";
-import { getCurrentProvider, hasActiveSubscription, isProviderBlocked } from "@/lib/provider-session";
+import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
 import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
@@ -33,9 +33,8 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const subscriptionActive = hasActiveSubscription(
-    provider.subscriptionExpiresAt
-  );
+  const subscriptionActive = canProviderPublish(provider);
+  const isAdmin = isAdminProvider(provider);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -44,9 +43,11 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
           <h1 className="text-2xl font-bold">Painel do prestador</h1>
           <p className="text-sm text-muted-foreground">
             Olá, {provider.name}
-            {subscriptionActive
-              ? " — assinatura ativa"
-              : " — assinatura inativa"}
+            {isAdmin
+              ? " — acesso administrativo (sem cobrança)"
+              : subscriptionActive
+                ? " — assinatura ativa"
+                : " — assinatura inativa"}
           </p>
         </div>
         <form action={logoutProviderAction}>

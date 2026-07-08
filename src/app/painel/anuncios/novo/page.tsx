@@ -4,7 +4,7 @@ import { createAdvertisementAction } from "@/actions/provider-actions";
 import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
-import { getCurrentProvider, hasActiveSubscription } from "@/lib/provider-session";
+import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
 import {
   getCategoriesWithCounts,
   listActiveCities,
@@ -24,7 +24,7 @@ export default async function NewAdvertisementPage({
   const provider = await getCurrentProvider();
   if (!provider) redirect("/entrar");
 
-  if (!hasActiveSubscription(provider.subscriptionExpiresAt)) {
+  if (!canProviderPublish(provider)) {
     redirect("/painel/assinatura");
   }
 

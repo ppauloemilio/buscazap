@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { CreditCard, Crown, Megaphone } from "lucide-react";
+import { CreditCard, Crown, Megaphone, Shield } from "lucide-react";
 import { createSubscriptionPaymentAction } from "@/actions/provider-actions";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
-import { getCurrentProvider } from "@/lib/provider-session";
+import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,9 +23,44 @@ export default async function SubscriptionPage({
 
   const params = await searchParams;
   const status = await getSubscriptionStatus(provider.id);
+  const isAdmin = isAdminProvider(provider);
 
   return (
     <PanelLayout>
+      {isAdmin ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-whatsapp" />
+              Acesso administrativo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg bg-whatsapp/10 p-4">
+              <div>
+                <p className="font-medium">Conta de administrador</p>
+                <p className="text-sm text-muted-foreground">
+                  Sem cobrança de assinatura ou destaque premium
+                </p>
+              </div>
+              <Badge variant="whatsapp">Liberado</Badge>
+            </div>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <Megaphone className="h-4 w-4 text-whatsapp" />
+                Publique anúncios sem pagar assinatura
+              </li>
+              <li className="flex items-center gap-2">
+                <Crown className="h-4 w-4 text-whatsapp" />
+                Ative destaque premium gratuitamente
+              </li>
+            </ul>
+            <Button variant="outline" asChild>
+              <a href="/admin">Ir para o painel admin</a>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -92,6 +127,7 @@ export default async function SubscriptionPage({
           )}
         </CardContent>
       </Card>
+      )}
     </PanelLayout>
   );
 }

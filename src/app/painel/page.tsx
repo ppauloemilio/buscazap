@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { CreditCard, Crown, Megaphone } from "lucide-react";
 import { findProviderAdvertisements } from "@/application/services/advertisement-service";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
-import { getCurrentProvider } from "@/lib/provider-session";
+import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ export default async function PanelPage() {
   ]);
 
   const premiumCount = advertisements.filter((ad) => ad.premiumActive).length;
+  const isAdmin = isAdminProvider(provider);
 
   return (
     <PanelLayout>
@@ -31,7 +32,7 @@ export default async function PanelPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {subscription.active ? "Ativa" : "Inativa"}
+              {isAdmin ? "Admin" : subscription.active ? "Ativa" : "Inativa"}
             </p>
           </CardContent>
         </Card>
@@ -86,7 +87,7 @@ export default async function PanelPage() {
         </Card>
       </div>
 
-      {!subscription.active && (
+      {!subscription.active && !isAdmin && (
         <Card className="mt-4 border-amber-200 bg-amber-50">
           <CardContent className="flex items-center gap-3 p-4 text-sm">
             <Megaphone className="h-5 w-5 text-amber-600" />

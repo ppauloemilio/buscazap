@@ -11,11 +11,15 @@ import {
 } from "@/application/services/payment-service";
 import { prisma } from "@/lib/prisma";
 import {
+  canProviderPublish,
   getCurrentProvider,
-  hasActiveSubscription,
+  isAdminProvider,
   isProviderBlocked,
   requireCurrentProvider,
 } from "@/lib/provider-session";
+import {
+  grantAdminPremiumBoost,
+} from "@/application/services/premium-service";
 import {
   createAdvertisementSchema,
   loginProviderSchema,
@@ -136,6 +140,11 @@ export async function logoutProviderAction() {
 
 export async function createSubscriptionPaymentAction() {
   const provider = await requireCurrentProvider();
+
+  if (isAdminProvider(provider)) {
+    redirect("/painel/assinatura");
+  }
+
   let payment;
 
   try {
@@ -150,8 +159,16 @@ export async function createSubscriptionPaymentAction() {
 export async function createPremiumPaymentAction(advertisementId: string) {
   const provider = await requireCurrentProvider();
 
-  if (!hasActiveSubscription(provider.subscriptionExpiresAt)) {
+  if (!canProviderPublish(provider)) {
     redirect("/painel/assinatura");
+  }
+
+  if (isAdminProvider(provider)) {
+    await grantAdminPremiumBoost(provider.id, advertisementId);
+    revalidatePath("/painel/anuncios");
+    revalidatePath("/buscar");
+    revalidatePath("/");
+    redirect("/painel/anuncios?boosted=1");
   }
 
   let payment;
@@ -178,7 +195,7 @@ export async function boostAdvertisementAction(formData: FormData) {
 export async function createAdvertisementAction(formData: FormData) {
   const provider = await requireCurrentProvider();
 
-  if (!hasActiveSubscription(provider.subscriptionExpiresAt)) {
+  if (!canProviderPublish(provider)) {
     redirect("/painel/assinatura");
   }
 
@@ -221,6 +238,14 @@ export async function createAdvertisementAction(formData: FormData) {
   revalidatePath("/");
 
   if (result.requiresPremiumPayment) {
+    if (isAdminProvider(provider)) {
+      await grantAdminPremiumBoost(provider.id, result.advertisement.id);
+      revalidatePath("/painel/anuncios");
+      revalidatePath("/buscar");
+      revalidatePath("/");
+      redirect("/painel/anuncios?boosted=1");
+    }
+
     let payment;
 
     try {
@@ -269,7 +294,8 @@ export async function getProviderSessionAction() {
     id: provider.id,
     name: provider.name,
     email: provider.email,
-    hasSubscription: hasActiveSubscription(provider.subscriptionExpiresAt),
+    hasSubscription: canProviderPublish(provider),
+    isAdmin: isAdminProvider(provider),
     subscriptionExpiresAt: provider.subscriptionExpiresAt?.toISOString() ?? null,
   };
 }

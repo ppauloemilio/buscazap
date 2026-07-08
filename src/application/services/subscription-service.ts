@@ -1,7 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import { PRICING } from "@/config/pricing";
 import { prisma } from "@/lib/prisma";
-import { hasActiveSubscription } from "@/lib/provider-session";
+import {
+  hasActiveSubscription,
+  isAdminProvider,
+} from "@/lib/provider-session";
 
 export async function getSubscriptionStatus(providerId: string) {
   const provider = await prisma.provider.findUnique({
@@ -18,10 +21,11 @@ export async function getSubscriptionStatus(providerId: string) {
     throw new Error("PROVIDER_NOT_FOUND");
   }
 
-  const active = hasActiveSubscription(provider.subscriptionExpiresAt);
+  const active = isAdminProvider(provider) || hasActiveSubscription(provider.subscriptionExpiresAt);
 
   return {
     active,
+    isAdmin: isAdminProvider(provider),
     expiresAt: provider.subscriptionExpiresAt,
     lastSubscription: provider.subscriptions[0] ?? null,
     monthlyAmount: PRICING.SUBSCRIPTION_AMOUNT,
@@ -73,6 +77,7 @@ export async function expireSubscriptions() {
 
   const expiredProviders = await prisma.provider.findMany({
     where: {
+      role: { not: "ADMIN" },
       subscriptionExpiresAt: { lt: now },
     },
   });

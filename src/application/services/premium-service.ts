@@ -67,3 +67,35 @@ export function getPremiumBoostPricing() {
     durationDays: PRICING.PREMIUM_BOOST_DAYS,
   };
 }
+
+export async function grantAdminPremiumBoost(
+  providerId: string,
+  advertisementId: string
+) {
+  const advertisement = await prisma.advertisement.findFirst({
+    where: { id: advertisementId, providerId },
+  });
+
+  if (!advertisement) {
+    throw new Error("Anúncio não encontrado");
+  }
+
+  const startsAt = new Date();
+  const baseDate =
+    advertisement.premiumExpiresAt &&
+    advertisement.premiumExpiresAt.getTime() > startsAt.getTime()
+      ? advertisement.premiumExpiresAt
+      : startsAt;
+  const expiresAt = new Date(baseDate);
+  expiresAt.setDate(expiresAt.getDate() + PRICING.PREMIUM_BOOST_DAYS);
+
+  await prisma.advertisement.update({
+    where: { id: advertisementId },
+    data: {
+      premiumExpiresAt: expiresAt,
+      status: "APPROVED",
+    },
+  });
+
+  return expiresAt;
+}
