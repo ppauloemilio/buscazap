@@ -1,4 +1,4 @@
-import { AdvertisementStatus, ProviderStatus, UserRole } from "@/domain/enums";
+import { AdvertisementStatus, PaymentStatus, ProviderStatus, UserRole } from "@/domain/enums";
 import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
 import { prisma } from "@/lib/prisma";
 import { hasActiveSubscription, isPremiumActive } from "@/lib/provider-session";
@@ -31,6 +31,7 @@ export async function getAdminDashboardStats() {
     openReportsCount,
     paidPayments,
     blockedProvidersCount,
+    expiredSubscriptionsCount,
   ] = await Promise.all([
     prisma.provider.count({ where: { role: UserRole.PROVIDER } }),
     prisma.advertisement.count(),
@@ -44,6 +45,15 @@ export async function getAdminDashboardStats() {
     prisma.payment.count({ where: { status: "PAID" } }),
     prisma.provider.count({
       where: { role: UserRole.PROVIDER, status: ProviderStatus.BLOCKED },
+    }),
+    prisma.provider.count({
+      where: {
+        role: UserRole.PROVIDER,
+        subscriptionExpiresAt: {
+          not: null,
+          lte: new Date(),
+        },
+      },
     }),
   ]);
 
@@ -63,39 +73,83 @@ export async function getAdminDashboardStats() {
     paidPayments,
     activeSubscriptions,
     blockedProvidersCount,
+    expiredSubscriptionsCount,
   };
 }
 
 export async function listAdminProviders(filters?: {
   readonly status?: string;
+  readonly subscription?: string;
 }) {
+  const now = new Date();
+
   const providers = await prisma.provider.findMany({
     where: {
       role: UserRole.PROVIDER,
       ...(filters?.status ? { status: filters.status } : {}),
+      ...(filters?.subscription === "expired"
+        ? {
+            subscriptionExpiresAt: {
+              not: null,
+              lte: now,
+            },
+          }
+        : {}),
+      ...(filters?.subscription === "active"
+        ? {
+            subscriptionExpiresAt: {
+              gt: now,
+            },
+          }
+        : {}),
     },
     orderBy: { createdAt: "desc" },
     include: {
+      payments: {
+        select: { status: true },
+      },
       _count: {
-        select: { advertisements: true, payments: true },
+        select: { advertisements: true },
       },
     },
   });
 
-  return providers.map((provider) => ({
-    id: provider.id,
-    name: provider.name,
-    email: provider.email,
-    whatsapp: provider.whatsapp,
-    status: provider.status,
-    city: provider.city,
-    state: provider.state,
-    subscriptionActive: hasActiveSubscription(provider.subscriptionExpiresAt),
-    subscriptionExpiresAt: provider.subscriptionExpiresAt,
-    advertisementsCount: provider._count.advertisements,
-    paymentsCount: provider._count.payments,
-    createdAt: provider.createdAt,
-  }));
+  return providers.map((provider) => {
+    const paymentsPaid = provider.payments.filter(
+      (payment) => payment.status === PaymentStatus.PAID
+    ).length;
+    const paymentsPending = provider.payments.filter(
+      (payment) => payment.status === PaymentStatus.PENDING
+    ).length;
+    const paymentsCancelled = provider.payments.filter(
+      (payment) =>
+        payment.status === PaymentStatus.CANCELLED ||
+        payment.status === PaymentStatus.EXPIRED
+    ).length;
+
+    const subscriptionActive = hasActiveSubscription(provider.subscriptionExpiresAt);
+    const hadSubscription = provider.subscriptionExpiresAt !== null;
+
+    return {
+      id: provider.id,
+      name: provider.name,
+      email: provider.email,
+      whatsapp: provider.whatsapp,
+      status: provider.status,
+      city: provider.city,
+      state: provider.state,
+      subscriptionActive,
+      subscriptionExpired: hadSubscription && !subscriptionActive,
+      hadSubscription,
+      subscriptionExpiresAt: provider.subscriptionExpiresAt,
+      advertisementsCount: provider._count.advertisements,
+      paymentsCount: provider.payments.length,
+      paymentsPaid,
+      paymentsPending,
+      paymentsCancelled,
+      createdAt: provider.createdAt,
+    };
+  });
 }
 
 export async function updateProviderStatusAsAdmin(input: {

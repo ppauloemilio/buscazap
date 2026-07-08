@@ -78,6 +78,16 @@ export default async function AdminDashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
+              Assinaturas vencidas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{stats.expiredSubscriptionsCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Prestadores bloqueados
             </CardTitle>
           </CardHeader>
@@ -93,6 +103,9 @@ export default async function AdminDashboardPage() {
         </Button>
         <Button variant="outline" asChild>
           <Link href="/admin/usuarios">Ver usuários</Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href="/admin/usuarios?subscription=expired">Assinaturas vencidas</Link>
         </Button>
         <Button variant="outline" asChild>
           <Link href="/admin/denuncias">Ver denúncias</Link>

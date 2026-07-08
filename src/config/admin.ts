@@ -17,6 +17,15 @@ export const REPORT_STATUS_LABELS: Record<string, string> = {
   DISMISSED: "Arquivada",
 };
 
+export function formatAdminPaymentBreakdown(input: {
+  readonly total: number;
+  readonly paid: number;
+  readonly pending: number;
+  readonly cancelled: number;
+}): string {
+  return `${input.total} pagamento(s) (${input.paid} efetivados, ${input.pending} pendentes, ${input.cancelled} cancelados)`;
+}
+
 export function getAdminProviderStatusLabel(status: string): string {
   return (
     ADMIN_PROVIDER_STATUS_OPTIONS.find((item) => item.value === status)?.label ??
