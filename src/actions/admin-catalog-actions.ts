@@ -69,10 +69,13 @@ export async function createCategoryAction(formData: FormData) {
       ...parsed.data,
     });
   } catch (error) {
-    redirectWithCatalogError(
-      "/admin/categorias",
-      error instanceof Error ? error.message : "Não foi possível criar a categoria"
-    );
+    const message =
+      error instanceof Error && error.message.includes("Unique constraint")
+        ? "Já existe uma categoria com este nome ou identificador na URL"
+        : error instanceof Error
+          ? error.message
+          : "Não foi possível criar a categoria";
+    redirectWithCatalogError("/admin/categorias", message);
   }
 
   revalidateCatalogPaths();
@@ -105,10 +108,13 @@ export async function updateCategoryAction(formData: FormData) {
       ...parsed.data,
     });
   } catch (error) {
-    redirectWithCatalogError(
-      "/admin/categorias",
-      error instanceof Error ? error.message : "Não foi possível atualizar a categoria"
-    );
+    const message =
+      error instanceof Error && error.message.includes("Unique constraint")
+        ? "Já existe uma categoria com este nome ou identificador na URL"
+        : error instanceof Error
+          ? error.message
+          : "Não foi possível atualizar a categoria";
+    redirectWithCatalogError("/admin/categorias", message);
   }
 
   revalidateCatalogPaths();

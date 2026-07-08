@@ -1,8 +1,29 @@
 import { redirect } from "next/navigation";
 import { listAdminAuditLogs } from "@/application/services/admin-service";
+import {
+  CATEGORY_AUDIT_ENTITY_LABEL,
+  formatCategoryAuditMetadata,
+  getCategoryAuditActionLabel,
+} from "@/config/category-catalog";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { Card, CardContent } from "@/components/ui/card";
+
+function formatAuditAction(action: string, entityType: string): string {
+  if (entityType === "CatalogCategory") {
+    return getCategoryAuditActionLabel(action) ?? action;
+  }
+
+  return action;
+}
+
+function formatAuditEntityType(entityType: string): string {
+  if (entityType === "CatalogCategory") {
+    return CATEGORY_AUDIT_ENTITY_LABEL;
+  }
+
+  return entityType;
+}
 
 export default async function AdminAuditPage() {
   const admin = await getCurrentAdmin();
@@ -22,30 +43,43 @@ export default async function AdminAuditPage() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {logs.map((log) => (
+          {logs.map((log) => {
+            const categoryMetadata =
+              log.entityType === "CatalogCategory"
+                ? formatCategoryAuditMetadata(log.metadata)
+                : null;
+
+            return (
             <Card key={log.id}>
               <CardContent className="p-4 text-sm">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="font-medium">{log.action}</p>
+                  <p className="font-medium">
+                    {formatAuditAction(log.action, log.entityType)}
+                  </p>
                   <span className="text-xs text-muted-foreground">
                     {log.createdAt.toLocaleString("pt-BR")}
                   </span>
                 </div>
                 <p className="text-muted-foreground">
-                  {log.entityType}
+                  {formatAuditEntityType(log.entityType)}
                   {log.entityId ? ` · ${log.entityId}` : ""}
                 </p>
                 <p className="text-muted-foreground">
                   Por {log.admin.name} ({log.admin.email})
                 </p>
-                {log.metadata && (
-                  <pre className="mt-2 overflow-x-auto rounded bg-muted p-2 text-xs">
-                    {log.metadata}
-                  </pre>
+                {categoryMetadata ? (
+                  <p className="mt-2 rounded bg-muted p-2 text-xs">{categoryMetadata}</p>
+                ) : (
+                  log.metadata && (
+                    <pre className="mt-2 overflow-x-auto rounded bg-muted p-2 text-xs">
+                      {log.metadata}
+                    </pre>
+                  )
                 )}
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </AdminLayout>
