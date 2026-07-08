@@ -20,14 +20,17 @@ import {
   createAdvertisementSchema,
   loginProviderSchema,
   registerProviderSchema,
-  resolveAdvertisementCategory,
-  updateProviderProfileSchema,
   updateProviderPasswordSchema,
+  updateProviderProfileSchema,
 } from "@/schemas/provider-schemas";
 import {
   createAdvertisement,
   deleteProviderAdvertisement,
 } from "@/application/services/advertisement-service";
+import {
+  registerCategorySuggestion,
+  resolveAdvertisementCategoryFromCatalog,
+} from "@/application/services/category-matching-service";
 
 function redirectWithPaymentError(returnPath: string, error: unknown): never {
   const message =
@@ -200,10 +203,17 @@ export async function createAdvertisementAction(formData: FormData) {
 
   const { customCategory: _customCategory, ...advertisementData } = parsed.data;
 
+  const categoryResolution = await resolveAdvertisementCategoryFromCatalog(parsed.data);
+
+  if (categoryResolution.isCustomCategory) {
+    await registerCategorySuggestion(categoryResolution.categoryName);
+  }
+
   const result = await createAdvertisement({
     providerId: provider.id,
     ...advertisementData,
-    category: resolveAdvertisementCategory(parsed.data),
+    category: categoryResolution.categoryName,
+    isCustomCategory: categoryResolution.isCustomCategory,
   });
 
   revalidatePath("/painel/anuncios");

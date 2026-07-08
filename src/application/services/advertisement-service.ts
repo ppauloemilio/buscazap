@@ -127,6 +127,7 @@ export async function createAdvertisement(input: {
   description: string;
   type: AdvertisementType;
   category: string;
+  isCustomCategory?: boolean;
   city: string;
   state: string;
   neighborhood?: string;
@@ -140,6 +141,7 @@ export async function createAdvertisement(input: {
       description: input.description,
       type: input.type,
       category: input.category,
+      isCustomCategory: Boolean(input.isCustomCategory),
       city: input.city,
       state: input.state,
       neighborhood: input.neighborhood,

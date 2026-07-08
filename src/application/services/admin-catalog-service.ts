@@ -1,6 +1,13 @@
 import { AdvertisementStatus } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
 import { logAdminAction } from "@/application/services/admin-service";
+import {
+  CategorySuggestionStatus,
+  countCustomCategoryAdvertisements,
+  formatCategoryDisplayName,
+  registerCategorySuggestion,
+  updateCustomCategoryAdvertisements,
+} from "@/application/services/category-matching-service";
 import { resolveCategorySlug } from "@/schemas/admin-catalog-schemas";
 
 async function countCategoryUsage(name: string) {
@@ -444,22 +451,180 @@ export async function deleteCityAsAdmin(input: {
 }
 
 export async function getAdminCustomCategories() {
-  const [catalogNames, grouped] = await Promise.all([
-    prisma.catalogCategory.findMany({ select: { name: true } }),
-    prisma.advertisement.groupBy({
-      by: ["category"],
-      _count: { category: true },
-      where: { status: AdvertisementStatus.APPROVED },
-      orderBy: { _count: { category: "desc" } },
-    }),
+  return listPendingCategorySuggestions();
+}
+
+async function syncCategorySuggestionsFromAdvertisements() {
+  const customCategories = await prisma.advertisement.groupBy({
+    by: ["category"],
+    where: { isCustomCategory: true },
+  });
+
+  for (const item of customCategories) {
+    await registerCategorySuggestion(item.category);
+  }
+}
+
+export async function listPendingCategorySuggestions() {
+  await syncCategorySuggestionsFromAdvertisements();
+
+  const suggestions = await prisma.categorySuggestion.findMany({
+    where: { status: CategorySuggestionStatus.PENDING },
+    orderBy: [{ updatedAt: "desc" }],
+  });
+
+  const withCounts = await Promise.all(
+    suggestions.map(async (suggestion) => ({
+      id: suggestion.id,
+      name: suggestion.name,
+      normalizedKey: suggestion.normalizedKey,
+      status: suggestion.status,
+      advertisementsCount: await countCustomCategoryAdvertisements(
+        suggestion.name,
+        suggestion.normalizedKey
+      ),
+      createdAt: suggestion.createdAt,
+      updatedAt: suggestion.updatedAt,
+    }))
+  );
+
+  return withCounts.sort((a, b) => b.advertisementsCount - a.advertisementsCount);
+}
+
+export async function promoteCategorySuggestionAsAdmin(input: {
+  readonly adminId: string;
+  readonly suggestionId: string;
+  readonly name: string;
+  readonly slug?: string;
+  readonly icon: string;
+  readonly sortOrder: number;
+}) {
+  const suggestion = await prisma.categorySuggestion.findUnique({
+    where: { id: input.suggestionId },
+  });
+
+  if (!suggestion || suggestion.status !== CategorySuggestionStatus.PENDING) {
+    throw new Error("Sugestão não encontrada ou já processada");
+  }
+
+  const displayName = formatCategoryDisplayName(input.name);
+  const slug = resolveCategorySlug(displayName, input.slug);
+
+  const existingCategory = await prisma.catalogCategory.findFirst({
+    where: {
+      OR: [{ name: displayName }, { slug }],
+    },
+  });
+
+  if (existingCategory) {
+    throw new Error("Já existe uma categoria oficial com este nome ou identificador");
+  }
+
+  const category = await prisma.catalogCategory.create({
+    data: {
+      name: displayName,
+      slug,
+      icon: input.icon,
+      sortOrder: input.sortOrder,
+    },
+  });
+
+  await updateCustomCategoryAdvertisements({
+    normalizedKey: suggestion.normalizedKey,
+    categoryName: category.name,
+    isCustomCategory: false,
+  });
+
+  await prisma.categorySuggestion.update({
+    where: { id: suggestion.id },
+    data: {
+      status: CategorySuggestionStatus.PROMOTED,
+      name: displayName,
+      mergedIntoName: category.name,
+    },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "PROMOTE_CATEGORY_SUGGESTION",
+    entityType: "CategorySuggestion",
+    entityId: suggestion.id,
+    metadata: {
+      suggestionName: suggestion.name,
+      categoryName: category.name,
+      slug: category.slug,
+    },
+  });
+
+  return category;
+}
+
+export async function mergeCategorySuggestionAsAdmin(input: {
+  readonly adminId: string;
+  readonly suggestionId: string;
+  readonly targetCategoryId: string;
+}) {
+  const [suggestion, targetCategory] = await Promise.all([
+    prisma.categorySuggestion.findUnique({ where: { id: input.suggestionId } }),
+    prisma.catalogCategory.findUnique({ where: { id: input.targetCategoryId } }),
   ]);
 
-  const known = new Set(catalogNames.map((item) => item.name));
+  if (!suggestion || suggestion.status !== CategorySuggestionStatus.PENDING) {
+    throw new Error("Sugestão não encontrada ou já processada");
+  }
 
-  return grouped
-    .filter((item) => !known.has(item.category))
-    .map((item) => ({
-      name: item.category,
-      advertisementsCount: item._count.category,
-    }));
+  if (!targetCategory) {
+    throw new Error("Categoria oficial de destino não encontrada");
+  }
+
+  await updateCustomCategoryAdvertisements({
+    normalizedKey: suggestion.normalizedKey,
+    categoryName: targetCategory.name,
+    isCustomCategory: false,
+  });
+
+  await prisma.categorySuggestion.update({
+    where: { id: suggestion.id },
+    data: {
+      status: CategorySuggestionStatus.MERGED,
+      mergedIntoName: targetCategory.name,
+    },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "MERGE_CATEGORY_SUGGESTION",
+    entityType: "CategorySuggestion",
+    entityId: suggestion.id,
+    metadata: {
+      suggestionName: suggestion.name,
+      mergedIntoName: targetCategory.name,
+    },
+  });
+}
+
+export async function dismissCategorySuggestionAsAdmin(input: {
+  readonly adminId: string;
+  readonly suggestionId: string;
+}) {
+  const suggestion = await prisma.categorySuggestion.findUnique({
+    where: { id: input.suggestionId },
+  });
+
+  if (!suggestion || suggestion.status !== CategorySuggestionStatus.PENDING) {
+    throw new Error("Sugestão não encontrada ou já processada");
+  }
+
+  await prisma.categorySuggestion.update({
+    where: { id: suggestion.id },
+    data: { status: CategorySuggestionStatus.DISMISSED },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "DISMISS_CATEGORY_SUGGESTION",
+    entityType: "CategorySuggestion",
+    entityId: suggestion.id,
+    metadata: { suggestionName: suggestion.name },
+  });
 }

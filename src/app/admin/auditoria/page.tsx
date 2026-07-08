@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { listAdminAuditLogs } from "@/application/services/admin-service";
 import {
   CATEGORY_AUDIT_ENTITY_LABEL,
+  CATEGORY_SUGGESTION_AUDIT_ENTITY_LABEL,
   formatCategoryAuditMetadata,
   getCategoryAuditActionLabel,
 } from "@/config/category-catalog";
@@ -10,7 +11,10 @@ import { getCurrentAdmin } from "@/lib/admin-session";
 import { Card, CardContent } from "@/components/ui/card";
 
 function formatAuditAction(action: string, entityType: string): string {
-  if (entityType === "CatalogCategory") {
+  if (
+    entityType === "CatalogCategory" ||
+    entityType === "CategorySuggestion"
+  ) {
     return getCategoryAuditActionLabel(action) ?? action;
   }
 
@@ -20,6 +24,10 @@ function formatAuditAction(action: string, entityType: string): string {
 function formatAuditEntityType(entityType: string): string {
   if (entityType === "CatalogCategory") {
     return CATEGORY_AUDIT_ENTITY_LABEL;
+  }
+
+  if (entityType === "CategorySuggestion") {
+    return CATEGORY_SUGGESTION_AUDIT_ENTITY_LABEL;
   }
 
   return entityType;
@@ -45,7 +53,8 @@ export default async function AdminAuditPage() {
         <div className="space-y-3">
           {logs.map((log) => {
             const categoryMetadata =
-              log.entityType === "CatalogCategory"
+              log.entityType === "CatalogCategory" ||
+              log.entityType === "CategorySuggestion"
                 ? formatCategoryAuditMetadata(log.metadata)
                 : null;
 

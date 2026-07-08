@@ -9,6 +9,9 @@ import {
   deleteCategoryAsAdmin,
   deleteCityAsAdmin,
   deleteStateAsAdmin,
+  dismissCategorySuggestionAsAdmin,
+  mergeCategorySuggestionAsAdmin,
+  promoteCategorySuggestionAsAdmin,
   updateCategoryAsAdmin,
   updateCityAsAdmin,
   updateStateAsAdmin,
@@ -18,6 +21,9 @@ import {
   createCategorySchema,
   createCitySchema,
   createStateSchema,
+  dismissCategorySuggestionSchema,
+  mergeCategorySuggestionSchema,
+  promoteCategorySuggestionSchema,
   updateCategorySchema,
   updateCitySchema,
   updateStateSchema,
@@ -138,6 +144,101 @@ export async function deleteCategoryAction(formData: FormData) {
 
   revalidateCatalogPaths();
   redirect("/admin/categorias?deleted=1");
+}
+
+export async function promoteCategorySuggestionAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const parsed = promoteCategorySuggestionSchema.safeParse({
+    suggestionId: formData.get("suggestionId"),
+    name: formData.get("name"),
+    slug: formData.get("slug"),
+    icon: formData.get("icon") || "Tag",
+    sortOrder: formData.get("sortOrder") || "0",
+  });
+
+  if (!parsed.success) {
+    redirectWithCatalogError(
+      "/admin/categorias",
+      parsed.error.errors[0]?.message ?? "Dados inválidos"
+    );
+  }
+
+  try {
+    await promoteCategorySuggestionAsAdmin({
+      adminId: admin.id,
+      ...parsed.data,
+    });
+  } catch (error) {
+    redirectWithCatalogError(
+      "/admin/categorias",
+      error instanceof Error ? error.message : "Não foi possível promover a sugestão"
+    );
+  }
+
+  revalidateCatalogPaths();
+  redirect("/admin/categorias?suggestion=promoted");
+}
+
+export async function mergeCategorySuggestionAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const parsed = mergeCategorySuggestionSchema.safeParse({
+    suggestionId: formData.get("suggestionId"),
+    targetCategoryId: formData.get("targetCategoryId"),
+  });
+
+  if (!parsed.success) {
+    redirectWithCatalogError(
+      "/admin/categorias",
+      parsed.error.errors[0]?.message ?? "Dados inválidos"
+    );
+  }
+
+  try {
+    await mergeCategorySuggestionAsAdmin({
+      adminId: admin.id,
+      ...parsed.data,
+    });
+  } catch (error) {
+    redirectWithCatalogError(
+      "/admin/categorias",
+      error instanceof Error ? error.message : "Não foi possível mesclar a sugestão"
+    );
+  }
+
+  revalidateCatalogPaths();
+  redirect("/admin/categorias?suggestion=merged");
+}
+
+export async function dismissCategorySuggestionAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const parsed = dismissCategorySuggestionSchema.safeParse({
+    suggestionId: formData.get("suggestionId"),
+  });
+
+  if (!parsed.success) {
+    redirect("/admin/categorias");
+  }
+
+  try {
+    await dismissCategorySuggestionAsAdmin({
+      adminId: admin.id,
+      suggestionId: parsed.data.suggestionId,
+    });
+  } catch (error) {
+    redirectWithCatalogError(
+      "/admin/categorias",
+      error instanceof Error ? error.message : "Não foi possível dispensar a sugestão"
+    );
+  }
+
+  revalidateCatalogPaths();
+  redirect("/admin/categorias?suggestion=dismissed");
 }
 
 export async function createStateAction(formData: FormData) {

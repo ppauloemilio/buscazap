@@ -54,6 +54,10 @@ export function AdvertisementCategoryFields({
             minLength={2}
             maxLength={50}
           />
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Se for parecida com uma categoria existente, usaremos a oficial automaticamente.
+            Caso contrário, seu anúncio será publicado e a sugestão irá para análise do administrador.
+          </p>
         </div>
       )}
     </div>

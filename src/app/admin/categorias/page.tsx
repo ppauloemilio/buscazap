@@ -5,12 +5,13 @@ import {
   deleteCategoryAction,
   updateCategoryAction,
 } from "@/actions/admin-catalog-actions";
-import { listAdminCategories, getAdminCustomCategories } from "@/application/services/admin-catalog-service";
+import { listAdminCategories, listPendingCategorySuggestions } from "@/application/services/admin-catalog-service";
 import {
   CATEGORY_ICON_OPTIONS,
   getCategoryIconLabel,
 } from "@/config/category-catalog";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
+import { AdminCategorySuggestionActions } from "@/features/admin/components/admin-category-suggestion-actions";
 import { AdminDeleteButton } from "@/features/admin/components/admin-delete-button";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ interface AdminCategoriesPageProps {
     readonly error?: string;
     readonly saved?: string;
     readonly deleted?: string;
+    readonly suggestion?: string;
   }>;
 }
 
@@ -47,9 +49,9 @@ export default async function AdminCategoriesPage({
   if (!admin) redirect("/admin/entrar");
 
   const params = await searchParams;
-  const [categories, customCategories] = await Promise.all([
+  const [categories, pendingSuggestions] = await Promise.all([
     listAdminCategories(),
-    getAdminCustomCategories(),
+    listPendingCategorySuggestions(),
   ]);
 
   return (
@@ -73,6 +75,56 @@ export default async function AdminCategoriesPage({
         <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
           Categoria excluída.
         </p>
+      )}
+      {params.suggestion === "promoted" && (
+        <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
+          Sugestão promovida para categoria oficial. Anúncios vinculados foram atualizados.
+        </p>
+      )}
+      {params.suggestion === "merged" && (
+        <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
+          Sugestão mesclada em categoria existente. Anúncios vinculados foram atualizados.
+        </p>
+      )}
+      {params.suggestion === "dismissed" && (
+        <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
+          Sugestão dispensada. Os anúncios permanecem publicados com a categoria informal.
+        </p>
+      )}
+
+      {pendingSuggestions.length > 0 && (
+        <Card className="mb-6 border-amber-200">
+          <CardHeader>
+            <CardTitle className="text-base">
+              Sugestões de novas categorias ({pendingSuggestions.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Prestadores informaram estas categorias ao escolher &quot;Outro&quot; ao criar anúncios.
+              Promova para o catálogo oficial, mescle em uma existente ou dispense a sugestão.
+            </p>
+            {pendingSuggestions.map((suggestion) => (
+              <div key={suggestion.id} className="rounded-lg border bg-card p-4">
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <h3 className="font-semibold">{suggestion.name}</h3>
+                  <Badge variant="outline">{suggestion.advertisementsCount} anúncio(s)</Badge>
+                  {suggestion.advertisementsCount >= 3 && (
+                    <Badge variant="premium">Alta demanda</Badge>
+                  )}
+                </div>
+                <AdminCategorySuggestionActions
+                  suggestionId={suggestion.id}
+                  name={suggestion.name}
+                  officialCategories={categories.map((category) => ({
+                    id: category.id,
+                    name: category.name,
+                  }))}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       <Card className="mb-6">
@@ -201,29 +253,6 @@ export default async function AdminCategoriesPage({
           </Card>
         ))}
       </div>
-
-      {customCategories.length > 0 && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-base">Categorias informadas manualmente nos anúncios</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="mb-3 text-sm text-muted-foreground">
-              Estas categorias foram digitadas por prestadores na opção &quot;Outro&quot; e ainda não
-              fazem parte do catálogo oficial.
-            </p>
-            {customCategories.map((item) => (
-              <div
-                key={item.name}
-                className="flex items-center justify-between rounded-lg border p-3"
-              >
-                <p className="font-medium">{item.name}</p>
-                <Badge variant="outline">{item.advertisementsCount} anúncio(s)</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
     </AdminLayout>
   );
 }

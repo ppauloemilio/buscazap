@@ -14,9 +14,14 @@ export const CATEGORY_AUDIT_ACTION_LABELS: Record<string, string> = {
   CREATE_CATEGORY: "Categoria criada",
   UPDATE_CATEGORY: "Categoria atualizada",
   DELETE_CATEGORY: "Categoria excluída",
+  PROMOTE_CATEGORY_SUGGESTION: "Sugestão promovida a categoria oficial",
+  MERGE_CATEGORY_SUGGESTION: "Sugestão mesclada em categoria existente",
+  DISMISS_CATEGORY_SUGGESTION: "Sugestão de categoria dispensada",
 };
 
 export const CATEGORY_AUDIT_ENTITY_LABEL = "Categoria";
+
+export const CATEGORY_SUGGESTION_AUDIT_ENTITY_LABEL = "Sugestão de categoria";
 
 export function getCategoryIconLabel(icon: string): string {
   return (
@@ -47,6 +52,18 @@ export function formatCategoryAuditMetadata(metadata: string | null): string | n
 
     if (typeof parsed.isActive === "boolean") {
       parts.push(parsed.isActive ? "Situação: ativa" : "Situação: inativa");
+    }
+
+    if (typeof parsed.suggestionName === "string") {
+      parts.push(`Sugestão: ${parsed.suggestionName}`);
+    }
+
+    if (typeof parsed.categoryName === "string") {
+      parts.push(`Categoria criada: ${parsed.categoryName}`);
+    }
+
+    if (typeof parsed.mergedIntoName === "string") {
+      parts.push(`Mesclada em: ${parsed.mergedIntoName}`);
     }
 
     return parts.length > 0 ? parts.join(" · ") : null;
