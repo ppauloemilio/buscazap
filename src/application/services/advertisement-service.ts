@@ -88,24 +88,22 @@ export async function findAdvertisementById(id: string) {
 
   const advertisement = await prisma.advertisement.findUnique({
     where: { id },
-    include: {
-      provider: {
-        select: { status: true },
-      },
-    },
   });
 
-  if (
-    !advertisement ||
-    advertisement.status === "BLOCKED" ||
-    advertisement.provider.status === ProviderStatus.BLOCKED
-  ) {
+  if (!advertisement || advertisement.status === "BLOCKED") {
     return undefined;
   }
 
-  const { provider: _provider, ...ad } = advertisement;
+  const provider = await prisma.provider.findUnique({
+    where: { id: advertisement.providerId },
+    select: { status: true },
+  });
 
-  return mapAdvertisementToEntity(ad);
+  if (provider?.status === ProviderStatus.BLOCKED) {
+    return undefined;
+  }
+
+  return mapAdvertisementToEntity(advertisement);
 }
 
 export async function findProviderAdvertisements(providerId: string) {

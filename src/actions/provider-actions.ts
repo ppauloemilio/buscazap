@@ -218,7 +218,16 @@ export async function createAdvertisementAction(formData: FormData) {
     );
   }
 
-  const { customCategory: _customCategory, ...advertisementData } = parsed.data;
+  const advertisementData = {
+    title: parsed.data.title,
+    description: parsed.data.description,
+    type: parsed.data.type,
+    city: parsed.data.city,
+    state: parsed.data.state,
+    neighborhood: parsed.data.neighborhood,
+    whatsappNumber: parsed.data.whatsappNumber,
+    withPremium: parsed.data.withPremium,
+  };
 
   const categoryResolution = await resolveAdvertisementCategoryFromCatalog(parsed.data);
 

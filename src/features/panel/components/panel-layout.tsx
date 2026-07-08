@@ -9,7 +9,7 @@ import {
   User,
 } from "lucide-react";
 import { logoutProviderAction } from "@/actions/provider-actions";
-import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
+import { getCurrentProvider, canProviderPublish, isAdminProvider, isProviderBlocked } from "@/lib/provider-session";
 import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
