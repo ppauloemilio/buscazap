@@ -23,7 +23,10 @@ import {
   updateProviderProfileSchema,
   updateProviderPasswordSchema,
 } from "@/schemas/provider-schemas";
-import { createAdvertisement } from "@/application/services/advertisement-service";
+import {
+  createAdvertisement,
+  deleteProviderAdvertisement,
+} from "@/application/services/advertisement-service";
 
 function redirectWithPaymentError(returnPath: string, error: unknown): never {
   const message =
@@ -211,6 +214,29 @@ export async function createAdvertisementAction(formData: FormData) {
   }
 
   redirect("/painel/anuncios");
+}
+
+export async function deleteAdvertisementAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const advertisementId = formData.get("advertisementId");
+
+  if (typeof advertisementId !== "string" || !advertisementId) {
+    redirect("/painel/anuncios");
+  }
+
+  try {
+    await deleteProviderAdvertisement(provider.id, advertisementId);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível excluir o anúncio";
+    redirect(`/painel/anuncios?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/painel/anuncios");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+
+  redirect("/painel/anuncios?deleted=1");
 }
 
 export async function getProviderSessionAction() {

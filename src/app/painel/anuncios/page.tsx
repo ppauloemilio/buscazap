@@ -4,6 +4,7 @@ import { Crown, Plus } from "lucide-react";
 import { findProviderAdvertisements } from "@/application/services/advertisement-service";
 import { getCurrentProvider, hasActiveSubscription } from "@/lib/provider-session";
 import { BoostAdvertisementForm } from "@/features/panel/components/boost-advertisement-form";
+import { DeleteAdvertisementForm } from "@/features/panel/components/delete-advertisement-form";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,7 @@ import { PRICING } from "@/config/pricing";
 interface ProviderAdsPageProps {
   readonly searchParams: Promise<{
     readonly error?: string;
+    readonly deleted?: string;
   }>;
 }
 
@@ -28,6 +30,7 @@ export default async function ProviderAdsPage({
   );
   const advertisements = await findProviderAdvertisements(provider.id);
   const boostLabel = `Destacar R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}`;
+  const premiumAmountLabel = `R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}`;
 
   return (
     <PanelLayout>
@@ -50,6 +53,12 @@ export default async function ProviderAdsPage({
       {params.error && (
         <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {params.error}
+        </div>
+      )}
+
+      {params.deleted === "1" && (
+        <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp">
+          Anúncio excluído com sucesso.
         </div>
       )}
 
@@ -85,7 +94,7 @@ export default async function ProviderAdsPage({
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/anuncio/${ad.id}`}>Ver</Link>
                   </Button>
@@ -95,6 +104,12 @@ export default async function ProviderAdsPage({
                       label={boostLabel}
                     />
                   )}
+                  <DeleteAdvertisementForm
+                    advertisementId={ad.id}
+                    advertisementTitle={ad.title}
+                    premiumActive={ad.premiumActive}
+                    premiumAmountLabel={premiumAmountLabel}
+                  />
                 </div>
               </CardContent>
             </Card>

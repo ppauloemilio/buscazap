@@ -137,6 +137,26 @@ export async function createAdvertisement(input: {
   };
 }
 
+export async function deleteProviderAdvertisement(
+  providerId: string,
+  advertisementId: string
+) {
+  const advertisement = await prisma.advertisement.findFirst({
+    where: {
+      id: advertisementId,
+      providerId,
+    },
+  });
+
+  if (!advertisement) {
+    throw new Error("Anúncio não encontrado");
+  }
+
+  await prisma.advertisement.delete({
+    where: { id: advertisementId },
+  });
+}
+
 export async function getPremiumAdvertisements() {
   const advertisements = await findPublicAdvertisements({ query: "" });
   return advertisements.filter((ad) => ad.isPremium).slice(0, 6);
