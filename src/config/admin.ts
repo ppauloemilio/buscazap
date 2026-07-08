@@ -1,3 +1,8 @@
+export const ADMIN_PROVIDER_STATUS_OPTIONS = [
+  { value: "ACTIVE", label: "Ativo" },
+  { value: "BLOCKED", label: "Bloqueado" },
+] as const;
+
 export const ADMIN_AD_STATUS_OPTIONS = [
   { value: "APPROVED", label: "Aprovado" },
   { value: "PENDING", label: "Pendente" },
@@ -11,6 +16,13 @@ export const REPORT_STATUS_LABELS: Record<string, string> = {
   REVIEWED: "Analisada",
   DISMISSED: "Arquivada",
 };
+
+export function getAdminProviderStatusLabel(status: string): string {
+  return (
+    ADMIN_PROVIDER_STATUS_OPTIONS.find((item) => item.value === status)?.label ??
+    status
+  );
+}
 
 export function getAdminAdStatusLabel(status: string): string {
   return (

@@ -63,10 +63,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </form>
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            Demo: demo@buscazap.com.br / 123456
-          </p>
-
-          <p className="mt-2 text-center text-xs text-muted-foreground">
             Não tem conta?{" "}
             <Link href="/cadastro" className="text-whatsapp hover:underline">
               Cadastre-se

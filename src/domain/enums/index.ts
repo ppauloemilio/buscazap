@@ -1,3 +1,8 @@
+export enum ProviderStatus {
+  ACTIVE = "ACTIVE",
+  BLOCKED = "BLOCKED",
+}
+
 export enum UserRole {
   ADMIN = "ADMIN",
   CONSUMER = "CONSUMER",

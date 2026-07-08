@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import {
   getCurrentProvider,
   hasActiveSubscription,
+  isProviderBlocked,
   requireCurrentProvider,
 } from "@/lib/provider-session";
 import {
@@ -102,6 +103,12 @@ export async function loginProviderAction(formData: FormData) {
 
   if (!valid) {
     redirect(`/entrar?error=${encodeURIComponent("Credenciais inválidas")}`);
+  }
+
+  if (isProviderBlocked(provider.status)) {
+    redirect(
+      `/entrar?error=${encodeURIComponent("Sua conta está bloqueada. Entre em contato com o suporte.")}`
+    );
   }
 
   const cookieStore = await cookies();

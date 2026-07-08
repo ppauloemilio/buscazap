@@ -7,7 +7,9 @@ import bcrypt from "bcryptjs";
 import {
   createReport,
   deleteAdvertisementAsAdmin,
+  deleteProviderAsAdmin,
   updateAdvertisementStatusAsAdmin,
+  updateProviderStatusAsAdmin,
   updateReportStatusAsAdmin,
 } from "@/application/services/admin-service";
 import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
@@ -147,6 +149,67 @@ export async function updateReportStatusAction(formData: FormData) {
   revalidatePath("/admin");
 
   redirect("/admin/denuncias?saved=1");
+}
+
+export async function moderateProviderAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const providerId = formData.get("providerId");
+  const status = formData.get("status");
+
+  if (typeof providerId !== "string" || typeof status !== "string") {
+    redirect("/admin/usuarios");
+  }
+
+  try {
+    await updateProviderStatusAsAdmin({
+      adminId: admin.id,
+      providerId,
+      status,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível atualizar o usuário";
+    redirect(`/admin/usuarios?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+
+  redirect("/admin/usuarios?saved=1");
+}
+
+export async function adminDeleteProviderAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const providerId = formData.get("providerId");
+
+  if (typeof providerId !== "string" || !providerId) {
+    redirect("/admin/usuarios");
+  }
+
+  try {
+    await deleteProviderAsAdmin({
+      adminId: admin.id,
+      providerId,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível excluir o usuário";
+    redirect(`/admin/usuarios?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin/anuncios");
+  revalidatePath("/admin");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+
+  redirect("/admin/usuarios?deleted=1");
 }
 
 export async function submitReportAction(formData: FormData) {

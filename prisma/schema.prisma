@@ -15,6 +15,7 @@ model Provider {
   whatsapp              String
   passwordHash          String
   role                  String          @default("PROVIDER")
+  status                String          @default("ACTIVE")
   age                   Int?
   state                 String?
   city                  String?

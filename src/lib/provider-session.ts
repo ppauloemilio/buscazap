@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
+import { ProviderStatus } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
 
 export async function getCurrentProvider() {
@@ -39,4 +40,8 @@ export function isPremiumActive(premiumExpiresAt: Date | null): boolean {
   }
 
   return premiumExpiresAt.getTime() > Date.now();
+}
+
+export function isProviderBlocked(status: string | null | undefined): boolean {
+  return status === ProviderStatus.BLOCKED;
 }

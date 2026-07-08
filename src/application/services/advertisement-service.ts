@@ -1,6 +1,6 @@
 import type { AdvertisementType } from "@/domain/enums";
 import type { SearchFilters } from "@/domain/entities";
-import { AdvertisementStatus } from "@/domain/enums";
+import { AdvertisementStatus, ProviderStatus } from "@/domain/enums";
 import { mapAdvertisementToEntity } from "@/infrastructure/mappers/advertisement-mapper";
 import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
 import { markDataFetchDynamic } from "@/lib/db";
@@ -26,6 +26,7 @@ export async function findPublicAdvertisements(
   const advertisements = await prisma.advertisement.findMany({
     where: {
       status: AdvertisementStatus.APPROVED,
+      provider: { status: ProviderStatus.ACTIVE },
       ...(filters.city
         ? { city: { contains: filters.city } }
         : {}),
@@ -82,13 +83,24 @@ export async function findAdvertisementById(id: string) {
 
   const advertisement = await prisma.advertisement.findUnique({
     where: { id },
+    include: {
+      provider: {
+        select: { status: true },
+      },
+    },
   });
 
-  if (!advertisement || advertisement.status === "BLOCKED") {
+  if (
+    !advertisement ||
+    advertisement.status === "BLOCKED" ||
+    advertisement.provider.status === ProviderStatus.BLOCKED
+  ) {
     return undefined;
   }
 
-  return mapAdvertisementToEntity(advertisement);
+  const { provider: _provider, ...ad } = advertisement;
+
+  return mapAdvertisementToEntity(ad);
 }
 
 export async function findProviderAdvertisements(providerId: string) {

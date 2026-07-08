@@ -9,7 +9,7 @@ import {
   User,
 } from "lucide-react";
 import { logoutProviderAction } from "@/actions/provider-actions";
-import { getCurrentProvider, hasActiveSubscription } from "@/lib/provider-session";
+import { getCurrentProvider, hasActiveSubscription, isProviderBlocked } from "@/lib/provider-session";
 import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
@@ -25,6 +25,12 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
 
   if (!provider) {
     redirect("/entrar");
+  }
+
+  if (isProviderBlocked(provider.status)) {
+    redirect(
+      `/entrar?error=${encodeURIComponent("Sua conta está bloqueada. Entre em contato com o suporte.")}`
+    );
   }
 
   const subscriptionActive = hasActiveSubscription(

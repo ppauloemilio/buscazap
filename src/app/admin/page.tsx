@@ -75,6 +75,16 @@ export default async function AdminDashboardPage() {
             <p className="text-2xl font-bold">{stats.openReportsCount}</p>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Prestadores bloqueados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{stats.blockedProvidersCount}</p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="mt-8 flex flex-wrap gap-3">

@@ -1,4 +1,4 @@
-import { AdvertisementStatus } from "@/domain/enums";
+import { AdvertisementStatus, ProviderStatus, UserRole } from "@/domain/enums";
 import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
 import { prisma } from "@/lib/prisma";
 import { hasActiveSubscription, isPremiumActive } from "@/lib/provider-session";
@@ -30,8 +30,9 @@ export async function getAdminDashboardStats() {
     premiumActiveCount,
     openReportsCount,
     paidPayments,
+    blockedProvidersCount,
   ] = await Promise.all([
-    prisma.provider.count({ where: { role: "PROVIDER" } }),
+    prisma.provider.count({ where: { role: UserRole.PROVIDER } }),
     prisma.advertisement.count(),
     prisma.advertisement.count({
       where: {
@@ -41,11 +42,15 @@ export async function getAdminDashboardStats() {
     }),
     prisma.report.count({ where: { status: "OPEN" } }),
     prisma.payment.count({ where: { status: "PAID" } }),
+    prisma.provider.count({
+      where: { role: UserRole.PROVIDER, status: ProviderStatus.BLOCKED },
+    }),
   ]);
 
   const activeSubscriptions = await prisma.provider.count({
     where: {
-      role: "PROVIDER",
+      role: UserRole.PROVIDER,
+      status: ProviderStatus.ACTIVE,
       subscriptionExpiresAt: { gt: new Date() },
     },
   });
@@ -57,12 +62,18 @@ export async function getAdminDashboardStats() {
     openReportsCount,
     paidPayments,
     activeSubscriptions,
+    blockedProvidersCount,
   };
 }
 
-export async function listAdminProviders() {
+export async function listAdminProviders(filters?: {
+  readonly status?: string;
+}) {
   const providers = await prisma.provider.findMany({
-    where: { role: "PROVIDER" },
+    where: {
+      role: UserRole.PROVIDER,
+      ...(filters?.status ? { status: filters.status } : {}),
+    },
     orderBy: { createdAt: "desc" },
     include: {
       _count: {
@@ -76,6 +87,7 @@ export async function listAdminProviders() {
     name: provider.name,
     email: provider.email,
     whatsapp: provider.whatsapp,
+    status: provider.status,
     city: provider.city,
     state: provider.state,
     subscriptionActive: hasActiveSubscription(provider.subscriptionExpiresAt),
@@ -84,6 +96,94 @@ export async function listAdminProviders() {
     paymentsCount: provider._count.payments,
     createdAt: provider.createdAt,
   }));
+}
+
+export async function updateProviderStatusAsAdmin(input: {
+  readonly adminId: string;
+  readonly providerId: string;
+  readonly status: string;
+}) {
+  if (![ProviderStatus.ACTIVE, ProviderStatus.BLOCKED].includes(input.status as ProviderStatus)) {
+    throw new Error("Status inválido");
+  }
+
+  const provider = await prisma.provider.findUnique({
+    where: { id: input.providerId },
+  });
+
+  if (!provider) {
+    throw new Error("Usuário não encontrado");
+  }
+
+  if (provider.role === UserRole.ADMIN) {
+    throw new Error("Não é possível alterar administradores");
+  }
+
+  if (provider.id === input.adminId) {
+    throw new Error("Você não pode alterar sua própria conta");
+  }
+
+  const updated = await prisma.provider.update({
+    where: { id: input.providerId },
+    data: { status: input.status },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "UPDATE_PROVIDER_STATUS",
+    entityType: "Provider",
+    entityId: updated.id,
+    metadata: {
+      status: input.status,
+      email: updated.email,
+      name: updated.name,
+    },
+  });
+
+  return updated;
+}
+
+export async function deleteProviderAsAdmin(input: {
+  readonly adminId: string;
+  readonly providerId: string;
+}) {
+  const provider = await prisma.provider.findUnique({
+    where: { id: input.providerId },
+    include: {
+      _count: {
+        select: { advertisements: true, payments: true },
+      },
+    },
+  });
+
+  if (!provider) {
+    throw new Error("Usuário não encontrado");
+  }
+
+  if (provider.role === UserRole.ADMIN) {
+    throw new Error("Não é possível excluir administradores");
+  }
+
+  if (provider.id === input.adminId) {
+    throw new Error("Você não pode excluir sua própria conta");
+  }
+
+  await prisma.provider.delete({
+    where: { id: input.providerId },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "DELETE_PROVIDER",
+    entityType: "Provider",
+    entityId: provider.id,
+    metadata: {
+      email: provider.email,
+      name: provider.name,
+      advertisementsCount: provider._count.advertisements,
+      paymentsCount: provider._count.payments,
+    },
+  });
 }
 
 export async function listAdminAdvertisements(filters?: {
