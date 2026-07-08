@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -14,14 +15,31 @@ const CATEGORY_STYLES: Record<string, string> = {
 interface AdvertisementCoverProps {
   readonly title: string;
   readonly category: string;
+  readonly imageUrl?: string;
   readonly className?: string;
+  readonly priority?: boolean;
 }
 
 export function AdvertisementCover({
   title,
   category,
+  imageUrl,
   className,
+  priority = false,
 }: AdvertisementCoverProps) {
+  if (imageUrl) {
+    return (
+      <Image
+        src={imageUrl}
+        alt={`Capa do anúncio ${title}`}
+        fill
+        className={cn("object-cover", className)}
+        sizes="(max-width: 768px) 100vw, 33vw"
+        priority={priority}
+      />
+    );
+  }
+
   const gradient = CATEGORY_STYLES[category] ?? "from-whatsapp/30 to-whatsapp/10";
   const initial = title.trim().charAt(0).toUpperCase() || "?";
 

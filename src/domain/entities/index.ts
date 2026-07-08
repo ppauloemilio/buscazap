@@ -25,6 +25,7 @@ export interface Advertisement {
   readonly rating: number;
   readonly reviewCount: number;
   readonly imageUrl?: string;
+  readonly galleryImages?: readonly string[];
   readonly whatsappNumber: string;
   readonly isPremium: boolean;
   readonly premiumExpiresAt?: string;

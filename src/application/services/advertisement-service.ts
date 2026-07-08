@@ -32,6 +32,12 @@ export async function findPublicAdvertisements(
         : {}),
       ...(filters.type ? { type: filters.type } : {}),
     },
+    include: {
+      images: {
+        where: { kind: "COVER" },
+        take: 1,
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -88,6 +94,11 @@ export async function findAdvertisementById(id: string) {
 
   const advertisement = await prisma.advertisement.findUnique({
     where: { id },
+    include: {
+      images: {
+        orderBy: { sortOrder: "asc" },
+      },
+    },
   });
 
   if (!advertisement || advertisement.status === "BLOCKED") {
@@ -109,6 +120,12 @@ export async function findAdvertisementById(id: string) {
 export async function findProviderAdvertisements(providerId: string) {
   const advertisements = await prisma.advertisement.findMany({
     where: { providerId },
+    include: {
+      images: {
+        where: { kind: "COVER" },
+        take: 1,
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 

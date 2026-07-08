@@ -4,6 +4,7 @@ import { createAdvertisementAction } from "@/actions/provider-actions";
 import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
+import { AdvertisementImageFields } from "@/features/panel/components/advertisement-image-fields";
 import { getCurrentProvider, canProviderPublish } from "@/lib/provider-session";
 import {
   getCategoriesWithCounts,
@@ -12,7 +13,6 @@ import {
 } from "@/application/services/catalog-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PRICING } from "@/config/pricing";
 
 interface NewAdvertisementPageProps {
   readonly searchParams: Promise<{ readonly error?: string }>;
@@ -45,7 +45,11 @@ export default async function NewAdvertisementPage({
         </p>
       )}
 
-      <form action={createAdvertisementAction} className="max-w-xl space-y-4">
+      <form
+        action={createAdvertisementAction}
+        encType="multipart/form-data"
+        className="max-w-xl space-y-4"
+      >
         <div>
           <label htmlFor="title" className="mb-1.5 block text-sm font-medium">
             Título
@@ -140,18 +144,7 @@ export default async function NewAdvertisementPage({
           />
         </div>
 
-        <label className="flex items-start gap-3 rounded-lg border p-4">
-          <input type="checkbox" name="withPremium" className="mt-1" />
-          <div>
-            <p className="text-sm font-medium">
-              Destacar este anúncio (+ R${" "}
-              {PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")} / 30 dias)
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Badge premium, seção de destaques e prioridade na busca.
-            </p>
-          </div>
-        </label>
+        <AdvertisementImageFields />
 
         <div className="flex gap-3">
           <Button type="submit" variant="whatsapp">

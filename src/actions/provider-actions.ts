@@ -31,10 +31,16 @@ import {
   createAdvertisement,
   deleteProviderAdvertisement,
 } from "@/application/services/advertisement-service";
+import { saveAdvertisementImages } from "@/application/services/advertisement-image-service";
 import {
   registerCategorySuggestion,
   resolveAdvertisementCategoryFromCatalog,
 } from "@/application/services/category-matching-service";
+import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
+import {
+  parseImageFiles,
+  validateImageFile,
+} from "@/lib/image-upload";
 
 function redirectWithPaymentError(returnPath: string, error: unknown): never {
   const message =
@@ -218,6 +224,43 @@ export async function createAdvertisementAction(formData: FormData) {
     );
   }
 
+  const coverFile = formData.get("coverImage");
+  if (!(coverFile instanceof File)) {
+    redirect(
+      `/painel/anuncios/novo?error=${encodeURIComponent("A foto de capa é obrigatória")}`
+    );
+  }
+
+  const coverValidationError = validateImageFile(coverFile, "Foto de capa");
+  if (coverValidationError) {
+    redirect(
+      `/painel/anuncios/novo?error=${encodeURIComponent(coverValidationError)}`
+    );
+  }
+
+  const galleryFiles = parseImageFiles(formData, "galleryImages");
+
+  if (galleryFiles.length > ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages) {
+    redirect(
+      `/painel/anuncios/novo?error=${encodeURIComponent(`Envie no máximo ${ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos extras`)}`
+    );
+  }
+
+  if (!parsed.data.withPremium && galleryFiles.length > 0) {
+    redirect(
+      `/painel/anuncios/novo?error=${encodeURIComponent("Fotos extras estão disponíveis apenas para anúncios premium")}`
+    );
+  }
+
+  for (const galleryFile of galleryFiles) {
+    const galleryValidationError = validateImageFile(galleryFile, "Foto da galeria");
+    if (galleryValidationError) {
+      redirect(
+        `/painel/anuncios/novo?error=${encodeURIComponent(galleryValidationError)}`
+      );
+    }
+  }
+
   const advertisementData = {
     title: parsed.data.title,
     description: parsed.data.description,
@@ -241,6 +284,25 @@ export async function createAdvertisementAction(formData: FormData) {
     category: categoryResolution.categoryName,
     isCustomCategory: categoryResolution.isCustomCategory,
   });
+
+  try {
+    await saveAdvertisementImages(
+      result.advertisement.id,
+      coverFile,
+      parsed.data.withPremium ? galleryFiles : []
+    );
+  } catch (error) {
+    await deleteProviderAdvertisement(provider.id, result.advertisement.id);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível enviar as fotos do anúncio";
+
+    redirect(
+      `/painel/anuncios/novo?error=${encodeURIComponent(message)}`
+    );
+  }
 
   revalidatePath("/painel/anuncios");
   revalidatePath("/buscar");

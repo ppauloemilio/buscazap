@@ -31,6 +31,7 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
         <AdvertisementCover
           title={advertisement.title}
           category={advertisement.category}
+          imageUrl={advertisement.imageUrl}
         />
         {advertisement.isPremium && (
           <Badge variant="premium" className="absolute left-3 top-3 gap-1">

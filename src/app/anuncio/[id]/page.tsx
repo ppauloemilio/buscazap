@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Star, MapPin, MessageCircle, Crown, ArrowLeft } from "lucide-react";
 import { getAdvertisementById } from "@/application/services/search-service";
 import { AdvertisementCover } from "@/components/advertisement/advertisement-cover";
+import { AdvertisementGallery } from "@/components/advertisement/advertisement-gallery";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,11 +61,25 @@ export default async function AdvertisementPage({ params }: AdvertisementPagePro
       </Link>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-xl border">
-          <AdvertisementCover
-            title={advertisement.title}
-            category={advertisement.category}
-          />
+        <div className="relative">
+          {advertisement.isPremium &&
+          advertisement.imageUrl &&
+          (advertisement.galleryImages?.length ?? 0) > 0 ? (
+            <AdvertisementGallery
+              coverImageUrl={advertisement.imageUrl}
+              galleryImages={advertisement.galleryImages}
+              title={advertisement.title}
+            />
+          ) : (
+            <div className="relative aspect-[4/3] overflow-hidden rounded-xl border">
+              <AdvertisementCover
+                title={advertisement.title}
+                category={advertisement.category}
+                imageUrl={advertisement.imageUrl}
+                priority
+              />
+            </div>
+          )}
           {advertisement.isPremium && (
             <Badge variant="premium" className="absolute left-4 top-4 gap-1">
               <Crown className="h-3 w-3" />

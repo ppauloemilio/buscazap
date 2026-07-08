@@ -47,9 +47,22 @@ model Advertisement {
   rating           Float          @default(0)
   reviewCount      Int            @default(0)
   premiumExpiresAt DateTime?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
   premiumBoosts    PremiumBoost[]
+  images           AdvertisementImage[]
+}
+
+model AdvertisementImage {
+  id              String        @id @default(cuid())
+  advertisementId String
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+  url             String
+  kind            String        @default("GALLERY")
+  sortOrder       Int           @default(0)
+  createdAt       DateTime      @default(now())
+
+  @@index([advertisementId, kind])
 }
 
 model Subscription {
