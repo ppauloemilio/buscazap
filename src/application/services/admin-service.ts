@@ -1,5 +1,4 @@
 import { AdvertisementStatus, PaymentStatus, ProviderStatus, UserRole } from "@/domain/enums";
-import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
 import { prisma } from "@/lib/prisma";
 import { hasActiveSubscription, isPremiumActive } from "@/lib/provider-session";
 
@@ -395,15 +394,20 @@ export async function createReport(input: {
 }
 
 export async function getAdminCategoryStats() {
-  const grouped = await prisma.advertisement.groupBy({
-    by: ["category"],
-    _count: { category: true },
-    where: { status: AdvertisementStatus.APPROVED },
-    orderBy: { _count: { category: "desc" } },
-  });
+  const [grouped, catalogCategories] = await Promise.all([
+    prisma.advertisement.groupBy({
+      by: ["category"],
+      _count: { category: true },
+      where: { status: AdvertisementStatus.APPROVED },
+      orderBy: { _count: { category: "desc" } },
+    }),
+    prisma.catalogCategory.findMany({
+      select: { name: true, slug: true },
+    }),
+  ]);
 
   const knownCategories = new Map(
-    CATEGORIES.map((category) => [category.name, category])
+    catalogCategories.map((category) => [category.name, category])
   );
 
   return grouped.map((item) => ({

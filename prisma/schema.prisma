@@ -113,3 +113,37 @@ model Report {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
+
+model CatalogCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  icon      String   @default("Tag")
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CatalogState {
+  id        String       @id @default(cuid())
+  uf        String       @unique @db.VarChar(2)
+  name      String       @unique
+  isActive  Boolean      @default(true)
+  sortOrder Int          @default(0)
+  cities    CatalogCity[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model CatalogCity {
+  id        String       @id @default(cuid())
+  name      String
+  stateId   String
+  state     CatalogState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([name, stateId])
+}

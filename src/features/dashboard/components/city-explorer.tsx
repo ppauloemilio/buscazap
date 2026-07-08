@@ -2,7 +2,11 @@ import Link from "next/link";
 import { MapPin, ArrowRight } from "lucide-react";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 
-export function CityExplorer() {
+interface CityExplorerProps {
+  readonly cities?: readonly string[];
+}
+
+export function CityExplorer({ cities = POPULAR_CITIES }: CityExplorerProps) {
   return (
     <section className="bg-muted/20 py-12">
       <div className="container mx-auto px-4">
@@ -25,7 +29,7 @@ export function CityExplorer() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {POPULAR_CITIES.map((city) => (
+          {cities.map((city) => (
             <Link
               key={city}
               href={`/buscar?city=${encodeURIComponent(city)}`}

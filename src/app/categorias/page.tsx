@@ -11,8 +11,8 @@ import {
   Shirt,
   ArrowRight,
 } from "lucide-react";
+import { getCategoriesWithCounts } from "@/application/services/catalog-service";
 import { PageHeader } from "@/components/layout/page-header";
-import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
 import { formatNumber } from "@/shared/utils/format";
 
 export const metadata: Metadata = {
@@ -30,7 +30,9 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Shirt,
 };
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const categories = await getCategoriesWithCounts();
+
   return (
     <>
       <PageHeader
@@ -39,7 +41,7 @@ export default function CategoriesPage() {
       />
       <section className="container mx-auto px-4 py-10">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {CATEGORIES.map((category) => {
+          {categories.map((category) => {
             const Icon = ICON_MAP[category.icon] ?? Heart;
             return (
               <Link

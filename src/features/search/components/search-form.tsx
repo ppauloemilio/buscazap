@@ -22,6 +22,7 @@ interface SearchFormProps {
   readonly initialCategory?: string;
   readonly initialPremium?: boolean;
   readonly initialSort?: string;
+  readonly cities?: readonly string[];
 }
 
 export function SearchForm({
@@ -31,6 +32,7 @@ export function SearchForm({
   initialCategory,
   initialPremium,
   initialSort,
+  cities = POPULAR_CITIES,
 }: SearchFormProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
@@ -80,7 +82,7 @@ export function SearchForm({
             aria-label="Cidade"
           />
           <datalist id="search-cities">
-            {POPULAR_CITIES.map((cityName) => (
+            {cities.map((cityName) => (
               <option key={cityName} value={cityName} />
             ))}
           </datalist>

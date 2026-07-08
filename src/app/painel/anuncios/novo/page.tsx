@@ -5,7 +5,11 @@ import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { getCurrentProvider, hasActiveSubscription } from "@/lib/provider-session";
-import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
+import {
+  getCategoriesWithCounts,
+  listActiveCities,
+  listActiveStates,
+} from "@/application/services/catalog-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PRICING } from "@/config/pricing";
@@ -25,6 +29,11 @@ export default async function NewAdvertisementPage({
   }
 
   const params = await searchParams;
+  const [categories, states, cities] = await Promise.all([
+    getCategoriesWithCounts(),
+    listActiveStates(),
+    listActiveCities(),
+  ]);
 
   return (
     <PanelLayout>
@@ -77,7 +86,7 @@ export default async function NewAdvertisementPage({
             </select>
           </div>
 
-          <AdvertisementCategoryFields categories={CATEGORIES} />
+          <AdvertisementCategoryFields categories={categories} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -85,13 +94,30 @@ export default async function NewAdvertisementPage({
             <label htmlFor="city" className="mb-1.5 block text-sm font-medium">
               Cidade
             </label>
-            <Input id="city" name="city" required />
+            <Input id="city" name="city" list="ad-cities" required />
+            <datalist id="ad-cities">
+              {cities.map((city) => (
+                <option key={city.id} value={city.name} />
+              ))}
+            </datalist>
           </div>
           <div>
             <label htmlFor="state" className="mb-1.5 block text-sm font-medium">
               UF
             </label>
-            <Input id="state" name="state" maxLength={2} required />
+            <select
+              id="state"
+              name="state"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              required
+              defaultValue={provider.state ?? states[0]?.uf ?? ""}
+            >
+              {states.map((state) => (
+                <option key={state.id} value={state.uf}>
+                  {state.uf}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

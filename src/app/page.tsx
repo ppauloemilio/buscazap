@@ -11,7 +11,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroSearch />
+      <HeroSearch cities={data.cityNames} />
       <StatsSection stats={data.stats} />
       <AdvertisementSection
         title="Anúncios Premium"
@@ -26,7 +26,7 @@ export default async function HomePage() {
         advertisements={data.recentAdvertisements}
         viewAllHref="/buscar?sort=recent"
       />
-      <CityExplorer />
+      <CityExplorer cities={data.cityNames} />
       <AdvertisementSection
         title="Mais populares"
         description="Os mais bem avaliados pelos consumidores"

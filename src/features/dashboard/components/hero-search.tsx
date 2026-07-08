@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 
+interface HeroSearchProps {
+  readonly cities?: readonly string[];
+}
+
 const SEARCH_TYPES = [
   { value: "all", label: "Tudo" },
   { value: "PROFESSIONAL", label: "Profissionais" },
@@ -15,7 +19,7 @@ const SEARCH_TYPES = [
   { value: "SERVICE", label: "Serviços" },
 ] as const;
 
-export function HeroSearch() {
+export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("");
@@ -70,7 +74,7 @@ export function HeroSearch() {
                 aria-label="Cidade"
               />
               <datalist id="cities">
-                {POPULAR_CITIES.map((cityName) => (
+                {cities.map((cityName) => (
                   <option key={cityName} value={cityName} />
                 ))}
               </datalist>

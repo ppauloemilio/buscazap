@@ -105,6 +105,15 @@ export default async function AdminDashboardPage() {
           <Link href="/admin/usuarios">Ver usuários</Link>
         </Button>
         <Button variant="outline" asChild>
+          <Link href="/admin/categorias">Gerenciar categorias</Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href="/admin/estados">Gerenciar estados</Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href="/admin/cidades">Gerenciar cidades</Link>
+        </Button>
+        <Button variant="outline" asChild>
           <Link href="/admin/usuarios?subscription=expired">Assinaturas vencidas</Link>
         </Button>
         <Button variant="outline" asChild>

@@ -1,14 +1,14 @@
 import type { AdvertisementType } from "@/domain/enums";
 import type { SearchFilters } from "@/domain/entities";
 import { AdvertisementStatus, ProviderStatus } from "@/domain/enums";
+import { getCategoryBySlug } from "@/application/services/catalog-service";
 import { mapAdvertisementToEntity } from "@/infrastructure/mappers/advertisement-mapper";
-import { CATEGORIES } from "@/infrastructure/data/mock-dashboard";
 import { markDataFetchDynamic } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { isPremiumActive } from "@/lib/provider-session";
 
-function matchesCategoryName(category: string, filter: string): boolean {
-  const bySlug = CATEGORIES.find((item) => item.slug === filter);
+async function matchesCategoryName(category: string, filter: string): Promise<boolean> {
+  const bySlug = await getCategoryBySlug(filter);
   if (bySlug) {
     return category === bySlug.name;
   }
@@ -50,9 +50,14 @@ export async function findPublicAdvertisements(
   }
 
   if (filters.category) {
-    results = results.filter((ad) =>
-      matchesCategoryName(ad.category, filters.category!)
+    const categoryFilter = filters.category;
+    const matching = await Promise.all(
+      results.map(async (ad) => ({
+        ad,
+        match: await matchesCategoryName(ad.category, categoryFilter),
+      }))
     );
+    results = matching.filter((item) => item.match).map((item) => item.ad);
   }
 
   if (filters.premium) {
@@ -186,6 +191,9 @@ export async function getPopularAdvertisements() {
   );
 }
 
-export function getCategoryNameBySlug(slug: string): string | undefined {
-  return CATEGORIES.find((category) => category.slug === slug)?.name;
+export async function getCategoryNameBySlug(slug: string) {
+  const { getCategoryNameBySlug: resolveCategoryName } = await import(
+    "@/application/services/catalog-service"
+  );
+  return resolveCategoryName(slug);
 }

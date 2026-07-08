@@ -5,7 +5,7 @@ import {
   updateProviderPasswordAction,
   updateProviderProfileAction,
 } from "@/actions/provider-actions";
-import { BRAZILIAN_STATES } from "@/config/brazilian-states";
+import { listActiveCities, listActiveStates } from "@/application/services/catalog-service";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { getCurrentProvider } from "@/lib/provider-session";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,10 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   if (!provider) redirect("/entrar");
 
   const params = await searchParams;
+  const [states, cities] = await Promise.all([
+    listActiveStates(),
+    listActiveCities(),
+  ]);
 
   return (
     <PanelLayout>
@@ -120,8 +124,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <option value="">Selecione</option>
-                  {BRAZILIAN_STATES.map((item) => (
-                    <option key={item.uf} value={item.uf}>
+                  {states.map((item) => (
+                    <option key={item.id} value={item.uf}>
                       {item.uf} — {item.name}
                     </option>
                   ))}
@@ -135,9 +139,15 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                 <Input
                   id="city"
                   name="city"
+                  list="profile-cities"
                   defaultValue={provider.city ?? ""}
                   placeholder="Sua cidade"
                 />
+                <datalist id="profile-cities">
+                  {cities.map((city) => (
+                    <option key={city.id} value={city.name} />
+                  ))}
+                </datalist>
               </div>
 
               <div>

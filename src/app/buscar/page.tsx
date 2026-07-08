@@ -5,6 +5,7 @@ import {
   getCategoryNameBySlug,
   searchAdvertisements,
 } from "@/application/services/search-service";
+import { listCityNamesForSearch } from "@/application/services/catalog-service";
 import { PageHeader } from "@/components/layout/page-header";
 import { AdvertisementCard } from "@/features/dashboard/components/advertisement-card";
 import { SearchForm } from "@/features/search/components/search-form";
@@ -45,9 +46,14 @@ function buildDescription(
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
-  const categoryName = params.category
-    ? getCategoryNameBySlug(params.category) ?? params.category
-    : undefined;
+  const [categoryName, cityNames] = await Promise.all([
+    params.category
+      ? getCategoryNameBySlug(params.category).then(
+          (name) => name ?? params.category
+        )
+      : Promise.resolve(undefined),
+    listCityNamesForSearch(),
+  ]);
 
   const type =
     params.type && params.type in AdvertisementType
@@ -81,6 +87,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           initialCategory={params.category}
           initialPremium={params.premium === "true"}
           initialSort={params.sort}
+          cities={cityNames}
         />
 
         {results.length > 0 ? (
