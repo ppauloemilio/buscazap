@@ -1,5 +1,6 @@
 "use server";
 
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import {
   requestPasswordReset,
@@ -21,17 +22,24 @@ export async function requestPasswordResetAction(formData: FormData) {
     );
   }
 
+  let message: string;
+
   try {
-    const message = await requestPasswordReset(parsed.data.email);
-    redirect(`/esqueci-senha?sent=1&message=${encodeURIComponent(message)}`);
+    message = await requestPasswordReset(parsed.data.email);
   } catch (error) {
-    const message =
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
+    const errorMessage =
       error instanceof Error
         ? error.message
         : "Não foi possível enviar o e-mail de redefinição";
 
-    redirect(`/esqueci-senha?error=${encodeURIComponent(message)}`);
+    redirect(`/esqueci-senha?error=${encodeURIComponent(errorMessage)}`);
   }
+
+  redirect(`/esqueci-senha?sent=1&message=${encodeURIComponent(message)}`);
 }
 
 export async function resetPasswordAction(formData: FormData) {
@@ -56,13 +64,17 @@ export async function resetPasswordAction(formData: FormData) {
   try {
     await resetPasswordWithToken(parsed.data.token, parsed.data.newPassword);
   } catch (error) {
-    const message =
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
+    const errorMessage =
       error instanceof Error
         ? error.message
         : "Não foi possível redefinir a senha";
 
     redirect(
-      `/redefinir-senha?token=${encodeURIComponent(parsed.data.token)}&error=${encodeURIComponent(message)}`
+      `/redefinir-senha?token=${encodeURIComponent(parsed.data.token)}&error=${encodeURIComponent(errorMessage)}`
     );
   }
 
