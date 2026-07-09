@@ -38,8 +38,7 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
     <section className="relative overflow-hidden bg-gradient-to-br from-whatsapp/10 via-background to-primary/5 px-4 py-12 md:py-20">
       <div className="container mx-auto max-w-4xl text-center">
         <h1 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl">
-          Encontre o que você precisa no{" "}
-          <span className="text-whatsapp">WhatsApp</span>
+          Encontre o <span className="text-whatsapp">Whatsapp</span> do que você precisa
         </h1>
         <p className="mb-8 text-base text-muted-foreground md:text-lg">
           Profissionais, empresas, produtos e serviços na sua cidade.
