@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { MessageCircle, Search, Menu, User, LayoutDashboard, Shield } from "lucide-react";
+import { MessageCircle, Search, Menu, User, LayoutDashboard, Shield, Plus, LogOut } from "lucide-react";
+import { logoutProviderAction } from "@/actions/provider-actions";
 import { Button } from "@/components/ui/button";
-import { getCurrentProvider } from "@/lib/provider-session";
+import { getCurrentProvider, canProviderPublish } from "@/lib/provider-session";
 import { isAdminRole } from "@/lib/admin-session";
 
 export async function Header() {
   const provider = await getCurrentProvider();
   const isAdmin = provider ? isAdminRole(provider.role) : false;
+  const canPublish = provider ? canProviderPublish(provider) : false;
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -54,6 +56,27 @@ export async function Header() {
           <Button variant="ghost" size="icon" className="md:hidden" aria-label="Menu">
             <Menu className="h-5 w-5" />
           </Button>
+          {provider && canPublish && (
+            <Button variant="whatsapp" size="sm" className="hidden sm:inline-flex" asChild>
+              <Link href="/painel/anuncios/novo">
+                <Plus className="h-4 w-4" />
+                Novo anúncio
+              </Link>
+            </Button>
+          )}
+          {provider && (
+            <form action={logoutProviderAction}>
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex"
+              >
+                <LogOut className="h-4 w-4" />
+                Sair
+              </Button>
+            </form>
+          )}
           <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
             <Link href={provider ? (isAdmin ? "/admin" : "/painel") : "/entrar"}>
               {provider ? (

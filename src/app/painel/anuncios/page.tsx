@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Crown, ImageIcon, Plus } from "lucide-react";
+import { Crown, ImageIcon } from "lucide-react";
 import { findProviderAdvertisements } from "@/application/services/advertisement-service";
 import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
 import { BoostAdvertisementForm } from "@/features/panel/components/boost-advertisement-form";
@@ -36,21 +36,7 @@ export default async function ProviderAdsPage({
 
   return (
     <PanelLayout>
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Meus anúncios</h2>
-        {subscriptionActive ? (
-          <Button variant="whatsapp" size="sm" asChild>
-            <Link href="/painel/anuncios/novo">
-              <Plus className="h-4 w-4" />
-              Novo anúncio
-            </Link>
-          </Button>
-        ) : (
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/painel/assinatura">Assinar para publicar</Link>
-          </Button>
-        )}
-      </div>
+      <h2 className="mb-6 text-xl font-semibold">Meus anúncios</h2>
 
       {params.error && (
         <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">

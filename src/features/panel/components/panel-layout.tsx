@@ -5,12 +5,9 @@ import {
   CreditCard,
   Megaphone,
   Receipt,
-  LogOut,
   User,
 } from "lucide-react";
-import { logoutProviderAction } from "@/actions/provider-actions";
 import { getCurrentProvider, canProviderPublish, isAdminProvider, isProviderBlocked } from "@/lib/provider-session";
-import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { href: "/painel", label: "Visão geral", icon: LayoutDashboard },
@@ -38,24 +35,16 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Painel do prestador</h1>
-          <p className="text-sm text-muted-foreground">
-            Olá, {provider.name}
-            {isAdmin
-              ? " — acesso administrativo (sem cobrança)"
-              : subscriptionActive
-                ? " — assinatura ativa"
-                : " — assinatura inativa"}
-          </p>
-        </div>
-        <form action={logoutProviderAction}>
-          <Button type="submit" variant="outline" size="sm">
-            <LogOut className="h-4 w-4" />
-            Sair
-          </Button>
-        </form>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold">Painel do prestador</h1>
+        <p className="text-sm text-muted-foreground">
+          Olá, {provider.name}
+          {isAdmin
+            ? " — acesso administrativo (sem cobrança)"
+            : subscriptionActive
+              ? " — assinatura ativa"
+              : " — assinatura inativa"}
+        </p>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
