@@ -38,6 +38,14 @@ export async function Header() {
           >
             Anunciar
           </Link>
+          {provider && (
+            <Link
+              href="/painel/anuncios"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Meus anúncios
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -63,12 +71,14 @@ export async function Header() {
               )}
             </Link>
           </Button>
-          <Button variant="whatsapp" size="sm" className="hidden sm:inline-flex" asChild>
-            <Link href="/anunciar">
-              <Search className="h-4 w-4" />
-              Anunciar grátis
-            </Link>
-          </Button>
+          {!provider && (
+            <Button variant="whatsapp" size="sm" className="hidden sm:inline-flex" asChild>
+              <Link href="/anunciar">
+                <Search className="h-4 w-4" />
+                Anunciar grátis
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>
