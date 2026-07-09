@@ -5,6 +5,7 @@ import {
   ADVERTISEMENT_IMAGE_LIMITS,
   isAllowedImageMimeType,
 } from "@/config/advertisement-images";
+import { getBlobAccessType } from "@/lib/blob-access";
 
 function sanitizeExtension(filename: string): string {
   const extension = path.extname(filename).toLowerCase();
@@ -49,7 +50,7 @@ export async function uploadAdvertisementImage(
 
   if (canUseVercelBlob()) {
     const blob = await put(storagePath, file, {
-      access: "public",
+      access: getBlobAccessType(),
       addRandomSuffix: true,
     });
 

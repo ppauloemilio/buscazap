@@ -5,6 +5,7 @@ import type {
 import type { Advertisement } from "@/domain/entities";
 import { AdvertisementStatus, AdvertisementType } from "@/domain/enums";
 import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
+import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { isPremiumActive } from "@/lib/provider-session";
 
 type PrismaAdvertisementWithImages = PrismaAdvertisement & {
@@ -57,8 +58,8 @@ export function mapAdvertisementToEntity(
     },
     rating: ad.rating,
     reviewCount: ad.reviewCount,
-    imageUrl: coverImageUrl,
-    galleryImages: resolveGalleryImageUrls(ad.images),
+    imageUrl: coverImageUrl ? resolveAdvertisementImageUrl(coverImageUrl) : undefined,
+    galleryImages: resolveGalleryImageUrls(ad.images).map(resolveAdvertisementImageUrl),
     whatsappNumber: ad.whatsappNumber,
     isPremium: premiumActive,
     premiumExpiresAt: ad.premiumExpiresAt?.toISOString(),
