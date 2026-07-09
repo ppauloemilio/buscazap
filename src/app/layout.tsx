@@ -30,6 +30,11 @@ export const metadata: Metadata = {
       "Busque profissionais, empresas, produtos e serviços na sua cidade.",
     type: "website",
     locale: "pt_BR",
+    images: [{ url: "/buscazap-logo.png", alt: "BuscaZap" }],
+  },
+  icons: {
+    icon: "/buscazap-logo.png",
+    apple: "/buscazap-logo.png",
   },
 };
 

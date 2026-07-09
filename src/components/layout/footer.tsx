@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 const FOOTER_LINKS = {
   plataforma: [
@@ -22,14 +22,7 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-whatsapp">
-                <MessageCircle className="h-4 w-4 text-whatsapp-foreground" />
-              </div>
-              <span className="text-lg font-bold">
-                Busca<span className="text-whatsapp">Zap</span>
-              </span>
-            </div>
+            <BrandLogo iconSize={32} textClassName="text-lg" />
             <p className="text-sm text-muted-foreground">
               Encontre profissionais, empresas, produtos e serviços perto de você.
               Contato direto via WhatsApp.
