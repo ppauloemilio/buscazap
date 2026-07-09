@@ -32,12 +32,14 @@ export async function Header() {
           >
             Categorias
           </Link>
-          <Link
-            href="/anunciar"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Anunciar
-          </Link>
+          {!provider && (
+            <Link
+              href="/anunciar"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Anunciar
+            </Link>
+          )}
           {provider && (
             <Link
               href="/painel/anuncios"
