@@ -28,6 +28,19 @@ model Provider {
   payments              Payment[]
   subscriptions         Subscription[]
   auditLogs             AuditLog[]
+  passwordResetTokens   PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  providerId String
+  provider   Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([providerId, createdAt])
 }
 
 model Advertisement {

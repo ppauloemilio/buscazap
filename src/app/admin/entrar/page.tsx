@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Shield } from "lucide-react";
 import { loginAdminAction } from "@/actions/admin-actions";
 import { PageHeader } from "@/components/layout/page-header";
@@ -42,9 +43,17 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
               <Input id="email" name="email" type="email" required />
             </div>
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium">
-                Senha
-              </label>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="password" className="block text-sm font-medium">
+                  Senha
+                </label>
+                <Link
+                  href="/esqueci-senha"
+                  className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  Esqueci minha senha
+                </Link>
+              </div>
               <Input id="password" name="password" type="password" required />
             </div>
             <Button type="submit" className="w-full">

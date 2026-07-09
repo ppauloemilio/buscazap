@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 interface LoginPageProps {
-  readonly searchParams: Promise<{ readonly error?: string }>;
+  readonly searchParams: Promise<{ readonly error?: string; readonly reset?: string }>;
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -25,6 +25,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-whatsapp/10">
             <LogIn className="h-6 w-6 text-whatsapp" />
           </div>
+
+          {params.reset === "1" && (
+            <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
+              Senha redefinida com sucesso. Faça login com sua nova senha.
+            </p>
+          )}
 
           {params.error && (
             <p className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
@@ -46,9 +52,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               />
             </div>
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium">
-                Senha
-              </label>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="password" className="block text-sm font-medium">
+                  Senha
+                </label>
+                <Link
+                  href="/esqueci-senha"
+                  className="text-xs text-whatsapp hover:underline"
+                >
+                  Esqueci minha senha
+                </Link>
+              </div>
               <Input
                 id="password"
                 name="password"

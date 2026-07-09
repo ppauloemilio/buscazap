@@ -14,6 +14,21 @@ export const loginProviderSchema = z.object({
   password: z.string().min(1, "Informe a senha"),
 });
 
+export const requestPasswordResetSchema = z.object({
+  email: z.string().email("E-mail inválido"),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, "Link inválido"),
+    newPassword: z.string().min(6, "Nova senha deve ter ao menos 6 caracteres"),
+    confirmPassword: z.string().min(1, "Confirme a nova senha"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"],
+  });
+
 const optionalAge = z.preprocess(
   (value) => {
     if (value === "" || value === null || value === undefined) {
