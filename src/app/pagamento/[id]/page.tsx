@@ -61,7 +61,9 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
             </Button>
             {payment.type === PaymentType.PREMIUM_BOOST && payment.referenceId && (
               <Button variant="outline" asChild>
-                <Link href="/painel/anuncios">Ver meus anúncios</Link>
+                <Link href={`/painel/anuncios/${payment.referenceId}/editar?boosted=1`}>
+                  Adicionar fotos da galeria
+                </Link>
               </Button>
             )}
           </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Crown, Plus } from "lucide-react";
+import { Crown, ImageIcon, Plus } from "lucide-react";
 import { findProviderAdvertisements } from "@/application/services/advertisement-service";
 import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
 import { BoostAdvertisementForm } from "@/features/panel/components/boost-advertisement-form";
@@ -66,7 +66,8 @@ export default async function ProviderAdsPage({
 
       {params.boosted === "1" && (
         <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp">
-          Destaque premium ativado com sucesso.
+          Destaque premium ativado com sucesso. Use &quot;Editar fotos&quot; para adicionar
+          até 5 imagens na galeria.
         </div>
       )}
 
@@ -106,6 +107,14 @@ export default async function ProviderAdsPage({
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/anuncio/${ad.id}`}>Ver</Link>
                   </Button>
+                  {ad.premiumActive && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/painel/anuncios/${ad.id}/editar`}>
+                        <ImageIcon className="h-4 w-4" />
+                        Editar fotos
+                      </Link>
+                    </Button>
+                  )}
                   {!ad.premiumActive && subscriptionActive && (
                     <BoostAdvertisementForm
                       advertisementId={ad.id}

@@ -2,7 +2,9 @@ import type { AdvertisementType } from "@/domain/enums";
 import type { SearchFilters } from "@/domain/entities";
 import { AdvertisementStatus, ProviderStatus } from "@/domain/enums";
 import { getCategoryBySlug } from "@/application/services/catalog-service";
+import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
 import { mapAdvertisementToEntity } from "@/infrastructure/mappers/advertisement-mapper";
+import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { markDataFetchDynamic } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { isPremiumActive } from "@/lib/provider-session";
@@ -134,6 +136,46 @@ export async function findProviderAdvertisements(providerId: string) {
     premiumExpiresAt: ad.premiumExpiresAt,
     premiumActive: isPremiumActive(ad.premiumExpiresAt),
   }));
+}
+
+export async function findProviderAdvertisementForEdit(
+  providerId: string,
+  advertisementId: string
+) {
+  const advertisement = await prisma.advertisement.findFirst({
+    where: { id: advertisementId, providerId },
+    include: {
+      images: {
+        orderBy: { sortOrder: "asc" },
+      },
+    },
+  });
+
+  if (!advertisement) {
+    return null;
+  }
+
+  const cover = advertisement.images.find(
+    (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.COVER
+  );
+  const gallery = advertisement.images.filter(
+    (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.GALLERY
+  );
+
+  return {
+    ...mapAdvertisementToEntity(advertisement),
+    premiumActive: isPremiumActive(advertisement.premiumExpiresAt),
+    coverImage: cover
+      ? {
+          id: cover.id,
+          url: resolveAdvertisementImageUrl(cover.url),
+        }
+      : null,
+    galleryImages: gallery.map((image) => ({
+      id: image.id,
+      url: resolveAdvertisementImageUrl(image.url),
+    })),
+  };
 }
 
 export async function createAdvertisement(input: {

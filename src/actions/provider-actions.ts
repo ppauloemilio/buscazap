@@ -14,6 +14,7 @@ import {
   canProviderPublish,
   getCurrentProvider,
   isAdminProvider,
+  isPremiumActive,
   isProviderBlocked,
   requireCurrentProvider,
 } from "@/lib/provider-session";
@@ -31,7 +32,12 @@ import {
   createAdvertisement,
   deleteProviderAdvertisement,
 } from "@/application/services/advertisement-service";
-import { saveAdvertisementImages } from "@/application/services/advertisement-image-service";
+import {
+  addAdvertisementGalleryImages,
+  removeAdvertisementGalleryImage,
+  replaceAdvertisementCover,
+  saveAdvertisementImages,
+} from "@/application/services/advertisement-image-service";
 import {
   registerCategorySuggestion,
   resolveAdvertisementCategoryFromCatalog,
@@ -41,6 +47,47 @@ import {
   parseImageFiles,
   validateImageFile,
 } from "@/lib/image-upload";
+
+function redirectToEditImages(
+  advertisementId: string,
+  query: { error?: string; saved?: string; boosted?: string } = {}
+): never {
+  const params = new URLSearchParams();
+  if (query.error) params.set("error", query.error);
+  if (query.saved) params.set("saved", query.saved);
+  if (query.boosted) params.set("boosted", query.boosted);
+
+  const suffix = params.size > 0 ? `?${params.toString()}` : "";
+  redirect(`/painel/anuncios/${advertisementId}/editar${suffix}`);
+}
+
+async function requireOwnedPremiumAdvertisement(
+  providerId: string,
+  advertisementId: string
+) {
+  const advertisement = await prisma.advertisement.findFirst({
+    where: { id: advertisementId, providerId },
+    select: { id: true, premiumExpiresAt: true },
+  });
+
+  if (!advertisement) {
+    redirect("/painel/anuncios");
+  }
+
+  if (!isPremiumActive(advertisement.premiumExpiresAt)) {
+    redirect("/painel/anuncios");
+  }
+
+  return advertisement;
+}
+
+function revalidateAdvertisementPaths(advertisementId: string) {
+  revalidatePath("/painel/anuncios");
+  revalidatePath(`/painel/anuncios/${advertisementId}/editar`);
+  revalidatePath(`/anuncio/${advertisementId}`);
+  revalidatePath("/buscar");
+  revalidatePath("/");
+}
 
 function redirectWithPaymentError(returnPath: string, error: unknown): never {
   const message =
@@ -171,10 +218,8 @@ export async function createPremiumPaymentAction(advertisementId: string) {
 
   if (isAdminProvider(provider)) {
     await grantAdminPremiumBoost(provider.id, advertisementId);
-    revalidatePath("/painel/anuncios");
-    revalidatePath("/buscar");
-    revalidatePath("/");
-    redirect("/painel/anuncios?boosted=1");
+    revalidateAdvertisementPaths(advertisementId);
+    redirectToEditImages(advertisementId, { boosted: "1" });
   }
 
   let payment;
@@ -238,29 +283,6 @@ export async function createAdvertisementAction(formData: FormData) {
     );
   }
 
-  const galleryFiles = parseImageFiles(formData, "galleryImages");
-
-  if (galleryFiles.length > ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages) {
-    redirect(
-      `/painel/anuncios/novo?error=${encodeURIComponent(`Envie no máximo ${ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos extras`)}`
-    );
-  }
-
-  if (!parsed.data.withPremium && galleryFiles.length > 0) {
-    redirect(
-      `/painel/anuncios/novo?error=${encodeURIComponent("Fotos extras estão disponíveis apenas para anúncios premium")}`
-    );
-  }
-
-  for (const galleryFile of galleryFiles) {
-    const galleryValidationError = validateImageFile(galleryFile, "Foto da galeria");
-    if (galleryValidationError) {
-      redirect(
-        `/painel/anuncios/novo?error=${encodeURIComponent(galleryValidationError)}`
-      );
-    }
-  }
-
   const advertisementData = {
     title: parsed.data.title,
     description: parsed.data.description,
@@ -286,11 +308,7 @@ export async function createAdvertisementAction(formData: FormData) {
   });
 
   try {
-    await saveAdvertisementImages(
-      result.advertisement.id,
-      coverFile,
-      parsed.data.withPremium ? galleryFiles : []
-    );
+    await saveAdvertisementImages(result.advertisement.id, coverFile, []);
   } catch (error) {
     await deleteProviderAdvertisement(provider.id, result.advertisement.id);
 
@@ -311,10 +329,8 @@ export async function createAdvertisementAction(formData: FormData) {
   if (result.requiresPremiumPayment) {
     if (isAdminProvider(provider)) {
       await grantAdminPremiumBoost(provider.id, result.advertisement.id);
-      revalidatePath("/painel/anuncios");
-      revalidatePath("/buscar");
-      revalidatePath("/");
-      redirect("/painel/anuncios?boosted=1");
+      revalidateAdvertisementPaths(result.advertisement.id);
+      redirectToEditImages(result.advertisement.id, { boosted: "1" });
     }
 
     let payment;
@@ -332,6 +348,100 @@ export async function createAdvertisementAction(formData: FormData) {
   }
 
   redirect("/painel/anuncios");
+}
+
+export async function updateAdvertisementImagesAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const advertisementId = formData.get("advertisementId");
+
+  if (typeof advertisementId !== "string" || !advertisementId) {
+    redirect("/painel/anuncios");
+  }
+
+  await requireOwnedPremiumAdvertisement(provider.id, advertisementId);
+
+  const coverFile = formData.get("coverImage");
+  const galleryFiles = parseImageFiles(formData, "galleryImages");
+
+  if (galleryFiles.length > ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages) {
+    redirectToEditImages(advertisementId, {
+      error: `Envie no máximo ${ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos por vez`,
+    });
+  }
+
+  for (const galleryFile of galleryFiles) {
+    const galleryValidationError = validateImageFile(galleryFile, "Foto da galeria");
+    if (galleryValidationError) {
+      redirectToEditImages(advertisementId, { error: galleryValidationError });
+    }
+  }
+
+  const hasCoverFile = coverFile instanceof File && coverFile.size > 0;
+  const hasGalleryFiles = galleryFiles.length > 0;
+
+  if (!hasCoverFile && !hasGalleryFiles) {
+    redirectToEditImages(advertisementId, {
+      error: "Selecione ao menos uma foto para atualizar",
+    });
+  }
+
+  if (hasCoverFile) {
+    const coverValidationError = validateImageFile(coverFile, "Foto de capa");
+    if (coverValidationError) {
+      redirectToEditImages(advertisementId, { error: coverValidationError });
+    }
+  }
+
+  try {
+    if (hasCoverFile) {
+      await replaceAdvertisementCover(advertisementId, coverFile);
+    }
+
+    if (hasGalleryFiles) {
+      await addAdvertisementGalleryImages(advertisementId, galleryFiles);
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível atualizar as fotos do anúncio";
+
+    redirectToEditImages(advertisementId, { error: message });
+  }
+
+  revalidateAdvertisementPaths(advertisementId);
+  redirectToEditImages(advertisementId, { saved: "1" });
+}
+
+export async function removeAdvertisementGalleryImageAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const advertisementId = formData.get("advertisementId");
+  const imageId = formData.get("imageId");
+
+  if (
+    typeof advertisementId !== "string" ||
+    !advertisementId ||
+    typeof imageId !== "string" ||
+    !imageId
+  ) {
+    redirect("/painel/anuncios");
+  }
+
+  await requireOwnedPremiumAdvertisement(provider.id, advertisementId);
+
+  try {
+    await removeAdvertisementGalleryImage(advertisementId, imageId);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível remover a foto da galeria";
+
+    redirectToEditImages(advertisementId, { error: message });
+  }
+
+  revalidateAdvertisementPaths(advertisementId);
+  redirectToEditImages(advertisementId, { saved: "1" });
 }
 
 export async function deleteAdvertisementAction(formData: FormData) {
