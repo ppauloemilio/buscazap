@@ -50,23 +50,23 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-8">
           {categories.map((category) => {
             const Icon = ICON_MAP[category.icon] ?? LayoutGrid;
             return (
               <Link
                 key={category.id}
                 href={`/buscar?category=${category.slug}`}
-                className="group flex flex-col items-center gap-3 rounded-xl border bg-card p-4 text-center transition-all hover:border-whatsapp/50 hover:shadow-md"
+                className="group flex flex-col items-center gap-1.5 rounded-lg border bg-card p-2.5 text-center transition-all hover:border-whatsapp/50 hover:shadow-md"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-whatsapp/10 transition-colors group-hover:bg-whatsapp/20">
-                  <Icon className="h-6 w-6 text-whatsapp" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-whatsapp/10 transition-colors group-hover:bg-whatsapp/20">
+                  <Icon className="h-4 w-4 text-whatsapp" />
                 </div>
                 <div>
-                  <span className="block text-sm font-semibold text-foreground">
+                  <span className="block text-xs font-semibold text-foreground">
                     {category.name}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[10px] text-muted-foreground">
                     {formatNumber(category.count)} anúncios
                   </span>
                 </div>
