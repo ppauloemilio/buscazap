@@ -1,12 +1,21 @@
 import { z } from "zod";
 import { AdvertisementType } from "@/domain/enums";
 import { CATEGORY_OTHER_VALUE } from "@/config/advertisement-form";
+import { isPilotCity } from "@/config/pricing";
 
 export const registerProviderSchema = z.object({
   name: z.string().min(3, "Nome deve ter ao menos 3 caracteres"),
   email: z.string().email("E-mail inválido"),
   whatsapp: z.string().min(10, "WhatsApp inválido"),
   password: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
+  referralCode: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return undefined;
+      const trimmed = value.trim().toUpperCase();
+      return trimmed.length === 0 ? undefined : trimmed;
+    },
+    z.string().min(4, "Código de indicação inválido").max(16).optional()
+  ),
 });
 
 export const loginProviderSchema = z.object({
@@ -117,6 +126,14 @@ export const createAdvertisementSchema = z
         code: z.ZodIssueCode.custom,
         message: "Informe a categoria desejada",
         path: ["customCategory"],
+      });
+    }
+
+    if (!isPilotCity(data.city, data.state)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "No momento, anúncios só podem ser criados em Belém ou Ananindeua (PA)",
+        path: ["city"],
       });
     }
   });

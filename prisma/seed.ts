@@ -9,29 +9,31 @@ async function main() {
 
   await prisma.provider.upsert({
     where: { email: "admin@buscazap.com.br" },
-    update: { role: "ADMIN" },
+    update: { role: "ADMIN", referralCode: "ADMIN001" },
     create: {
       name: "Administrador BuscaZap",
       email: "admin@buscazap.com.br",
       whatsapp: "5511999999998",
       passwordHash: adminPasswordHash,
       role: "ADMIN",
+      referralCode: "ADMIN001",
     },
   });
 
   const provider = await prisma.provider.upsert({
     where: { email: "demo@buscazap.com.br" },
-    update: { role: "PROVIDER" },
+    update: { role: "PROVIDER", referralCode: "DEMO0001", city: "Belém", state: "PA" },
     create: {
       name: "Demo Anunciante",
       email: "demo@buscazap.com.br",
       whatsapp: "5511999999999",
       passwordHash,
       role: "PROVIDER",
+      referralCode: "DEMO0001",
       age: 32,
-      state: "SP",
-      city: "São Paulo",
-      neighborhood: "Centro",
+      state: "PA",
+      city: "Belém",
+      neighborhood: "Nazaré",
       bio: "Anunciante de demonstração do BuscaZap.",
       subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     },

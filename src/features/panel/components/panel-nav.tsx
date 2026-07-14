@@ -8,6 +8,7 @@ import {
   Megaphone,
   Receipt,
   User,
+  Gift,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const NAV_ITEMS: ReadonlyArray<{
   { href: "/painel/perfil", label: "Meu perfil", icon: User },
   { href: "/painel/assinatura", label: "Assinatura", icon: CreditCard },
   { href: "/painel/anuncios", label: "Meus anúncios", icon: Megaphone },
+  { href: "/painel/indicacoes", label: "Indicações", icon: Gift },
   { href: "/painel/pagamentos", label: "Pagamentos", icon: Receipt },
 ];
 

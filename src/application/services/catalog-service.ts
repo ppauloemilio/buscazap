@@ -1,5 +1,6 @@
 import type { Category } from "@/domain/entities";
 import { AdvertisementStatus } from "@/domain/enums";
+import { PILOT_CITIES } from "@/config/pricing";
 import { prisma } from "@/lib/prisma";
 import { markDataFetchDynamic } from "@/lib/db";
 
@@ -78,7 +79,10 @@ export async function listAllCities(stateId?: string) {
 
 export async function listCityNamesForSearch() {
   const cities = await listActiveCities();
-  return cities.map((city) => city.name);
+  const names = cities.map((city) => city.name);
+  return Array.from(
+    new Set([...PILOT_CITIES.map((city) => city.name), ...names])
+  );
 }
 
 export async function getCategoriesWithCounts(): Promise<Category[]> {

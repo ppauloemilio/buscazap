@@ -4,9 +4,9 @@ import { getHomepageAdvertisements } from "@/application/services/advertisement-
 import {
   getCatalogStats,
   getCategoriesWithCounts,
-  listCityNamesForSearch,
 } from "@/application/services/catalog-service";
 import { getHomepageSettings } from "@/application/services/homepage-settings-service";
+import { PILOT_CITIES } from "@/config/pricing";
 import { prisma } from "@/lib/prisma";
 
 export interface DashboardData {
@@ -22,14 +22,12 @@ export async function getDashboardData(): Promise<DashboardData> {
     homeAdvertisements,
     homepageSettings,
     catalogStats,
-    cityNames,
     totalAdvertisements,
     totalProviders,
   ] = await Promise.all([
     getHomepageAdvertisements(),
     getHomepageSettings(),
     getCatalogStats(),
-    listCityNamesForSearch(),
     prisma.advertisement.count(),
     prisma.provider.count({ where: { role: "PROVIDER" } }),
   ]);
@@ -42,11 +40,11 @@ export async function getDashboardData(): Promise<DashboardData> {
     stats: {
       totalAdvertisements,
       totalProviders,
-      totalCities: catalogStats.citiesCount,
+      totalCities: Math.max(catalogStats.citiesCount, PILOT_CITIES.length),
       totalCategories: catalogStats.categoriesCount,
     },
     categories,
-    cityNames,
+    cityNames: PILOT_CITIES.map((city) => city.name),
     homeAdvertisements,
     homepageSettings,
   };

@@ -31,12 +31,20 @@ export default async function ProviderAdsPage({
   const advertisements = await findProviderAdvertisements(provider.id);
   const boostLabel = isAdmin
     ? "Destacar grátis"
-    : `Destacar R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}`;
+    : `Destacar R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")} (30 dias)`;
   const premiumAmountLabel = `R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}`;
+  const freeCredits = isAdmin ? 0 : provider.freePremiumCredits;
 
   return (
     <PanelLayout>
       <h2 className="mb-6 text-xl font-semibold">Meus anúncios</h2>
+
+      {!isAdmin && freeCredits > 0 && (
+        <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp">
+          Você tem {freeCredits} crédito(s) de destaque grátis (
+          {PRICING.REFERRAL_PREMIUM_DAYS} dias cada). Use em &quot;Usar crédito&quot;.
+        </div>
+      )}
 
       {params.error && (
         <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -104,7 +112,9 @@ export default async function ProviderAdsPage({
                   {!ad.premiumActive && subscriptionActive && (
                     <BoostAdvertisementForm
                       advertisementId={ad.id}
-                      label={boostLabel}
+                      paidLabel={boostLabel}
+                      freeCredits={freeCredits}
+                      referralDays={PRICING.REFERRAL_PREMIUM_DAYS}
                     />
                   )}
                   <DeleteAdvertisementForm

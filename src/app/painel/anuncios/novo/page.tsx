@@ -8,11 +8,11 @@ import { AdvertisementImageFields } from "@/features/panel/components/advertisem
 import { getCurrentProvider, canProviderPublish } from "@/lib/provider-session";
 import {
   getCategoriesWithCounts,
-  listActiveCities,
   listActiveStates,
 } from "@/application/services/catalog-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PILOT_CITIES } from "@/config/pricing";
 
 interface NewAdvertisementPageProps {
   readonly searchParams: Promise<{ readonly error?: string }>;
@@ -29,11 +29,14 @@ export default async function NewAdvertisementPage({
   }
 
   const params = await searchParams;
-  const [categories, states, cities] = await Promise.all([
+  const [categories, states] = await Promise.all([
     getCategoriesWithCounts(),
     listActiveStates(),
-    listActiveCities(),
   ]);
+  const cities = PILOT_CITIES;
+  const pilotStates = states.filter((state) =>
+    PILOT_CITIES.some((city) => city.state === state.uf)
+  );
 
   return (
     <PanelLayout>
@@ -98,10 +101,16 @@ export default async function NewAdvertisementPage({
             <label htmlFor="city" className="mb-1.5 block text-sm font-medium">
               Cidade
             </label>
-            <Input id="city" name="city" list="ad-cities" required />
+            <Input
+              id="city"
+              name="city"
+              list="ad-cities"
+              required
+              defaultValue={PILOT_CITIES[0].name}
+            />
             <datalist id="ad-cities">
               {cities.map((city) => (
-                <option key={city.id} value={city.name} />
+                <option key={city.name} value={city.name} />
               ))}
             </datalist>
           </div>
@@ -114,13 +123,15 @@ export default async function NewAdvertisementPage({
               name="state"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               required
-              defaultValue={provider.state ?? states[0]?.uf ?? ""}
+              defaultValue="PA"
             >
-              {states.map((state) => (
-                <option key={state.id} value={state.uf}>
-                  {state.uf}
-                </option>
-              ))}
+              {(pilotStates.length > 0 ? pilotStates : [{ id: "PA", uf: "PA" }]).map(
+                (state) => (
+                  <option key={state.id} value={state.uf}>
+                    {state.uf}
+                  </option>
+                )
+              )}
             </select>
           </div>
         </div>

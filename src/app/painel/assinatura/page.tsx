@@ -109,8 +109,10 @@ export default async function SubscriptionPage({
             </li>
             <li className="flex items-center gap-2">
               <Crown className="h-4 w-4 text-whatsapp" />
-              Destaque premium opcional por R${" "}
-              {PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}/anúncio
+              Destaque premium: R${" "}
+              {PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}/
+              {PRICING.PREMIUM_BOOST_DAYS} dias (pago) ou{" "}
+              {PRICING.REFERRAL_PREMIUM_DAYS} dias (indicação)
             </li>
           </ul>
 

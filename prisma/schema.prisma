@@ -21,6 +21,11 @@ model Provider {
   city                  String?
   neighborhood          String?
   bio                   String?
+  referralCode          String          @unique
+  freePremiumCredits    Int             @default(0)
+  referredById          String?
+  referredBy            Provider?       @relation("ProviderReferrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals             Provider[]      @relation("ProviderReferrals")
   subscriptionExpiresAt DateTime?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
@@ -29,6 +34,8 @@ model Provider {
   subscriptions         Subscription[]
   auditLogs             AuditLog[]
   passwordResetTokens   PasswordResetToken[]
+  referralsMade         Referral[]      @relation("ReferralsMade")
+  referralReceived      Referral?       @relation("ReferralReceived")
 }
 
 model PasswordResetToken {
@@ -95,12 +102,24 @@ model PremiumBoost {
   advertisementId String
   advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
   providerId      String
-  amount          Float
+  amount          Float         @default(0)
+  source          String        @default("PAID")
   startsAt        DateTime
   expiresAt       DateTime
-  paymentId       String        @unique
-  payment         Payment       @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  paymentId       String?       @unique
+  payment         Payment?      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
   createdAt       DateTime      @default(now())
+}
+
+model Referral {
+  id         String   @id @default(cuid())
+  referrerId String
+  referrer   Provider @relation("ReferralsMade", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId String   @unique
+  referred   Provider @relation("ReferralReceived", fields: [referredId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([referrerId, createdAt])
 }
 
 model Payment {

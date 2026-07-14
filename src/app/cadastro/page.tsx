@@ -5,13 +5,17 @@ import { registerProviderAction } from "@/actions/provider-actions";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PRICING } from "@/config/pricing";
 
 export const metadata: Metadata = {
   title: "Cadastro de anunciante",
 };
 
 interface RegisterPageProps {
-  readonly searchParams: Promise<{ readonly error?: string }>;
+  readonly searchParams: Promise<{
+    readonly error?: string;
+    readonly ref?: string;
+  }>;
 }
 
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
@@ -22,7 +26,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
       <PageHeader
         compact
         title="Criar conta de anunciante"
-        description="Cadastre-se para publicar seus anúncios no BuscaZap"
+        description={`Cadastre-se com ${PRICING.LAUNCH_TRIAL_DAYS} dias grátis para publicar em Belém e Ananindeua`}
       />
       <section className="container mx-auto max-w-md px-4 py-5">
         <div className="rounded-xl border bg-card p-4">
@@ -76,6 +80,20 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 type="password"
                 placeholder="Mínimo 6 caracteres"
                 required
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="referralCode"
+                className="mb-1 block text-sm font-medium"
+              >
+                Código de indicação (opcional)
+              </label>
+              <Input
+                id="referralCode"
+                name="referralCode"
+                placeholder="Ex.: A1B2C3D4"
+                defaultValue={params.ref ?? ""}
               />
             </div>
             <Button type="submit" variant="whatsapp" className="mt-1 w-full">

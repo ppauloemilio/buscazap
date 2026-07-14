@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
-import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
+import { PROVIDER_SESSION_COOKIE, PRICING } from "@/config/pricing";
 import {
   createPremiumBoostPayment,
   createSubscriptionPayment,
@@ -20,7 +20,12 @@ import {
 } from "@/lib/provider-session";
 import {
   grantAdminPremiumBoost,
+  redeemReferralPremiumBoost,
 } from "@/application/services/premium-service";
+import {
+  applyReferralOnRegistration,
+  generateUniqueReferralCode,
+} from "@/application/services/referral-service";
 import {
   createAdvertisementSchema,
   loginProviderSchema,
@@ -103,6 +108,7 @@ export async function registerProviderAction(formData: FormData) {
     email: formData.get("email"),
     whatsapp: formData.get("whatsapp"),
     password: formData.get("password"),
+    referralCode: formData.get("referralCode"),
   });
 
   if (!parsed.success) {
@@ -119,14 +125,39 @@ export async function registerProviderAction(formData: FormData) {
     redirect(`/cadastro?error=${encodeURIComponent("E-mail já cadastrado")}`);
   }
 
+  if (parsed.data.referralCode) {
+    const referrer = await prisma.provider.findUnique({
+      where: { referralCode: parsed.data.referralCode },
+      select: { id: true },
+    });
+    if (!referrer) {
+      redirect(
+        `/cadastro?error=${encodeURIComponent("Código de indicação inválido")}`
+      );
+    }
+  }
+
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+  const referralCode = await generateUniqueReferralCode();
+  const trialExpiresAt = new Date();
+  trialExpiresAt.setDate(trialExpiresAt.getDate() + PRICING.LAUNCH_TRIAL_DAYS);
+
+  const { referralCode: _ignoredCode, password: _password, ...accountData } =
+    parsed.data;
 
   const provider = await prisma.provider.create({
     data: {
-      ...parsed.data,
+      ...accountData,
       passwordHash,
       role: "PROVIDER",
+      referralCode,
+      subscriptionExpiresAt: trialExpiresAt,
     },
+  });
+
+  await applyReferralOnRegistration({
+    referredId: provider.id,
+    referralCode: parsed.data.referralCode,
   });
 
   const cookieStore = await cookies();
@@ -136,7 +167,32 @@ export async function registerProviderAction(formData: FormData) {
     path: "/",
   });
 
-  redirect("/painel/assinatura");
+  redirect("/painel");
+}
+
+export async function redeemReferralPremiumAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const advertisementId = formData.get("advertisementId");
+
+  if (typeof advertisementId !== "string" || !advertisementId) {
+    redirect("/painel/anuncios");
+  }
+
+  if (!canProviderPublish(provider)) {
+    redirect("/painel/assinatura");
+  }
+
+  try {
+    await redeemReferralPremiumBoost(provider.id, advertisementId);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível usar o crédito";
+    redirect(`/painel/anuncios?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidateAdvertisementPaths(advertisementId);
+  revalidatePath("/painel/indicacoes");
+  redirectToEditImages(advertisementId, { boosted: "1" });
 }
 
 export async function loginProviderAction(formData: FormData) {
