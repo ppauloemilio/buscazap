@@ -8,13 +8,13 @@ const ACCEPT = ADVERTISEMENT_IMAGE_LIMITS.allowedMimeTypes.join(",");
 
 export function AdvertisementImageFields() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5">
       <div>
-        <label htmlFor="coverImage" className="mb-1.5 block text-sm font-medium">
+        <label htmlFor="coverImage" className="mb-1 block text-sm font-medium">
           Foto de capa
         </label>
-        <div className="flex items-center gap-3 rounded-lg border border-dashed p-4">
-          <ImagePlus className="h-5 w-5 shrink-0 text-muted-foreground" />
+        <div className="flex items-center gap-2 rounded-lg border border-dashed p-2.5">
+          <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
             <input
               id="coverImage"
@@ -24,15 +24,15 @@ export function AdvertisementImageFields() {
               required
               className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
             />
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               JPG, PNG ou WebP. Máximo 5 MB. Aparece na listagem e na página do anúncio.
             </p>
           </div>
         </div>
       </div>
 
-      <label className="flex items-start gap-3 rounded-lg border p-4">
-        <input type="checkbox" name="withPremium" className="mt-1" />
+      <label className="flex items-start gap-2 rounded-lg border p-2.5">
+        <input type="checkbox" name="withPremium" className="mt-0.5" />
         <div>
           <p className="text-sm font-medium">
             Destacar este anúncio (+ R${" "}

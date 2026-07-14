@@ -35,7 +35,7 @@ export function PanelNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-col">
+    <nav className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:flex lg:flex-col">
       {NAV_ITEMS.map((item) => {
         const active = isActive(pathname, item.href);
 
@@ -44,13 +44,13 @@ export function PanelNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors",
+              "flex min-h-9 items-center gap-2 rounded-lg border px-2.5 py-2 text-sm font-semibold transition-colors",
               active
                 ? "border-whatsapp bg-whatsapp text-whatsapp-foreground shadow-sm"
                 : "border-border bg-background text-foreground hover:border-whatsapp/50 hover:bg-whatsapp/5"
             )}
           >
-            <item.icon className="h-4 w-4 shrink-0" />
+            <item.icon className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{item.label}</span>
           </Link>
         );

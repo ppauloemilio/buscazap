@@ -37,29 +37,29 @@ export default async function ProviderAdsPage({
 
   return (
     <PanelLayout>
-      <h2 className="mb-6 text-xl font-semibold">Meus anúncios</h2>
+      <h2 className="mb-3 text-lg font-semibold">Meus anúncios</h2>
 
       {!isAdmin && freeCredits > 0 && (
-        <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp">
+        <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
           Você tem {freeCredits} crédito(s) de destaque grátis (
           {PRICING.REFERRAL_PREMIUM_DAYS} dias cada). Use em &quot;Usar crédito&quot;.
         </div>
       )}
 
       {params.error && (
-        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="mb-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {params.error}
         </div>
       )}
 
       {params.deleted === "1" && (
-        <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp">
+        <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
           Anúncio excluído com sucesso.
         </div>
       )}
 
       {params.boosted === "1" && (
-        <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp">
+        <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
           Destaque premium ativado com sucesso. Use &quot;Editar fotos&quot; para adicionar
           até 5 imagens na galeria.
         </div>
@@ -67,15 +67,15 @@ export default async function ProviderAdsPage({
 
       {advertisements.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
             Você ainda não tem anúncios publicados.
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-2">
           {advertisements.map((ad) => (
             <Card key={ad.id}>
-              <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="mb-1 flex flex-wrap items-center gap-2">
                     <h3 className="font-semibold">{ad.title}</h3>

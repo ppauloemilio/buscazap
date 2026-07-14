@@ -29,7 +29,7 @@ function SaveButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" variant="whatsapp" disabled={pending}>
+    <Button type="submit" variant="whatsapp" size="sm" disabled={pending}>
       {pending ? "Salvando..." : "Salvar fotos"}
     </Button>
   );
@@ -65,18 +65,18 @@ export function AdvertisementImagesEditor({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {premiumActive && galleryImages.length > 0 && (
         <div>
-          <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-sm font-medium">Fotos atuais da galeria</p>
             <span className="text-xs text-muted-foreground">
               {galleryImages.length}/{ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {galleryImages.map((image) => (
-              <div key={image.id} className="space-y-2">
+              <div key={image.id} className="space-y-1.5">
                 <div className="relative aspect-square overflow-hidden rounded-lg border">
                   <Image
                     src={image.url}
@@ -100,16 +100,16 @@ export function AdvertisementImagesEditor({
       <form
         action={updateAdvertisementImagesAction}
         encType="multipart/form-data"
-        className="space-y-6"
+        className="space-y-3"
       >
         <input type="hidden" name="advertisementId" value={advertisementId} />
 
         <div>
-          <label htmlFor="coverImage" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="coverImage" className="mb-1 block text-sm font-medium">
             Foto de capa
           </label>
           {coverImage && (
-            <div className="relative mb-3 aspect-[4/3] max-w-sm overflow-hidden rounded-lg border">
+            <div className="relative mb-2 aspect-[4/3] max-w-sm overflow-hidden rounded-lg border">
               <Image
                 src={coverImage.url}
                 alt={`Capa do anúncio ${title}`}
@@ -119,8 +119,8 @@ export function AdvertisementImagesEditor({
               />
             </div>
           )}
-          <div className="flex items-center gap-3 rounded-lg border border-dashed p-4">
-            <ImagePlus className="h-5 w-5 shrink-0 text-muted-foreground" />
+          <div className="flex items-center gap-2 rounded-lg border border-dashed p-2.5">
+            <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
             <div className="min-w-0 flex-1">
               <input
                 id="coverImage"
@@ -129,7 +129,7 @@ export function AdvertisementImagesEditor({
                 accept={ACCEPT}
                 className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
               />
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {coverImage
                   ? "Envie uma nova imagem para substituir a capa atual."
                   : "Adicione a foto de capa do anúncio."}{" "}
@@ -141,7 +141,7 @@ export function AdvertisementImagesEditor({
 
         {premiumActive && (
           <div>
-            <div className="mb-1.5 flex items-center justify-between gap-3">
+            <div className="mb-1 flex items-center justify-between gap-2">
               <label htmlFor="galleryImages" className="block text-sm font-medium">
                 Adicionar fotos à galeria premium
               </label>
@@ -153,8 +153,8 @@ export function AdvertisementImagesEditor({
             </div>
 
             {remainingGallerySlots > 0 ? (
-              <div className="flex items-center gap-3 rounded-lg border border-dashed p-4">
-                <ImagePlus className="h-5 w-5 shrink-0 text-muted-foreground" />
+              <div className="flex items-center gap-2 rounded-lg border border-dashed p-2.5">
+                <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <input
                     id="galleryImages"
@@ -164,7 +164,7 @@ export function AdvertisementImagesEditor({
                     multiple
                     className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     Adicione até {remainingGallerySlots} foto
                     {remainingGallerySlots === 1 ? "" : "s"} extra
                     {remainingGallerySlots === 1 ? "" : "s"} para demonstrar seu produto ou
@@ -173,7 +173,7 @@ export function AdvertisementImagesEditor({
                 </div>
               </div>
             ) : (
-              <p className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
+              <p className="rounded-lg border bg-muted/40 p-2.5 text-sm text-muted-foreground">
                 Você atingiu o limite de {ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages}{" "}
                 fotos na galeria premium. Remova uma foto para adicionar outra.
               </p>
@@ -181,9 +181,9 @@ export function AdvertisementImagesEditor({
           </div>
         )}
 
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <SaveButton />
-          <Button type="button" variant="outline" asChild>
+          <Button type="button" variant="outline" size="sm" asChild>
             <a href="/painel/anuncios">Voltar</a>
           </Button>
         </div>

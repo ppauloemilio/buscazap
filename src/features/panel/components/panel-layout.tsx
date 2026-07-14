@@ -19,9 +19,9 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
   const isAdmin = isAdminProvider(provider);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Painel do Usuário</h1>
+    <div className="container mx-auto px-4 py-4 md:py-5">
+      <div className="mb-3">
+        <h1 className="text-xl font-bold md:text-2xl">Painel do Usuário</h1>
         <p className="text-sm text-muted-foreground">
           Olá, {provider.name}
           {isAdmin
@@ -32,7 +32,7 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
         </p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
+      <div className="grid gap-3 lg:grid-cols-[180px_1fr]">
         <PanelNav />
         <div>{children}</div>
       </div>

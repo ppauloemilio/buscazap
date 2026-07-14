@@ -40,10 +40,10 @@ export default async function NewAdvertisementPage({
 
   return (
     <PanelLayout>
-      <h2 className="mb-6 text-xl font-semibold">Novo anúncio</h2>
+      <h2 className="mb-3 text-lg font-semibold">Novo anúncio</h2>
 
       {params.error && (
-        <p className="mb-4 max-w-xl rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+        <p className="mb-2 max-w-xl rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">
           {params.error}
         </p>
       )}
@@ -51,31 +51,31 @@ export default async function NewAdvertisementPage({
       <form
         action={createAdvertisementAction}
         encType="multipart/form-data"
-        className="max-w-xl space-y-4"
+        className="max-w-xl space-y-2.5"
       >
         <div>
-          <label htmlFor="title" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="title" className="mb-1 block text-sm font-medium">
             Título
           </label>
           <Input id="title" name="title" required />
         </div>
 
         <div>
-          <label htmlFor="description" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="description" className="mb-1 block text-sm font-medium">
             Descrição
           </label>
           <textarea
             id="description"
             name="description"
             required
-            rows={4}
+            rows={3}
             className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-2">
           <div>
-            <label htmlFor="type" className="mb-1.5 block text-sm font-medium">
+            <label htmlFor="type" className="mb-1 block text-sm font-medium">
               Tipo
             </label>
             <select
@@ -96,9 +96,9 @@ export default async function NewAdvertisementPage({
           <AdvertisementCategoryFields categories={categories} />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-3">
           <div className="sm:col-span-2">
-            <label htmlFor="city" className="mb-1.5 block text-sm font-medium">
+            <label htmlFor="city" className="mb-1 block text-sm font-medium">
               Cidade
             </label>
             <Input
@@ -115,7 +115,7 @@ export default async function NewAdvertisementPage({
             </datalist>
           </div>
           <div>
-            <label htmlFor="state" className="mb-1.5 block text-sm font-medium">
+            <label htmlFor="state" className="mb-1 block text-sm font-medium">
               UF
             </label>
             <select
@@ -137,14 +137,14 @@ export default async function NewAdvertisementPage({
         </div>
 
         <div>
-          <label htmlFor="neighborhood" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="neighborhood" className="mb-1 block text-sm font-medium">
             Bairro (opcional)
           </label>
           <Input id="neighborhood" name="neighborhood" />
         </div>
 
         <div>
-          <label htmlFor="whatsappNumber" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="whatsappNumber" className="mb-1 block text-sm font-medium">
             WhatsApp
           </label>
           <Input
@@ -157,11 +157,11 @@ export default async function NewAdvertisementPage({
 
         <AdvertisementImageFields />
 
-        <div className="flex gap-3">
-          <Button type="submit" variant="whatsapp">
+        <div className="flex gap-2">
+          <Button type="submit" variant="whatsapp" size="sm">
             Publicar anúncio
           </Button>
-          <Button type="button" variant="outline" asChild>
+          <Button type="button" variant="outline" size="sm" asChild>
             <Link href="/painel/anuncios">Cancelar</Link>
           </Button>
         </div>

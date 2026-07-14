@@ -35,31 +35,31 @@ export default async function EditAdvertisementImagesPage({
 
   return (
     <PanelLayout>
-      <div className="mb-6">
+      <div className="mb-3">
         <Link
           href="/painel/anuncios"
-          className="mb-2 inline-block text-sm text-muted-foreground hover:text-foreground"
+          className="mb-1 inline-block text-sm text-muted-foreground hover:text-foreground"
         >
           ← Voltar para meus anúncios
         </Link>
-        <h2 className="text-xl font-semibold">Editar fotos do anúncio</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{advertisement.title}</p>
+        <h2 className="text-lg font-semibold">Editar fotos do anúncio</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{advertisement.title}</p>
       </div>
 
       {query.boosted === "1" && (
-        <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp">
+        <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
           Destaque premium ativado! Agora você pode adicionar até 5 fotos extras na galeria.
         </div>
       )}
 
       {query.saved === "1" && (
-        <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp">
+        <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
           Fotos atualizadas com sucesso.
         </div>
       )}
 
       {query.error && (
-        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="mb-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {query.error}
         </div>
       )}

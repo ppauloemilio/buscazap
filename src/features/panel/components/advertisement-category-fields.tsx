@@ -16,9 +16,9 @@ export function AdvertisementCategoryFields({
   const isOther = category === CATEGORY_OTHER_VALUE;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       <div>
-        <label htmlFor="category" className="mb-1.5 block text-sm font-medium">
+        <label htmlFor="category" className="mb-1 block text-sm font-medium">
           Categoria
         </label>
         <select
@@ -42,7 +42,7 @@ export function AdvertisementCategoryFields({
         <div>
           <label
             htmlFor="customCategory"
-            className="mb-1.5 block text-sm font-medium"
+            className="mb-1 block text-sm font-medium"
           >
             Qual categoria?
           </label>
@@ -54,7 +54,7 @@ export function AdvertisementCategoryFields({
             minLength={2}
             maxLength={50}
           />
-          <p className="mt-1.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-muted-foreground">
             Se for parecida com uma categoria existente, usaremos a oficial automaticamente.
             Caso contrário, seu anúncio será publicado e a sugestão irá para análise do administrador.
           </p>

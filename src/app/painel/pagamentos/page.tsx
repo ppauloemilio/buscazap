@@ -26,29 +26,29 @@ export default async function PaymentsPage() {
 
   return (
     <PanelLayout>
-      <h2 className="mb-6 text-xl font-semibold">Histórico de pagamentos</h2>
+      <h2 className="mb-3 text-lg font-semibold">Histórico de pagamentos</h2>
 
       {payments.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
             Nenhum pagamento realizado ainda.
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {payments.map((payment) => (
             <Card key={payment.id}>
-              <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <CardContent className="flex flex-col gap-1.5 p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="font-medium">
+                  <p className="text-sm font-medium">
                     {TYPE_LABELS[payment.type] ?? payment.type}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {payment.createdAt.toLocaleString("pt-BR")}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold">
                     R$ {payment.amount.toFixed(2).replace(".", ",")}
                   </span>
                   <Badge
