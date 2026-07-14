@@ -5,14 +5,19 @@ import { CategoryGrid } from "@/features/dashboard/components/category-grid";
 import { AdvertisementSection } from "@/features/dashboard/components/advertisement-section";
 import { CityExplorer } from "@/features/dashboard/components/city-explorer";
 import { HowItWorks } from "@/features/dashboard/components/how-it-works";
+import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 
 export default async function HomePage() {
-  const data = await getDashboardData();
+  const [data, provider] = await Promise.all([
+    getDashboardData(),
+    getCurrentProvider(),
+  ]);
+  const isAdmin = provider ? isAdminProvider(provider) : false;
 
   return (
     <>
       <HeroSearch cities={data.cityNames} />
-      <StatsSection stats={data.stats} />
+      {isAdmin && <StatsSection stats={data.stats} />}
       <AdvertisementSection
         title="Anúncios Premium"
         description="Destaques selecionados com maior visibilidade"

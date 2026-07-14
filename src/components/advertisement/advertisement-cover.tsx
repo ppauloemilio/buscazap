@@ -18,6 +18,7 @@ interface AdvertisementCoverProps {
   readonly imageUrl?: string;
   readonly className?: string;
   readonly priority?: boolean;
+  readonly compact?: boolean;
 }
 
 export function AdvertisementCover({
@@ -26,6 +27,7 @@ export function AdvertisementCover({
   imageUrl,
   className,
   priority = false,
+  compact = false,
 }: AdvertisementCoverProps) {
   if (imageUrl) {
     return (
@@ -34,7 +36,11 @@ export function AdvertisementCover({
         alt={`Capa do anúncio ${title}`}
         fill
         className={cn("object-cover", className)}
-        sizes="(max-width: 768px) 100vw, 33vw"
+        sizes={
+          compact
+            ? "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
+            : "(max-width: 768px) 100vw, 33vw"
+        }
         priority={priority}
       />
     );
@@ -52,7 +58,12 @@ export function AdvertisementCover({
       )}
       aria-hidden
     >
-      <span className="select-none text-5xl font-bold text-white/70 md:text-6xl">
+      <span
+        className={cn(
+          "select-none font-bold text-white/70",
+          compact ? "text-3xl md:text-4xl" : "text-5xl md:text-6xl"
+        )}
+      >
         {initial}
       </span>
     </div>

@@ -26,34 +26,38 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
     : advertisement.location.city;
 
   return (
-    <Card className="group overflow-hidden transition-shadow hover:shadow-lg">
+    <Card className="group overflow-hidden transition-shadow hover:shadow-md">
       <div className="relative aspect-[4/3] overflow-hidden">
         <AdvertisementCover
           title={advertisement.title}
           category={advertisement.category}
           imageUrl={advertisement.imageUrl}
+          compact
         />
         {advertisement.isPremium && (
-          <Badge variant="premium" className="absolute left-3 top-3 gap-1">
-            <Crown className="h-3 w-3" />
+          <Badge
+            variant="premium"
+            className="absolute left-1.5 top-1.5 gap-0.5 px-1.5 py-0 text-[10px] leading-4"
+          >
+            <Crown className="h-2.5 w-2.5" />
             Premium
           </Badge>
         )}
         <Badge
           variant="secondary"
-          className="absolute right-3 top-3 bg-background/90"
+          className="absolute right-1.5 top-1.5 bg-background/90 px-1.5 py-0 text-[10px] leading-4"
         >
           {getAdvertisementTypeLabel(advertisement.type)}
         </Badge>
       </div>
 
-      <CardContent className="p-4">
-        <div className="mb-2 flex items-center gap-2">
-          <Badge variant="outline" className="text-xs">
+      <CardContent className="space-y-1.5 p-2.5">
+        <div className="flex items-center gap-1.5">
+          <Badge variant="outline" className="px-1.5 py-0 text-[10px] leading-4">
             {advertisement.category}
           </Badge>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+          <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+            <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
             <span className="font-medium text-foreground">
               {formatRating(advertisement.rating)}
             </span>
@@ -62,33 +66,43 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
         </div>
 
         <Link href={`/anuncio/${advertisement.id}`}>
-          <h3 className="mb-1 line-clamp-1 text-base font-semibold text-foreground transition-colors hover:text-whatsapp">
+          <h3 className="line-clamp-1 text-sm font-semibold text-foreground transition-colors hover:text-whatsapp">
             {advertisement.title}
           </h3>
         </Link>
 
-        <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
+        <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
           {advertisement.description}
         </p>
 
-        <div className="mb-4 flex items-center gap-1 text-xs text-muted-foreground">
-          <MapPin className="h-3.5 w-3.5 shrink-0" />
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <MapPin className="h-2.5 w-2.5 shrink-0" />
           <span className="line-clamp-1">{locationLabel}</span>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="whatsapp" size="sm" className="flex-1" asChild>
+        <div className="flex gap-1.5 pt-0.5">
+          <Button
+            variant="whatsapp"
+            size="sm"
+            className="h-7 flex-1 px-2 text-[11px]"
+            asChild
+          >
             <a
               href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Contatar ${advertisement.title} via WhatsApp`}
             >
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className="h-3 w-3" />
               WhatsApp
             </a>
           </Button>
-          <Button variant="outline" size="sm" asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-[11px]"
+            asChild
+          >
             <Link href={`/anuncio/${advertisement.id}`}>Ver mais</Link>
           </Button>
         </div>
