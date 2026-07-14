@@ -36,31 +36,32 @@ export default async function CategoriesPage() {
   return (
     <>
       <PageHeader
+        compact
         title="Categorias"
         description="Explore anúncios por área de atuação"
       />
-      <section className="container mx-auto px-4 py-10">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <section className="container mx-auto px-4 py-5">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {categories.map((category) => {
             const Icon = ICON_MAP[category.icon] ?? Heart;
             return (
               <Link
                 key={category.id}
                 href={`/buscar?category=${category.slug}`}
-                className="group flex items-center gap-2.5 rounded-lg border bg-card p-2.5 transition-all hover:border-whatsapp/50 hover:shadow-md"
+                className="group flex items-center gap-2 rounded-lg border bg-card px-2 py-2 transition-all hover:border-whatsapp/50 hover:shadow-md"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-whatsapp/10 group-hover:bg-whatsapp/20">
-                  <Icon className="h-4 w-4 text-whatsapp" />
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-whatsapp/10 group-hover:bg-whatsapp/20">
+                  <Icon className="h-3.5 w-3.5 text-whatsapp" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-sm font-semibold text-foreground">
+                  <h2 className="truncate text-xs font-semibold text-foreground">
                     {category.name}
                   </h2>
                   <p className="text-[10px] text-muted-foreground">
                     {formatNumber(category.count)} anúncios
                   </p>
                 </div>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-whatsapp" />
+                <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground group-hover:text-whatsapp" />
               </Link>
             );
           })}
