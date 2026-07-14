@@ -1,9 +1,5 @@
-import type { DashboardStats, Category } from "@/domain/entities";
-import {
-  getPopularAdvertisements,
-  getPremiumAdvertisements,
-  getRecentAdvertisements,
-} from "@/application/services/advertisement-service";
+import type { DashboardStats, Category, Advertisement } from "@/domain/entities";
+import { getHomepageAdvertisements } from "@/application/services/advertisement-service";
 import {
   getCatalogStats,
   getCategoriesWithCounts,
@@ -15,31 +11,19 @@ export interface DashboardData {
   readonly stats: DashboardStats;
   readonly categories: readonly Category[];
   readonly cityNames: readonly string[];
-  readonly premiumAdvertisements: Awaited<
-    ReturnType<typeof getPremiumAdvertisements>
-  >;
-  readonly recentAdvertisements: Awaited<
-    ReturnType<typeof getRecentAdvertisements>
-  >;
-  readonly popularAdvertisements: Awaited<
-    ReturnType<typeof getPopularAdvertisements>
-  >;
+  readonly homeAdvertisements: readonly Advertisement[];
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
   const [
-    premiumAdvertisements,
-    recentAdvertisements,
-    popularAdvertisements,
+    homeAdvertisements,
     categories,
     catalogStats,
     cityNames,
     totalAdvertisements,
     totalProviders,
   ] = await Promise.all([
-    getPremiumAdvertisements(),
-    getRecentAdvertisements(),
-    getPopularAdvertisements(),
+    getHomepageAdvertisements(),
     getCategoriesWithCounts(),
     getCatalogStats(),
     listCityNamesForSearch(),
@@ -56,8 +40,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
     categories,
     cityNames,
-    premiumAdvertisements,
-    recentAdvertisements,
-    popularAdvertisements,
+    homeAdvertisements,
   };
 }

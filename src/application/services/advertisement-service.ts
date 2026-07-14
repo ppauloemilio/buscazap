@@ -250,6 +250,23 @@ export async function getPopularAdvertisements() {
   );
 }
 
+/** Home feed: Premium → mais populares → mais recentes (sem duplicar). */
+export async function getHomepageAdvertisements() {
+  const advertisements = await findPublicAdvertisements({ query: "" });
+
+  return [...advertisements].sort((a, b) => {
+    if (a.isPremium !== b.isPremium) {
+      return a.isPremium ? -1 : 1;
+    }
+
+    if (b.reviewCount !== a.reviewCount) {
+      return b.reviewCount - a.reviewCount;
+    }
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+}
+
 export async function getCategoryNameBySlug(slug: string) {
   const { getCategoryNameBySlug: resolveCategoryName } = await import(
     "@/application/services/catalog-service"

@@ -60,12 +60,12 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
   }
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-whatsapp/10 via-background to-primary/5 px-4 pb-6 pt-6 md:pb-8 md:pt-8">
+    <section className="relative overflow-hidden bg-gradient-to-br from-whatsapp/10 via-background to-primary/5 px-4 pb-3 pt-4 md:pb-4 md:pt-6">
       <div className="container mx-auto max-w-4xl text-center">
         <h1 className="mb-2 text-3xl font-bold tracking-tight text-foreground md:mb-3 md:text-5xl">
           Encontre o <span className="text-whatsapp">Whatsapp</span> do que você precisa
         </h1>
-        <p className="mb-5 text-base text-muted-foreground md:mb-6 md:text-lg">
+        <p className="mb-4 text-base text-muted-foreground md:mb-5 md:text-lg">
           Profissionais, empresas, produtos e serviços na sua cidade.
           Busque e fale direto no WhatsApp.
         </p>
@@ -143,7 +143,7 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
           )}
         </form>
 
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
           <Filter className="h-4 w-4" />
           <span>Populares:</span>
           {POPULAR_SEARCHES.map((term) => (

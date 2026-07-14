@@ -21,25 +21,13 @@ export default async function HomePage() {
       <UrgentSearches />
       {isAdmin && <StatsSection stats={data.stats} />}
       <AdvertisementSection
-        title="Anúncios Premium"
-        description="Destaques selecionados com maior visibilidade"
-        advertisements={data.premiumAdvertisements}
-        viewAllHref="/buscar?premium=true"
+        title="Anúncios"
+        description="Premium primeiro, depois os mais populares e os mais recentes"
+        advertisements={data.homeAdvertisements}
+        viewAllHref="/buscar"
       />
       <CategoryGrid categories={data.categories} />
-      <AdvertisementSection
-        title="Adicionados recentemente"
-        description="Os anúncios mais novos da plataforma"
-        advertisements={data.recentAdvertisements}
-        viewAllHref="/buscar?sort=recent"
-      />
       <CityExplorer cities={data.cityNames} />
-      <AdvertisementSection
-        title="Mais populares"
-        description="Os mais bem avaliados pelos consumidores"
-        advertisements={data.popularAdvertisements}
-        viewAllHref="/buscar?sort=popular"
-      />
       <HowItWorks />
     </>
   );

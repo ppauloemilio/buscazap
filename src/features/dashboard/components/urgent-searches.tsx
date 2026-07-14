@@ -16,9 +16,9 @@ export function UrgentSearches() {
   }, []);
 
   return (
-    <section className="border-b bg-background py-5">
+    <section className="border-b bg-background py-3">
       <div className="container mx-auto px-4">
-        <div className="mb-3">
+        <div className="mb-2">
           <h2 className="text-lg font-bold text-foreground">Precisa agora?</h2>
           <p className="text-sm text-muted-foreground">
             Toque e vá direto aos contatos de WhatsApp

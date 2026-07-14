@@ -21,9 +21,9 @@ export function AdvertisementSection({
   }
 
   return (
-    <section className="py-6 md:py-8">
+    <section className="py-4 md:py-5">
       <div className="container mx-auto px-4">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-foreground">{title}</h2>
             {description && (
