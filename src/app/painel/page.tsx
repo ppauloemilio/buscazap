@@ -66,7 +66,12 @@ export default async function PanelPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               Necessária para publicar anúncios na plataforma.
             </p>
-            <Button variant="whatsapp" size="sm" className="mt-4" asChild>
+            <Button
+              variant="whatsapp"
+              size="sm"
+              className="mt-4 w-full sm:w-auto"
+              asChild
+            >
               <Link href="/painel/assinatura">Gerenciar</Link>
             </Button>
           </CardContent>
@@ -80,7 +85,12 @@ export default async function PanelPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               Badge premium e prioridade na busca por anúncio.
             </p>
-            <Button variant="outline" size="sm" className="mt-4" asChild>
+            <Button
+              variant="whatsapp"
+              size="sm"
+              className="mt-4 w-full sm:w-auto"
+              asChild
+            >
               <Link href="/painel/anuncios">Destacar anúncio</Link>
             </Button>
           </CardContent>

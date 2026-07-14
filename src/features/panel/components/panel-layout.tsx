@@ -36,7 +36,7 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">Painel do prestador</h1>
+        <h1 className="text-2xl font-bold">Painel do Usuário</h1>
         <p className="text-sm text-muted-foreground">
           Olá, {provider.name}
           {isAdmin
