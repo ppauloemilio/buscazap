@@ -20,30 +20,31 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   return (
     <>
       <PageHeader
+        compact
         title="Criar conta de anunciante"
         description="Cadastre-se para publicar seus anúncios no BuscaZap"
       />
-      <section className="container mx-auto max-w-md px-4 py-10">
-        <div className="rounded-xl border bg-card p-6">
-          <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-whatsapp/10">
-            <UserPlus className="h-6 w-6 text-whatsapp" />
+      <section className="container mx-auto max-w-md px-4 py-5">
+        <div className="rounded-xl border bg-card p-4">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-whatsapp/10">
+            <UserPlus className="h-5 w-5 text-whatsapp" />
           </div>
 
           {params.error && (
-            <p className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+            <p className="mb-3 rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">
               {params.error}
             </p>
           )}
 
-          <form action={registerProviderAction} className="space-y-4">
+          <form action={registerProviderAction} className="space-y-2.5">
             <div>
-              <label htmlFor="name" className="mb-1.5 block text-sm font-medium">
+              <label htmlFor="name" className="mb-1 block text-sm font-medium">
                 Nome completo
               </label>
               <Input id="name" name="name" placeholder="Seu nome" required />
             </div>
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-medium">
+              <label htmlFor="email" className="mb-1 block text-sm font-medium">
                 E-mail
               </label>
               <Input
@@ -55,7 +56,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               />
             </div>
             <div>
-              <label htmlFor="whatsapp" className="mb-1.5 block text-sm font-medium">
+              <label htmlFor="whatsapp" className="mb-1 block text-sm font-medium">
                 WhatsApp
               </label>
               <Input
@@ -66,7 +67,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               />
             </div>
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium">
+              <label htmlFor="password" className="mb-1 block text-sm font-medium">
                 Senha
               </label>
               <Input
@@ -77,12 +78,12 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 required
               />
             </div>
-            <Button type="submit" variant="whatsapp" className="w-full">
+            <Button type="submit" variant="whatsapp" className="mt-1 w-full">
               Criar conta
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-xs text-muted-foreground">
+          <p className="mt-3 text-center text-xs text-muted-foreground">
             Já tem conta?{" "}
             <Link href="/entrar" className="text-whatsapp hover:underline">
               Entrar
