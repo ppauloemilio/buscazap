@@ -89,15 +89,6 @@ export function MobileNav({ isLoggedIn, isAdmin, canPublish }: MobileNavProps) {
                 >
                   Como funciona
                 </Link>
-                {!isLoggedIn && (
-                  <Link
-                    href="/anunciar"
-                    onClick={close}
-                    className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
-                  >
-                    Anunciar
-                  </Link>
-                )}
                 {isLoggedIn && (
                   <Link
                     href="/painel/anuncios"
@@ -146,7 +137,7 @@ export function MobileNav({ isLoggedIn, isAdmin, canPublish }: MobileNavProps) {
                   <Button variant="whatsapp" size="sm" className="justify-start" asChild>
                     <Link href="/anunciar" onClick={close}>
                       <Search className="h-4 w-4" />
-                      Anunciar grátis
+                      Anuncie
                     </Link>
                   </Button>
                 )}

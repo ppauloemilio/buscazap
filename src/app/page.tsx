@@ -22,7 +22,6 @@ export default async function HomePage() {
       {isAdmin && <StatsSection stats={data.stats} />}
       <AdvertisementSection
         title="Anúncios"
-        description="Premium primeiro, depois os mais populares e os mais recentes"
         advertisements={data.homeAdvertisements}
         viewAllHref="/buscar"
       />

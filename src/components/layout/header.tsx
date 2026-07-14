@@ -35,14 +35,6 @@ export async function Header() {
           >
             Como funciona
           </Link>
-          {!provider && (
-            <Link
-              href="/anunciar"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Anunciar
-            </Link>
-          )}
           {provider && (
             <Link
               href="/painel/anuncios"
@@ -103,7 +95,7 @@ export async function Header() {
             <Button variant="whatsapp" size="sm" className="hidden md:inline-flex" asChild>
               <Link href="/anunciar">
                 <Search className="h-4 w-4" />
-                Anunciar grátis
+                Anuncie
               </Link>
             </Button>
           )}
