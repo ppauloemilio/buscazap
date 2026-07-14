@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { PRICING } from "@/config/pricing";
 import { prisma } from "@/lib/prisma";
 import {
+  canRenewSubscription,
   hasActiveSubscription,
   isAdminProvider,
 } from "@/lib/provider-session";
@@ -22,14 +23,19 @@ export async function getSubscriptionStatus(providerId: string) {
   }
 
   const active = isAdminProvider(provider) || hasActiveSubscription(provider.subscriptionExpiresAt);
+  const canRenew =
+    !isAdminProvider(provider) &&
+    canRenewSubscription(provider.subscriptionExpiresAt);
 
   return {
     active,
+    canRenew,
     isAdmin: isAdminProvider(provider),
     expiresAt: provider.subscriptionExpiresAt,
     lastSubscription: provider.subscriptions[0] ?? null,
     monthlyAmount: PRICING.SUBSCRIPTION_AMOUNT,
     durationDays: PRICING.SUBSCRIPTION_DAYS,
+    renewalWindowDays: PRICING.SUBSCRIPTION_RENEWAL_WINDOW_DAYS,
   };
 }
 

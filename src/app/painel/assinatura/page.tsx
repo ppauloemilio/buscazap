@@ -114,11 +114,34 @@ export default async function SubscriptionPage({
             </li>
           </ul>
 
-          <form action={createSubscriptionPaymentAction}>
-            <Button type="submit" variant="whatsapp">
-              {status.active ? "Renovar assinatura" : "Assinar agora"}
-            </Button>
-          </form>
+          {!status.active ? (
+            <form action={createSubscriptionPaymentAction}>
+              <Button type="submit" variant="whatsapp" className="w-full sm:w-auto">
+                Fazer assinatura
+              </Button>
+            </form>
+          ) : status.canRenew ? (
+            <form action={createSubscriptionPaymentAction}>
+              <Button type="submit" variant="whatsapp" className="w-full sm:w-auto">
+                Renovar Assinatura
+              </Button>
+            </form>
+          ) : (
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="whatsapp"
+                className="w-full sm:w-auto"
+                disabled
+              >
+                Renovar Assinatura
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                A renovação fica disponível nos últimos{" "}
+                {status.renewalWindowDays} dias da assinatura.
+              </p>
+            </div>
+          )}
 
           {!status.active && (
             <p className="text-xs text-muted-foreground">

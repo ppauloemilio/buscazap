@@ -4,6 +4,10 @@ import { PRICING } from "@/config/pricing";
 import { PaymentStatus, PaymentType } from "@/domain/enums";
 import { getPixProvider } from "@/infrastructure/pix";
 import { prisma } from "@/lib/prisma";
+import {
+  canRenewSubscription,
+  hasActiveSubscription,
+} from "@/lib/provider-session";
 import { activatePremiumBoost } from "@/application/services/premium-service";
 import { activateSubscription } from "@/application/services/subscription-service";
 
@@ -65,7 +69,7 @@ async function initiatePayment(input: {
 async function getProviderPaymentProfile(providerId: string) {
   const provider = await prisma.provider.findUnique({
     where: { id: providerId },
-    select: { email: true, name: true },
+    select: { email: true, name: true, subscriptionExpiresAt: true },
   });
 
   if (!provider) {
@@ -77,6 +81,15 @@ async function getProviderPaymentProfile(providerId: string) {
 
 export async function createSubscriptionPayment(providerId: string) {
   const provider = await getProviderPaymentProfile(providerId);
+
+  if (
+    hasActiveSubscription(provider.subscriptionExpiresAt) &&
+    !canRenewSubscription(provider.subscriptionExpiresAt)
+  ) {
+    throw new Error(
+      `A renovação fica disponível nos últimos ${PRICING.SUBSCRIPTION_RENEWAL_WINDOW_DAYS} dias da assinatura.`
+    );
+  }
 
   return initiatePayment({
     providerId,

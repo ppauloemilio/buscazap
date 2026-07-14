@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
+import { PRICING, PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import { ProviderStatus, UserRole } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
 
@@ -41,6 +41,20 @@ export function hasActiveSubscription(subscriptionExpiresAt: Date | null): boole
   }
 
   return subscriptionExpiresAt.getTime() > Date.now();
+}
+
+export function canRenewSubscription(
+  subscriptionExpiresAt: Date | null,
+  now = new Date()
+): boolean {
+  if (!subscriptionExpiresAt || !hasActiveSubscription(subscriptionExpiresAt)) {
+    return false;
+  }
+
+  const msRemaining = subscriptionExpiresAt.getTime() - now.getTime();
+  const daysRemaining = msRemaining / (1000 * 60 * 60 * 24);
+
+  return daysRemaining <= PRICING.SUBSCRIPTION_RENEWAL_WINDOW_DAYS;
 }
 
 export function canProviderPublish(provider: ProviderAccessProfile): boolean {
