@@ -30,11 +30,11 @@ interface CategoryGridProps {
 
 export function CategoryGrid({ categories }: CategoryGridProps) {
   return (
-    <section className="py-12">
+    <section className="py-6 md:py-8">
       <div className="container mx-auto px-4">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-foreground">
+            <h2 className="text-xl font-bold text-foreground md:text-2xl">
               Categorias populares
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">

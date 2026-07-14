@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, Filter } from "lucide-react";
+import { Search, MapPin, Filter, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { POPULAR_SEARCHES } from "@/config/quick-searches";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
+import {
+  buildSearchHref,
+  getPreferredCity,
+  setPreferredCity,
+} from "@/shared/utils/search-preferences";
 
 interface HeroSearchProps {
   readonly cities?: readonly string[];
@@ -24,14 +30,33 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("");
   const [searchType, setSearchType] = useState("all");
+  const [showFilters, setShowFilters] = useState(false);
+  const [cityReady, setCityReady] = useState(false);
+
+  useEffect(() => {
+    const preferredCity = getPreferredCity();
+    if (preferredCity) setCity(preferredCity);
+    setCityReady(true);
+  }, []);
+
+  function goToSearch(nextQuery?: string, nextCity?: string, nextType?: string) {
+    const resolvedQuery = nextQuery ?? query;
+    const resolvedCity = nextCity ?? city;
+    const resolvedType = nextType ?? searchType;
+
+    setPreferredCity(resolvedCity);
+    router.push(
+      buildSearchHref({
+        query: resolvedQuery,
+        city: resolvedCity,
+        type: resolvedType,
+      })
+    );
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (city) params.set("city", city);
-    if (searchType !== "all") params.set("type", searchType);
-    router.push(`/buscar?${params.toString()}`);
+    goToSearch();
   }
 
   return (
@@ -42,7 +67,7 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
         </h1>
         <p className="mb-5 text-base text-muted-foreground md:mb-6 md:text-lg">
           Profissionais, empresas, produtos e serviços na sua cidade.
-          Busque, compare e entre em contato direto.
+          Busque e fale direto no WhatsApp.
         </p>
 
         <form
@@ -54,20 +79,22 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="O que você procura?"
+                placeholder="Ex.: gás, água, delivery, dentista..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="pl-10"
                 aria-label="Termo de busca"
+                autoFocus
               />
             </div>
             <div className="relative sm:w-48">
               <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Cidade"
+                placeholder={cityReady ? "Sua cidade" : "Cidade"}
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
+                onBlur={() => setPreferredCity(city)}
                 list="cities"
                 className="pl-10"
                 aria-label="Cidade"
@@ -81,7 +108,23 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setShowFilters((current) => !current)}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              {showFilters ? "Ocultar filtros" : "Filtros"}
+            </button>
+
+            <Button type="submit" variant="whatsapp" size="lg">
+              <Search className="h-4 w-4" />
+              Buscar
+            </Button>
+          </div>
+
+          {showFilters && (
+            <div className="flex flex-wrap gap-2 border-t pt-3">
               {SEARCH_TYPES.map((type) => (
                 <button
                   key={type.value}
@@ -97,22 +140,17 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
                 </button>
               ))}
             </div>
-
-            <Button type="submit" variant="whatsapp" size="lg">
-              <Search className="h-4 w-4" />
-              Buscar
-            </Button>
-          </div>
+          )}
         </form>
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
           <Filter className="h-4 w-4" />
           <span>Populares:</span>
-          {["Eletricista", "Dentista", "Delivery", "Mecânico"].map((term) => (
+          {POPULAR_SEARCHES.map((term) => (
             <button
               key={term}
               type="button"
-              onClick={() => setQuery(term)}
+              onClick={() => goToSearch(term)}
               className="rounded-full bg-muted px-3 py-1 text-xs font-medium transition-colors hover:bg-whatsapp/10 hover:text-whatsapp"
             >
               {term}

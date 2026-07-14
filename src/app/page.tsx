@@ -1,5 +1,6 @@
 import { getDashboardData } from "@/application/services/dashboard-service";
 import { HeroSearch } from "@/features/dashboard/components/hero-search";
+import { UrgentSearches } from "@/features/dashboard/components/urgent-searches";
 import { StatsSection } from "@/features/dashboard/components/stats-section";
 import { CategoryGrid } from "@/features/dashboard/components/category-grid";
 import { AdvertisementSection } from "@/features/dashboard/components/advertisement-section";
@@ -17,6 +18,7 @@ export default async function HomePage() {
   return (
     <>
       <HeroSearch cities={data.cityNames} />
+      <UrgentSearches />
       {isAdmin && <StatsSection stats={data.stats} />}
       <AdvertisementSection
         title="Anúncios Premium"

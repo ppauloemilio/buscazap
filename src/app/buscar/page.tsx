@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Search } from "lucide-react";
 import { AdvertisementType } from "@/domain/enums";
 import {
@@ -9,6 +10,8 @@ import { listCityNamesForSearch } from "@/application/services/catalog-service";
 import { PageHeader } from "@/components/layout/page-header";
 import { AdvertisementCard } from "@/features/dashboard/components/advertisement-card";
 import { SearchForm } from "@/features/search/components/search-form";
+import { URGENT_SEARCHES } from "@/config/quick-searches";
+import { buildSearchHref } from "@/shared/utils/search-preferences";
 
 interface SearchPageProps {
   readonly searchParams: Promise<{
@@ -97,15 +100,37 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-xl border bg-card px-6 py-16 text-center">
+          <div className="flex flex-col items-center justify-center rounded-xl border bg-card px-6 py-12 text-center">
             <Search className="mb-4 h-12 w-12 text-muted-foreground" />
             <h2 className="text-lg font-semibold text-foreground">
               Nenhum anúncio encontrado
             </h2>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              Tente ajustar os filtros ou buscar por outro termo, cidade ou
-              categoria.
+              Tente outro termo, remova a cidade ou escolha uma busca rápida
+              abaixo.
             </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              {URGENT_SEARCHES.map((item) => (
+                <Link
+                  key={item.label}
+                  href={buildSearchHref({
+                    query: item.query,
+                    city: params.city,
+                  })}
+                  className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-whatsapp hover:bg-whatsapp/5 hover:text-whatsapp"
+                >
+                  {item.label}
+                </Link>
+              ))}
+              {params.city && (
+                <Link
+                  href={buildSearchHref({ query: params.q })}
+                  className="rounded-full border border-whatsapp/40 bg-whatsapp/5 px-3 py-1.5 text-xs font-medium text-whatsapp transition-colors hover:bg-whatsapp/10"
+                >
+                  Buscar sem cidade
+                </Link>
+              )}
+            </div>
           </div>
         )}
       </section>
