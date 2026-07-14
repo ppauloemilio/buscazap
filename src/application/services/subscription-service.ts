@@ -31,7 +31,17 @@ export async function getSubscriptionStatus(providerId: string) {
     active,
     canRenew,
     isAdmin: isAdminProvider(provider),
+    isTrial: active && !isAdminProvider(provider) && provider.subscriptions.length === 0,
     expiresAt: provider.subscriptionExpiresAt,
+    daysLeft: provider.subscriptionExpiresAt
+      ? Math.max(
+          0,
+          Math.ceil(
+            (provider.subscriptionExpiresAt.getTime() - Date.now()) /
+              (1000 * 60 * 60 * 24)
+          )
+        )
+      : null,
     lastSubscription: provider.subscriptions[0] ?? null,
     monthlyAmount: PRICING.SUBSCRIPTION_AMOUNT,
     durationDays: PRICING.SUBSCRIPTION_DAYS,

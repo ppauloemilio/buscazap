@@ -34,12 +34,12 @@ export function AdminCategorySuggestionActions({
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-dashed p-4">
-      <p className="text-sm font-medium">Ações da sugestão</p>
+    <div className="space-y-2.5 rounded-lg border border-dashed p-2.5">
+      <p className="text-sm font-medium">Ações rápidas</p>
 
       <form
         action={promoteCategorySuggestionAction}
-        className="grid gap-3 lg:grid-cols-5"
+        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5"
       >
         <input type="hidden" name="suggestionId" value={suggestionId} />
         <Input name="name" defaultValue={name} placeholder="Nome oficial" required />
@@ -56,12 +56,12 @@ export function AdminCategorySuggestionActions({
           ))}
         </select>
         <Input name="sortOrder" type="number" min={0} defaultValue={0} />
-        <Button type="submit" variant="whatsapp" className="lg:col-span-5">
-          Promover para categoria oficial
+        <Button type="submit" variant="whatsapp" size="sm" className="lg:col-span-5">
+          Promover
         </Button>
       </form>
 
-      <form action={mergeCategorySuggestionAction} className="flex flex-col gap-2 sm:flex-row">
+      <form action={mergeCategorySuggestionAction} className="flex flex-col gap-1.5 sm:flex-row">
         <input type="hidden" name="suggestionId" value={suggestionId} />
         <select
           name="targetCategoryId"
@@ -78,15 +78,15 @@ export function AdminCategorySuggestionActions({
             </option>
           ))}
         </select>
-        <Button type="submit" variant="outline">
+        <Button type="submit" variant="outline" size="sm">
           Mesclar
         </Button>
       </form>
 
       <form action={dismissCategorySuggestionAction} onSubmit={handleDismiss}>
         <input type="hidden" name="suggestionId" value={suggestionId} />
-        <Button type="submit" variant="outline" className="text-destructive">
-          Dispensar sugestão
+        <Button type="submit" variant="outline" size="sm" className="text-destructive">
+          Dispensar
         </Button>
       </form>
     </div>

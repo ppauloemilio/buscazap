@@ -100,6 +100,15 @@ export async function findAdvertisementById(id: string) {
       images: {
         orderBy: { sortOrder: "asc" },
       },
+      provider: {
+        select: {
+          status: true,
+          name: true,
+          bio: true,
+          businessHours: true,
+          responseHint: true,
+        },
+      },
     },
   });
 
@@ -107,16 +116,43 @@ export async function findAdvertisementById(id: string) {
     return undefined;
   }
 
-  const provider = await prisma.provider.findUnique({
-    where: { id: advertisement.providerId },
-    select: { status: true },
-  });
-
-  if (provider?.status === ProviderStatus.BLOCKED) {
+  if (advertisement.provider.status === ProviderStatus.BLOCKED) {
     return undefined;
   }
 
-  return mapAdvertisementToEntity(advertisement);
+  return {
+    ...mapAdvertisementToEntity(advertisement),
+    providerName: advertisement.provider.name,
+    providerBio: advertisement.provider.bio ?? undefined,
+    providerBusinessHours: advertisement.provider.businessHours ?? undefined,
+    providerResponseHint: advertisement.provider.responseHint ?? undefined,
+  };
+}
+
+export async function findAdvertisementsByIds(ids: readonly string[]) {
+  if (ids.length === 0) return [];
+
+  markDataFetchDynamic();
+
+  const advertisements = await prisma.advertisement.findMany({
+    where: {
+      id: { in: [...ids] },
+      status: { not: AdvertisementStatus.BLOCKED },
+      provider: { status: { not: ProviderStatus.BLOCKED } },
+    },
+    include: {
+      images: {
+        where: { kind: ADVERTISEMENT_IMAGE_KIND.COVER },
+        take: 1,
+      },
+    },
+  });
+
+  const order = new Map(ids.map((id, index) => [id, index]));
+
+  return advertisements
+    .map(mapAdvertisementToEntity)
+    .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 }
 
 export async function findProviderAdvertisements(providerId: string) {

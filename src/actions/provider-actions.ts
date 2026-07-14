@@ -549,6 +549,8 @@ export async function updateProviderProfileAction(formData: FormData) {
     city: formData.get("city"),
     neighborhood: formData.get("neighborhood"),
     bio: formData.get("bio"),
+    businessHours: formData.get("businessHours"),
+    responseHint: formData.get("responseHint"),
   });
 
   if (!parsed.success) {
@@ -580,6 +582,8 @@ export async function updateProviderProfileAction(formData: FormData) {
       city: parsed.data.city ?? null,
       neighborhood: parsed.data.neighborhood ?? null,
       bio: parsed.data.bio ?? null,
+      businessHours: parsed.data.businessHours ?? null,
+      responseHint: parsed.data.responseHint ?? null,
     },
   });
 

@@ -24,6 +24,12 @@ export async function Header() {
             Buscar
           </Link>
           <Link
+            href="/favoritos"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Favoritos
+          </Link>
+          <Link
             href="/categorias"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getCurrentProvider, canProviderPublish, isAdminProvider, isProviderBlocked } from "@/lib/provider-session";
+import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { PanelNav } from "@/features/panel/components/panel-nav";
+import { SubscriptionReminderBanner } from "@/features/panel/components/subscription-reminder-banner";
 
 export async function PanelLayout({ children }: { children: React.ReactNode }) {
   const provider = await getCurrentProvider();
@@ -17,6 +19,7 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
 
   const subscriptionActive = canProviderPublish(provider);
   const isAdmin = isAdminProvider(provider);
+  const subscription = await getSubscriptionStatus(provider.id);
 
   return (
     <div className="container mx-auto px-4 py-4 md:py-5">
@@ -27,14 +30,25 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
           {isAdmin
             ? " — acesso administrativo (sem cobrança)"
             : subscriptionActive
-              ? " — assinatura ativa"
+              ? subscription.isTrial
+                ? " — período grátis ativo"
+                : " — assinatura ativa"
               : " — assinatura inativa"}
         </p>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[180px_1fr]">
         <PanelNav />
-        <div>{children}</div>
+        <div>
+          <SubscriptionReminderBanner
+            active={subscription.active}
+            isAdmin={subscription.isAdmin}
+            expiresAt={subscription.expiresAt?.toISOString() ?? null}
+            isTrial={subscription.isTrial}
+            canRenew={subscription.canRenew}
+          />
+          {children}
+        </div>
       </div>
     </div>
   );

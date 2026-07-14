@@ -2,9 +2,10 @@ import { redirect } from "next/navigation";
 import { Gift, Share2, Crown } from "lucide-react";
 import { getReferralDashboard } from "@/application/services/referral-service";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
+import { ReferralShareActions } from "@/features/panel/components/referral-share-actions";
 import { getCurrentProvider } from "@/lib/provider-session";
+import { buildAbsoluteUrl } from "@/lib/site-url";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { PRICING } from "@/config/pricing";
 
 export default async function ReferralsPage() {
@@ -13,6 +14,7 @@ export default async function ReferralsPage() {
 
   const dashboard = await getReferralDashboard(provider.id);
   const invitePath = `/cadastro?ref=${encodeURIComponent(dashboard.referralCode)}`;
+  const inviteUrl = buildAbsoluteUrl(invitePath);
 
   return (
     <PanelLayout>
@@ -66,12 +68,13 @@ export default async function ReferralsPage() {
             <Share2 className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
             <div className="min-w-0">
               <p className="text-sm font-semibold">Link de indicação</p>
-              <p className="truncate text-xs text-muted-foreground">{invitePath}</p>
+              <p className="truncate text-xs text-muted-foreground">{inviteUrl}</p>
             </div>
           </div>
-          <Button variant="whatsapp" size="sm" asChild>
-            <a href={invitePath}>Abrir cadastro com meu código</a>
-          </Button>
+          <ReferralShareActions
+            inviteUrl={inviteUrl}
+            referralCode={dashboard.referralCode}
+          />
         </CardContent>
       </Card>
 

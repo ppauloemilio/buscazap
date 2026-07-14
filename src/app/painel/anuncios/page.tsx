@@ -37,7 +37,18 @@ export default async function ProviderAdsPage({
 
   return (
     <PanelLayout>
-      <h2 className="mb-3 text-lg font-semibold">Meus anúncios</h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold">Meus anúncios</h2>
+        {subscriptionActive ? (
+          <Button variant="whatsapp" size="sm" asChild>
+            <Link href="/painel/anuncios/novo">Novo anúncio</Link>
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/painel/assinatura">Assinar para anunciar</Link>
+          </Button>
+        )}
+      </div>
 
       {!isAdmin && freeCredits > 0 && (
         <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">

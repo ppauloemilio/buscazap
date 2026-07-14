@@ -175,6 +175,30 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                     className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   />
                 </div>
+
+                <div>
+                  <label htmlFor="businessHours" className="mb-1 block text-sm font-medium">
+                    Horário de atendimento
+                  </label>
+                  <Input
+                    id="businessHours"
+                    name="businessHours"
+                    defaultValue={provider.businessHours ?? ""}
+                    placeholder="Ex.: Seg–Sáb, 8h–18h"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="responseHint" className="mb-1 block text-sm font-medium">
+                    Tempo de resposta
+                  </label>
+                  <Input
+                    id="responseHint"
+                    name="responseHint"
+                    defaultValue={provider.responseHint ?? ""}
+                    placeholder="Ex.: Respondo em até 15 min"
+                  />
+                </div>
               </div>
 
               <Button type="submit" variant="whatsapp" size="sm">

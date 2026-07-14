@@ -76,6 +76,13 @@ export function MobileNav({ isLoggedIn, isAdmin, canPublish }: MobileNavProps) {
                   Buscar
                 </Link>
                 <Link
+                  href="/favoritos"
+                  onClick={close}
+                  className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
+                >
+                  Favoritos
+                </Link>
+                <Link
                   href="/categorias"
                   onClick={close}
                   className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"

@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { getAdminDashboardStats } from "@/application/services/admin-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { getCurrentAdmin } from "@/lib/admin-session";
+import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -14,113 +14,153 @@ export default async function AdminDashboardPage() {
 
   return (
     <AdminLayout>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <h2 className="mb-3 text-lg font-semibold">Visão geral do piloto</h2>
+
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Anunciantes
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Cadastros (7 dias)
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.providersCount}</p>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{stats.providersLast7Days}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Assinaturas ativas
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Indicações (7 dias)
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.activeSubscriptions}</p>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{stats.referralsLast7Days}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Anúncios
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Em trial ativo
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.advertisementsCount}</p>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{stats.trialActiveCount}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Destaques premium ativos
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Assinantes pagos
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.premiumActiveCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pagamentos confirmados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.paidPayments}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Denúncias abertas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.openReportsCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Assinaturas vencidas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.expiredSubscriptionsCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Anunciantes bloqueados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.blockedProvidersCount}</p>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{stats.paidSubscriptionsCount}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {stats.signupsLast30Days} cadastros em 30 dias
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Button asChild>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        <Card>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Anunciantes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{stats.providersCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Assinaturas ativas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{stats.activeSubscriptions}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Anúncios
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{stats.advertisementsCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Destaques premium
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{stats.premiumActiveCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Denúncias abertas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{stats.openReportsCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Sugestões de categoria
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{stats.pendingCategorySuggestions}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {stats.adsByCity.length > 0 && (
+        <Card className="mt-3">
+          <CardHeader className="p-3 pb-2">
+            <CardTitle className="text-sm">Anúncios por cidade</CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <ul className="space-y-1">
+              {stats.adsByCity.map((row) => (
+                <li
+                  key={row.city}
+                  className="flex items-center justify-between rounded border px-2.5 py-1.5 text-sm"
+                >
+                  <span>{row.city}</span>
+                  <span className="font-semibold">{row.count}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button size="sm" asChild>
+          <Link href="/admin/denuncias">Moderar denúncias</Link>
+        </Button>
+        <Button size="sm" variant="outline" asChild>
+          <Link href="/admin/categorias">Sugestões de categoria</Link>
+        </Button>
+        <Button size="sm" variant="outline" asChild>
           <Link href="/admin/anuncios">Moderar anúncios</Link>
         </Button>
-        <Button variant="outline" asChild>
-          <Link href="/admin/home">Visibilidade da home</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/admin/usuarios">Ver usuários</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/admin/categorias">Gerenciar categorias</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/admin/estados">Gerenciar estados</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/admin/cidades">Gerenciar cidades</Link>
-        </Button>
-        <Button variant="outline" asChild>
+        <Button size="sm" variant="outline" asChild>
           <Link href="/admin/usuarios?subscription=expired">Assinaturas vencidas</Link>
         </Button>
-        <Button variant="outline" asChild>
-          <Link href="/admin/denuncias">Ver denúncias</Link>
+        <Button size="sm" variant="outline" asChild>
+          <Link href="/admin/home">Home</Link>
         </Button>
       </div>
     </AdminLayout>

@@ -25,30 +25,30 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
 
   return (
     <AdminLayout>
-      <h2 className="mb-6 text-xl font-semibold">Denúncias</h2>
+      <h2 className="mb-3 text-lg font-semibold">Denúncias</h2>
 
       {params.error && (
-        <p className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+        <p className="mb-2 rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">
           {params.error}
         </p>
       )}
       {params.saved === "1" && (
-        <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
+        <p className="mb-2 rounded-lg bg-whatsapp/10 p-2.5 text-sm text-whatsapp">
           Denúncia atualizada.
         </p>
       )}
 
       {reports.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
             Nenhuma denúncia encontrada.
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-2">
           {reports.map((report) => (
             <Card key={report.id}>
-              <CardContent className="space-y-3 p-4">
+              <CardContent className="space-y-2 p-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline">
                     {REPORT_STATUS_LABELS[report.status] ?? report.status}
@@ -67,13 +67,13 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
                   <p className="text-sm text-muted-foreground">{report.details}</p>
                 )}
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {report.status !== "REVIEWED" && (
                     <form action={updateReportStatusAction}>
                       <input type="hidden" name="reportId" value={report.id} />
                       <input type="hidden" name="status" value="REVIEWED" />
-                      <Button type="submit" size="sm" variant="outline">
-                        Marcar analisada
+                      <Button type="submit" size="sm" variant="whatsapp">
+                        Analisada
                       </Button>
                     </form>
                   )}

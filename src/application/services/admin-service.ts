@@ -23,6 +23,12 @@ export async function logAdminAction(input: {
 }
 
 export async function getAdminDashboardStats() {
+  const now = new Date();
+  const weekAgo = new Date(now);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const monthAgo = new Date(now);
+  monthAgo.setDate(monthAgo.getDate() - 30);
+
   const [
     providersCount,
     advertisementsCount,
@@ -31,12 +37,18 @@ export async function getAdminDashboardStats() {
     paidPayments,
     blockedProvidersCount,
     expiredSubscriptionsCount,
+    providersLast7Days,
+    referralsLast7Days,
+    paidSubscriptionsCount,
+    trialActiveCount,
+    adsByCity,
+    pendingCategorySuggestions,
   ] = await Promise.all([
     prisma.provider.count({ where: { role: UserRole.PROVIDER } }),
     prisma.advertisement.count(),
     prisma.advertisement.count({
       where: {
-        premiumExpiresAt: { gt: new Date() },
+        premiumExpiresAt: { gt: now },
         status: AdvertisementStatus.APPROVED,
       },
     }),
@@ -50,17 +62,56 @@ export async function getAdminDashboardStats() {
         role: UserRole.PROVIDER,
         subscriptionExpiresAt: {
           not: null,
-          lte: new Date(),
+          lte: now,
         },
       },
     }),
+    prisma.provider.count({
+      where: {
+        role: UserRole.PROVIDER,
+        createdAt: { gte: weekAgo },
+      },
+    }),
+    prisma.referral.count({
+      where: { createdAt: { gte: weekAgo } },
+    }),
+    prisma.provider.count({
+      where: {
+        role: UserRole.PROVIDER,
+        status: ProviderStatus.ACTIVE,
+        subscriptionExpiresAt: { gt: now },
+        subscriptions: { some: {} },
+      },
+    }),
+    prisma.provider.count({
+      where: {
+        role: UserRole.PROVIDER,
+        status: ProviderStatus.ACTIVE,
+        subscriptionExpiresAt: { gt: now },
+        subscriptions: { none: {} },
+      },
+    }),
+    prisma.advertisement.groupBy({
+      by: ["city"],
+      where: { status: AdvertisementStatus.APPROVED },
+      _count: { _all: true },
+      take: 8,
+    }),
+    prisma.categorySuggestion.count({ where: { status: "PENDING" } }),
   ]);
 
   const activeSubscriptions = await prisma.provider.count({
     where: {
       role: UserRole.PROVIDER,
       status: ProviderStatus.ACTIVE,
-      subscriptionExpiresAt: { gt: new Date() },
+      subscriptionExpiresAt: { gt: now },
+    },
+  });
+
+  const signupsLast30Days = await prisma.provider.count({
+    where: {
+      role: UserRole.PROVIDER,
+      createdAt: { gte: monthAgo },
     },
   });
 
@@ -73,6 +124,18 @@ export async function getAdminDashboardStats() {
     activeSubscriptions,
     blockedProvidersCount,
     expiredSubscriptionsCount,
+    providersLast7Days,
+    referralsLast7Days,
+    paidSubscriptionsCount,
+    trialActiveCount,
+    signupsLast30Days,
+    pendingCategorySuggestions,
+    adsByCity: adsByCity
+      .map((row) => ({
+        city: row.city,
+        count: row._count._all,
+      }))
+      .sort((a, b) => b.count - a.count),
   };
 }
 

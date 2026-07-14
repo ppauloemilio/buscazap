@@ -87,6 +87,22 @@ export const updateProviderProfileSchema = z.object({
     },
     z.string().max(500, "Bio deve ter no máximo 500 caracteres").optional()
   ),
+  businessHours: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return value;
+      const trimmed = value.trim();
+      return trimmed.length === 0 ? undefined : trimmed;
+    },
+    z.string().max(120, "Horário deve ter no máximo 120 caracteres").optional()
+  ),
+  responseHint: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return value;
+      const trimmed = value.trim();
+      return trimmed.length === 0 ? undefined : trimmed;
+    },
+    z.string().max(120, "Dica de resposta deve ter no máximo 120 caracteres").optional()
+  ),
 });
 
 export const updateProviderPasswordSchema = z

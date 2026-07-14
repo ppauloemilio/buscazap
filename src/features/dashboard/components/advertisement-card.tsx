@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdvertisementCover } from "@/components/advertisement/advertisement-cover";
+import { FavoriteButton } from "@/features/favorites/favorite-button";
 import type { Advertisement } from "@/domain/entities";
 import {
   buildWhatsAppLink,
@@ -24,6 +25,8 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
   const locationLabel = advertisement.location.neighborhood
     ? `${advertisement.location.neighborhood}, ${advertisement.location.city}`
     : advertisement.location.city;
+
+  const hasReviews = advertisement.reviewCount > 0;
 
   return (
     <Card className="group overflow-hidden transition-shadow hover:shadow-md">
@@ -49,6 +52,9 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
         >
           {getAdvertisementTypeLabel(advertisement.type)}
         </Badge>
+        <div className="absolute bottom-1.5 right-1.5">
+          <FavoriteButton advertisementId={advertisement.id} />
+        </div>
       </div>
 
       <CardContent className="space-y-1.5 p-2.5">
@@ -56,13 +62,15 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
           <Badge variant="outline" className="px-1.5 py-0 text-[10px] leading-4">
             {advertisement.category}
           </Badge>
-          <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-            <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-            <span className="font-medium text-foreground">
-              {formatRating(advertisement.rating)}
-            </span>
-            <span>({advertisement.reviewCount})</span>
-          </div>
+          {hasReviews && (
+            <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+              <span className="font-medium text-foreground">
+                {formatRating(advertisement.rating)}
+              </span>
+              <span>({advertisement.reviewCount})</span>
+            </div>
+          )}
         </div>
 
         <Link href={`/anuncio/${advertisement.id}`}>
@@ -84,7 +92,7 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
           <Button
             variant="whatsapp"
             size="sm"
-            className="h-7 flex-1 px-2 text-[11px]"
+            className="h-8 flex-1 px-2 text-xs font-semibold"
             asChild
           >
             <a
@@ -93,17 +101,17 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
               rel="noopener noreferrer"
               aria-label={`Contatar ${advertisement.title} via WhatsApp`}
             >
-              <MessageCircle className="h-3 w-3" />
+              <MessageCircle className="h-3.5 w-3.5" />
               WhatsApp
             </a>
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="h-7 px-2 text-[11px]"
+            className="h-8 px-2 text-[11px]"
             asChild
           >
-            <Link href={`/anuncio/${advertisement.id}`}>Ver mais</Link>
+            <Link href={`/anuncio/${advertisement.id}`}>Ver</Link>
           </Button>
         </div>
       </CardContent>

@@ -30,6 +30,10 @@ export interface Advertisement {
   readonly isPremium: boolean;
   readonly premiumExpiresAt?: string;
   readonly providerId?: string;
+  readonly providerName?: string;
+  readonly providerBio?: string;
+  readonly providerBusinessHours?: string;
+  readonly providerResponseHint?: string;
   readonly createdAt: string;
 }
 

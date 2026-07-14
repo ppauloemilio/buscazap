@@ -21,6 +21,8 @@ model Provider {
   city                  String?
   neighborhood          String?
   bio                   String?
+  businessHours         String?
+  responseHint          String?
   referralCode          String          @unique
   freePremiumCredits    Int             @default(0)
   referredById          String?
@@ -71,6 +73,19 @@ model Advertisement {
   updatedAt        DateTime              @updatedAt
   premiumBoosts    PremiumBoost[]
   images           AdvertisementImage[]
+  reviews          Review[]
+}
+
+model Review {
+  id              String        @id @default(cuid())
+  advertisementId String
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+  authorName      String
+  rating          Int
+  comment         String?
+  createdAt       DateTime      @default(now())
+
+  @@index([advertisementId])
 }
 
 model AdvertisementImage {

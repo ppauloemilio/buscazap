@@ -105,8 +105,8 @@ export default async function AdminCategoriesPage({
               Promova para o catálogo oficial, mescle em uma existente ou dispense a sugestão.
             </p>
             {pendingSuggestions.map((suggestion) => (
-              <div key={suggestion.id} className="rounded-lg border bg-card p-4">
-                <div className="mb-4 flex flex-wrap items-center gap-2">
+              <div key={suggestion.id} className="rounded-lg border bg-card p-2.5">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
                   <h3 className="font-semibold">{suggestion.name}</h3>
                   <Badge variant="outline">{suggestion.advertisementsCount} anúncio(s)</Badge>
                   {suggestion.advertisementsCount >= 3 && (
