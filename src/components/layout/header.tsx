@@ -29,6 +29,12 @@ export async function Header() {
           >
             Categorias
           </Link>
+          <Link
+            href="/como-funciona"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Como funciona
+          </Link>
           {!provider && (
             <Link
               href="/anunciar"

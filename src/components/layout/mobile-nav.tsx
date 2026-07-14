@@ -82,6 +82,13 @@ export function MobileNav({ isLoggedIn, isAdmin, canPublish }: MobileNavProps) {
                 >
                   Categorias
                 </Link>
+                <Link
+                  href="/como-funciona"
+                  onClick={close}
+                  className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
+                >
+                  Como funciona
+                </Link>
                 {!isLoggedIn && (
                   <Link
                     href="/anunciar"
