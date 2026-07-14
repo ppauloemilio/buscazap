@@ -39,22 +39,25 @@ export default function HowItWorksPage() {
   return (
     <>
       <PageHeader
+        compact
         title="Como funciona"
         description="Encontre e entre em contato em poucos passos"
       />
-      <section className="container mx-auto max-w-3xl px-4 py-10">
-        <div className="space-y-6">
+      <section className="container mx-auto max-w-3xl px-4 py-5">
+        <div className="space-y-2.5">
           {STEPS.map((step) => (
             <div
               key={step.title}
-              className="flex gap-4 rounded-xl border bg-card p-5"
+              className="flex gap-3 rounded-xl border bg-card p-3"
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-whatsapp/10">
-                <step.icon className="h-6 w-6 text-whatsapp" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-whatsapp/10">
+                <step.icon className="h-4 w-4 text-whatsapp" />
               </div>
               <div>
-                <h2 className="font-semibold text-foreground">{step.title}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <h2 className="text-sm font-semibold text-foreground">
+                  {step.title}
+                </h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   {step.description}
                 </p>
               </div>
@@ -62,7 +65,7 @@ export default function HowItWorksPage() {
           ))}
         </div>
 
-        <div className="mt-10 text-center">
+        <div className="mt-5 text-center">
           <Button variant="whatsapp" asChild>
             <Link href="/buscar">Começar a buscar</Link>
           </Button>
