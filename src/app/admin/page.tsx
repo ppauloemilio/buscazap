@@ -102,6 +102,9 @@ export default async function AdminDashboardPage() {
           <Link href="/admin/anuncios">Moderar anúncios</Link>
         </Button>
         <Button variant="outline" asChild>
+          <Link href="/admin/home">Visibilidade da home</Link>
+        </Button>
+        <Button variant="outline" asChild>
           <Link href="/admin/usuarios">Ver usuários</Link>
         </Button>
         <Button variant="outline" asChild>

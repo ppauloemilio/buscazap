@@ -184,3 +184,11 @@ model CatalogCity {
 
   @@unique([name, stateId])
 }
+
+model HomepageSetting {
+  id                    String   @id @default("default")
+  showUrgentSearches    Boolean  @default(false)
+  showPopularCategories Boolean  @default(false)
+  showCityExplorer      Boolean  @default(false)
+  updatedAt             DateTime @updatedAt
+}

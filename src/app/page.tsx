@@ -5,7 +5,6 @@ import { StatsSection } from "@/features/dashboard/components/stats-section";
 import { CategoryGrid } from "@/features/dashboard/components/category-grid";
 import { AdvertisementSection } from "@/features/dashboard/components/advertisement-section";
 import { CityExplorer } from "@/features/dashboard/components/city-explorer";
-import { HowItWorks } from "@/features/dashboard/components/how-it-works";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 
 export default async function HomePage() {
@@ -14,11 +13,12 @@ export default async function HomePage() {
     getCurrentProvider(),
   ]);
   const isAdmin = provider ? isAdminProvider(provider) : false;
+  const { homepageSettings } = data;
 
   return (
     <>
       <HeroSearch cities={data.cityNames} />
-      <UrgentSearches />
+      {homepageSettings.showUrgentSearches && <UrgentSearches />}
       {isAdmin && <StatsSection stats={data.stats} />}
       <AdvertisementSection
         title="Anúncios"
@@ -26,9 +26,12 @@ export default async function HomePage() {
         advertisements={data.homeAdvertisements}
         viewAllHref="/buscar"
       />
-      <CategoryGrid categories={data.categories} />
-      <CityExplorer cities={data.cityNames} />
-      <HowItWorks />
+      {homepageSettings.showPopularCategories && (
+        <CategoryGrid categories={data.categories} />
+      )}
+      {homepageSettings.showCityExplorer && (
+        <CityExplorer cities={data.cityNames} />
+      )}
     </>
   );
 }

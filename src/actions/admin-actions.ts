@@ -12,6 +12,7 @@ import {
   updateProviderStatusAsAdmin,
   updateReportStatusAsAdmin,
 } from "@/application/services/admin-service";
+import { updateHomepageSettings } from "@/application/services/homepage-settings-service";
 import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
@@ -237,3 +238,19 @@ export async function submitReportAction(formData: FormData) {
 
   redirect("/denunciar?sent=1");
 }
+
+export async function updateHomepageSettingsAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  await updateHomepageSettings({
+    showUrgentSearches: formData.get("showUrgentSearches") === "on",
+    showPopularCategories: formData.get("showPopularCategories") === "on",
+    showCityExplorer: formData.get("showCityExplorer") === "on",
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin/home");
+  redirect("/admin/home?saved=1");
+}
+

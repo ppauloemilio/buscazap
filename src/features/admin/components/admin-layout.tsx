@@ -11,6 +11,7 @@ import {
   ScrollText,
   Receipt,
   LogOut,
+  Home,
 } from "lucide-react";
 import { logoutAdminAction } from "@/actions/admin-actions";
 import { getCurrentAdmin } from "@/lib/admin-session";
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Visão geral", icon: LayoutDashboard },
+  { href: "/admin/home", label: "Home", icon: Home },
   { href: "/admin/usuarios", label: "Usuários", icon: Users },
   { href: "/admin/anuncios", label: "Anúncios", icon: Megaphone },
   { href: "/admin/categorias", label: "Categorias", icon: Tags },
