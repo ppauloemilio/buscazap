@@ -23,7 +23,7 @@ async function main() {
     where: { email: "demo@buscazap.com.br" },
     update: { role: "PROVIDER" },
     create: {
-      name: "Demo Prestador",
+      name: "Demo Anunciante",
       email: "demo@buscazap.com.br",
       whatsapp: "5511999999999",
       passwordHash,
@@ -32,7 +32,7 @@ async function main() {
       state: "SP",
       city: "São Paulo",
       neighborhood: "Centro",
-      bio: "Prestador de demonstração do BuscaZap.",
+      bio: "Anunciante de demonstração do BuscaZap.",
       subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     },
   });

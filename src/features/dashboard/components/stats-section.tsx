@@ -13,7 +13,7 @@ interface StatsSectionProps {
 
 const STAT_ITEMS = [
   { key: "totalAdvertisements" as const, label: "Anúncios ativos", icon: Megaphone },
-  { key: "totalProviders" as const, label: "Prestadores", icon: Users },
+  { key: "totalProviders" as const, label: "Anunciantes", icon: Users },
   { key: "totalCities" as const, label: "Cidades", icon: MapPin },
   { key: "totalCategories" as const, label: "Categorias", icon: LayoutGrid },
 ];

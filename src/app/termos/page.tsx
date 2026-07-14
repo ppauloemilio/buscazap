@@ -14,12 +14,12 @@ const SECTIONS = [
   {
     title: "2. Uso da plataforma",
     content:
-      "O BuscaZap é uma plataforma de intermediação de contatos. Não nos responsabilizamos pelas negociações realizadas entre consumidores e prestadores.",
+      "O BuscaZap é uma plataforma de intermediação de contatos. Não nos responsabilizamos pelas negociações realizadas entre consumidores e anunciantes.",
   },
   {
     title: "3. Anúncios",
     content:
-      "Prestadores são responsáveis pelo conteúdo de seus anúncios. Reservamo-nos o direito de moderar, rejeitar ou remover anúncios que violem nossas políticas.",
+      "Anunciantes são responsáveis pelo conteúdo de seus anúncios. Reservamo-nos o direito de moderar, rejeitar ou remover anúncios que violem nossas políticas.",
   },
   {
     title: "4. Conduta do usuário",

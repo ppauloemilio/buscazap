@@ -21,7 +21,7 @@ const FAQ_ITEMS = [
   {
     question: "Como anuncio meu serviço?",
     answer:
-      "Acesse a página Anunciar e crie sua conta de prestador para cadastrar seus anúncios.",
+      "Acesse a página Anunciar e crie sua conta de anunciante para cadastrar seus anúncios.",
   },
   {
     question: "Como denuncio um anúncio?",

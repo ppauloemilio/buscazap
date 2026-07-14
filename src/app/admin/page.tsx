@@ -18,7 +18,7 @@ export default async function AdminDashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Prestadores
+              Anunciantes
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -88,7 +88,7 @@ export default async function AdminDashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Prestadores bloqueados
+              Anunciantes bloqueados
             </CardTitle>
           </CardHeader>
           <CardContent>

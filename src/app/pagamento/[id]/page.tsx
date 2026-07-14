@@ -16,7 +16,7 @@ interface PaymentPageProps {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  [PaymentType.SUBSCRIPTION]: "Assinatura mensal do prestador",
+  [PaymentType.SUBSCRIPTION]: "Assinatura mensal do anunciante",
   [PaymentType.PREMIUM_BOOST]: "Destaque premium do anúncio (30 dias)",
 };
 

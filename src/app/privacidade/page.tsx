@@ -19,7 +19,7 @@ const SECTIONS = [
   {
     title: "Compartilhamento",
     content:
-      "Não vendemos seus dados pessoais. Informações de contato em anúncios são exibidas conforme autorizado pelo prestador.",
+      "Não vendemos seus dados pessoais. Informações de contato em anúncios são exibidas conforme autorizado pelo anunciante.",
   },
   {
     title: "Seus direitos",

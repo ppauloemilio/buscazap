@@ -56,7 +56,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
     <AdminLayout>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Usuários (prestadores)</h2>
+          <h2 className="text-xl font-semibold">Usuários (anunciantes)</h2>
           {isExpiredFilter && (
             <p className="mt-1 text-sm text-muted-foreground">
               Exibindo apenas usuários com assinatura vencida.
@@ -131,7 +131,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
       {providers.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            Nenhum prestador encontrado.
+            Nenhum anunciante encontrado.
           </CardContent>
         </Card>
       ) : (

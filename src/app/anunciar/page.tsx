@@ -33,7 +33,7 @@ export default async function AdvertisePage() {
           </div>
 
           <h2 className="mb-4 text-xl font-semibold text-foreground">
-            Planos para prestadores
+            Planos para anunciantes
           </h2>
 
           <ul className="mb-8 space-y-3">
@@ -73,7 +73,7 @@ export default async function AdvertisePage() {
             ) : (
               <>
                 <Button variant="whatsapp" asChild>
-                  <Link href="/cadastro">Criar conta de prestador</Link>
+                  <Link href="/cadastro">Criar conta de anunciante</Link>
                 </Button>
                 <Button variant="outline" asChild>
                   <Link href="/entrar">Já tenho conta</Link>

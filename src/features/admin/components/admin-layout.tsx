@@ -48,7 +48,7 @@ export async function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/painel">Painel prestador</Link>
+            <Link href="/painel">Painel anunciante</Link>
           </Button>
           <form action={logoutAdminAction}>
             <Button type="submit" variant="outline" size="sm">

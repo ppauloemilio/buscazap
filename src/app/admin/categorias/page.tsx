@@ -58,7 +58,7 @@ export default async function AdminCategoriesPage({
     <AdminLayout>
       <h2 className="mb-2 text-xl font-semibold">Categorias</h2>
       <p className="mb-6 text-sm text-muted-foreground">
-        Gerencie as categorias exibidas na busca, nos anúncios e no cadastro de prestadores.
+        Gerencie as categorias exibidas na busca, nos anúncios e no cadastro de anunciantes.
       </p>
 
       {params.error && (
@@ -101,7 +101,7 @@ export default async function AdminCategoriesPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Prestadores informaram estas categorias ao escolher &quot;Outro&quot; ao criar anúncios.
+              Anunciantes informaram estas categorias ao escolher &quot;Outro&quot; ao criar anúncios.
               Promova para o catálogo oficial, mescle em uma existente ou dispense a sugestão.
             </p>
             {pendingSuggestions.map((suggestion) => (

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export const metadata: Metadata = {
-  title: "Cadastro de prestador",
+  title: "Cadastro de anunciante",
 };
 
 interface RegisterPageProps {
@@ -20,7 +20,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   return (
     <>
       <PageHeader
-        title="Criar conta de prestador"
+        title="Criar conta de anunciante"
         description="Cadastre-se para publicar seus anúncios no BuscaZap"
       />
       <section className="container mx-auto max-w-md px-4 py-10">
