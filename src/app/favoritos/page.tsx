@@ -9,13 +9,15 @@ export const metadata: Metadata = {
 
 export default function FavoritesPage() {
   return (
-    <section className="container mx-auto px-4 py-6">
+    <>
       <PageHeader
         title="Favoritos"
         description="Seus contatos salvos neste aparelho."
         compact
       />
-      <FavoritesList />
-    </section>
+      <section className="container mx-auto px-4 py-5 md:py-6">
+        <FavoritesList />
+      </section>
+    </>
   );
 }

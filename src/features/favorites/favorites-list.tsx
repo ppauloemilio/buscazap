@@ -35,8 +35,8 @@ export function FavoritesList() {
 
   if (favoriteIds.length === 0 || ads.length === 0) {
     return (
-      <div className="rounded-lg border px-4 py-8 text-center">
-        <Heart className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center rounded-xl border bg-card px-6 py-10 text-center">
+        <Heart className="mb-3 h-10 w-10 text-muted-foreground" />
         <p className="mb-3 text-sm text-muted-foreground">
           Você ainda não salvou anúncios. Toque no coração para guardar contatos.
         </p>
@@ -48,7 +48,7 @@ export function FavoritesList() {
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
       {ads.map((ad) => (
         <AdvertisementCard key={ad.id} advertisement={ad} />
       ))}
