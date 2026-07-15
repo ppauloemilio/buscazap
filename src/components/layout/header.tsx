@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Search, User, LayoutDashboard, Shield, Plus, LogOut } from "lucide-react";
+import { Search, User, LayoutDashboard, Plus, LogOut } from "lucide-react";
 import { logoutProviderAction } from "@/actions/provider-actions";
+import { AdminViewSwitcher } from "@/components/layout/admin-view-switcher";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ export async function Header() {
   const provider = await getCurrentProvider();
   const isAdmin = provider ? isAdminRole(provider.role) : false;
   const canPublish = provider ? canProviderPublish(provider) : false;
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="relative container mx-auto flex h-16 items-center justify-between px-4">
@@ -65,6 +67,23 @@ export async function Header() {
               </Link>
             </Button>
           )}
+          {isAdmin ? (
+            <AdminViewSwitcher className="hidden md:inline-flex" />
+          ) : provider ? (
+            <Button variant="outline" size="sm" className="hidden md:inline-flex" asChild>
+              <Link href="/painel">
+                <LayoutDashboard className="h-4 w-4" />
+                Painel
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="hidden md:inline-flex" asChild>
+              <Link href="/entrar">
+                <User className="h-4 w-4" />
+                Entrar
+              </Link>
+            </Button>
+          )}
           {provider && (
             <form action={logoutProviderAction}>
               <Button
@@ -78,25 +97,6 @@ export async function Header() {
               </Button>
             </form>
           )}
-          <Button variant="outline" size="sm" className="hidden md:inline-flex" asChild>
-            <Link href={provider ? (isAdmin ? "/admin" : "/painel") : "/entrar"}>
-              {provider ? (
-                <>
-                  {isAdmin ? (
-                    <Shield className="h-4 w-4" />
-                  ) : (
-                    <LayoutDashboard className="h-4 w-4" />
-                  )}
-                  {isAdmin ? "Admin" : "Painel"}
-                </>
-              ) : (
-                <>
-                  <User className="h-4 w-4" />
-                  Entrar
-                </>
-              )}
-            </Link>
-          </Button>
           {!provider && (
             <Button variant="whatsapp" size="sm" className="hidden md:inline-flex" asChild>
               <Link href="/anunciar">

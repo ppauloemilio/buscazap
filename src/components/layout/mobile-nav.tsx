@@ -9,11 +9,11 @@ import {
   X,
   User,
   LayoutDashboard,
-  Shield,
   Plus,
   LogOut,
 } from "lucide-react";
 import { logoutProviderAction } from "@/actions/provider-actions";
+import { AdminViewSwitcher } from "@/components/layout/admin-view-switcher";
 import { Button } from "@/components/ui/button";
 
 type MobileNavProps = {
@@ -117,28 +117,28 @@ export function MobileNav({ isLoggedIn, isAdmin, canPublish }: MobileNavProps) {
                   </Button>
                 )}
 
-                <Button variant="outline" size="sm" className="justify-start" asChild>
-                  <Link
-                    href={isLoggedIn ? (isAdmin ? "/admin" : "/painel") : "/entrar"}
-                    onClick={close}
-                  >
-                    {isLoggedIn ? (
-                      <>
-                        {isAdmin ? (
-                          <Shield className="h-4 w-4" />
-                        ) : (
+                {isAdmin ? (
+                  <AdminViewSwitcher fullWidth onNavigate={close} />
+                ) : (
+                  <Button variant="outline" size="sm" className="justify-start" asChild>
+                    <Link
+                      href={isLoggedIn ? "/painel" : "/entrar"}
+                      onClick={close}
+                    >
+                      {isLoggedIn ? (
+                        <>
                           <LayoutDashboard className="h-4 w-4" />
-                        )}
-                        {isAdmin ? "Admin" : "Painel"}
-                      </>
-                    ) : (
-                      <>
-                        <User className="h-4 w-4" />
-                        Entrar
-                      </>
-                    )}
-                  </Link>
-                </Button>
+                          Painel
+                        </>
+                      ) : (
+                        <>
+                          <User className="h-4 w-4" />
+                          Entrar
+                        </>
+                      )}
+                    </Link>
+                  </Button>
+                )}
 
                 {!isLoggedIn && (
                   <Button variant="whatsapp" size="sm" className="justify-start" asChild>
