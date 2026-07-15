@@ -95,7 +95,6 @@ export async function getAdminDashboardStats() {
       by: ["city"],
       where: { status: AdvertisementStatus.APPROVED },
       _count: { _all: true },
-      take: 8,
     }),
     prisma.categorySuggestion.count({ where: { status: "PENDING" } }),
   ]);
@@ -135,7 +134,8 @@ export async function getAdminDashboardStats() {
         city: row.city,
         count: row._count._all,
       }))
-      .sort((a, b) => b.count - a.count),
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8),
   };
 }
 
