@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryIcon } from "@/components/category/category-icon";
 import type { SearchCategoryOption } from "@/features/dashboard/components/hero-search";
+import { CitySelect } from "@/features/search/components/city-select";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 import {
   buildSearchHref,
@@ -103,22 +104,16 @@ export function SearchForm({
           />
         </div>
         <div className="relative sm:w-52">
-          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Sua cidade"
+          <CitySelect
+            cities={cities}
             value={city}
-            onChange={(e) => setCity(e.target.value)}
-            onBlur={() => setPreferredCity(city)}
-            list="search-cities"
-            className="pl-10"
-            aria-label="Cidade"
+            onChange={(nextCity) => {
+              setCity(nextCity);
+              setPreferredCity(nextCity);
+            }}
+            id="search-city"
+            className="sm:w-52"
           />
-          <datalist id="search-cities">
-            {cities.map((cityName) => (
-              <option key={cityName} value={cityName} />
-            ))}
-          </datalist>
         </div>
         <Button type="submit" variant="whatsapp" className="sm:w-auto">
           <Search className="h-4 w-4" />

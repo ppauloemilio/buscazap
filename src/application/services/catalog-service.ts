@@ -78,10 +78,23 @@ export async function listAllCities(stateId?: string) {
 }
 
 export async function listCityNamesForSearch() {
-  const cities = await listActiveCities();
-  const names = cities.map((city) => city.name);
-  return Array.from(
-    new Set([...PILOT_CITIES.map((city) => city.name), ...names])
+  markDataFetchDynamic();
+
+  const grouped = await prisma.advertisement.groupBy({
+    by: ["city"],
+    where: { status: AdvertisementStatus.APPROVED },
+  });
+
+  const names = grouped
+    .map((item) => item.city.trim())
+    .filter(Boolean);
+
+  if (names.length === 0) {
+    return PILOT_CITIES.map((city) => city.name);
+  }
+
+  return Array.from(new Set(names)).sort((a, b) =>
+    a.localeCompare(b, "pt-BR")
   );
 }
 

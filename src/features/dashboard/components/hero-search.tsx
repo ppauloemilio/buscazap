@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryIcon } from "@/components/category/category-icon";
+import { CitySelect } from "@/features/search/components/city-select";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 import {
   buildSearchHref,
@@ -33,12 +34,10 @@ export function HeroSearch({
   const [city, setCity] = useState("");
   const [category, setCategory] = useState("all");
   const [showFilters, setShowFilters] = useState(true);
-  const [cityReady, setCityReady] = useState(false);
 
   useEffect(() => {
     const preferredCity = getPreferredCity();
     if (preferredCity) setCity(preferredCity);
-    setCityReady(true);
   }, []);
 
   function goToSearch(input?: {
@@ -93,22 +92,16 @@ export function HeroSearch({
               />
             </div>
             <div className="relative sm:w-48">
-              <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={cityReady ? "Sua cidade" : "Cidade"}
+              <CitySelect
+                cities={cities}
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
-                onBlur={() => setPreferredCity(city)}
-                list="cities"
-                className="pl-10"
-                aria-label="Cidade"
+                onChange={(nextCity) => {
+                  setCity(nextCity);
+                  setPreferredCity(nextCity);
+                }}
+                id="hero-city"
+                className="sm:w-48"
               />
-              <datalist id="cities">
-                {cities.map((cityName) => (
-                  <option key={cityName} value={cityName} />
-                ))}
-              </datalist>
             </div>
           </div>
 
