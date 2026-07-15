@@ -9,7 +9,12 @@ export const createCategorySchema = z.object({
     .max(80)
     .optional()
     .transform((value) => (value ? slugify(value) : undefined)),
-  icon: z.string().trim().min(2).max(40).default("Tag"),
+  icon: z
+    .string()
+    .trim()
+    .min(1, "Selecione um emoji")
+    .max(32)
+    .default("🏷️"),
   sortOrder: z.coerce.number().int().min(0).max(999).default(0),
 });
 
@@ -71,7 +76,12 @@ export const promoteCategorySuggestionSchema = z.object({
     .max(80)
     .optional()
     .transform((value) => (value ? slugify(value) : undefined)),
-  icon: z.string().trim().min(2).max(40).default("Tag"),
+  icon: z
+    .string()
+    .trim()
+    .min(1, "Selecione um emoji")
+    .max(32)
+    .default("🏷️"),
   sortOrder: z.coerce.number().int().min(0).max(999).default(0),
 });
 

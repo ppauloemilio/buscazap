@@ -5,9 +5,9 @@ import {
   mergeCategorySuggestionAction,
   promoteCategorySuggestionAction,
 } from "@/actions/admin-catalog-actions";
-import { CATEGORY_ICON_OPTIONS } from "@/config/category-catalog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CategoryIconPicker } from "@/features/admin/components/category-icon-picker";
 
 interface AdminCategorySuggestionActionsProps {
   readonly suggestionId: string;
@@ -37,26 +37,15 @@ export function AdminCategorySuggestionActions({
     <div className="space-y-2.5 rounded-lg border border-dashed p-2.5">
       <p className="text-sm font-medium">Ações rápidas</p>
 
-      <form
-        action={promoteCategorySuggestionAction}
-        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5"
-      >
+      <form action={promoteCategorySuggestionAction} className="space-y-2">
         <input type="hidden" name="suggestionId" value={suggestionId} />
-        <Input name="name" defaultValue={name} placeholder="Nome oficial" required />
-        <Input name="slug" placeholder="Identificador na URL" />
-        <select
-          name="icon"
-          defaultValue="Tag"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-        >
-          {CATEGORY_ICON_OPTIONS.map((icon) => (
-            <option key={icon.value} value={icon.value}>
-              {icon.label}
-            </option>
-          ))}
-        </select>
-        <Input name="sortOrder" type="number" min={0} defaultValue={0} />
-        <Button type="submit" variant="whatsapp" size="sm" className="lg:col-span-5">
+        <div className="grid gap-2 sm:grid-cols-3">
+          <Input name="name" defaultValue={name} placeholder="Nome oficial" required />
+          <Input name="slug" placeholder="Identificador na URL" />
+          <Input name="sortOrder" type="number" min={0} defaultValue={0} />
+        </div>
+        <CategoryIconPicker name="icon" />
+        <Button type="submit" variant="whatsapp" size="sm">
           Promover
         </Button>
       </form>

@@ -179,7 +179,7 @@ model CatalogCategory {
   id        String   @id @default(cuid())
   name      String   @unique
   slug      String   @unique
-  icon      String   @default("Tag")
+  icon      String   @default("🏷️")
   isActive  Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())

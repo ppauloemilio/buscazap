@@ -6,13 +6,11 @@ import {
   updateCategoryAction,
 } from "@/actions/admin-catalog-actions";
 import { listAdminCategories, listPendingCategorySuggestions } from "@/application/services/admin-catalog-service";
-import {
-  CATEGORY_ICON_OPTIONS,
-  getCategoryIconLabel,
-} from "@/config/category-catalog";
+import { getCategoryIconLabel } from "@/config/category-catalog";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminCategorySuggestionActions } from "@/features/admin/components/admin-category-suggestion-actions";
 import { AdminDeleteButton } from "@/features/admin/components/admin-delete-button";
+import { CategoryIconPicker } from "@/features/admin/components/category-icon-picker";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -132,7 +130,7 @@ export default async function AdminCategoriesPage({
           <CardTitle className="text-base">Nova categoria</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={createCategoryAction} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <form action={createCategoryAction} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <FieldLabel htmlFor="new-category-name">Nome</FieldLabel>
               <Input id="new-category-name" name="name" placeholder="Ex.: Pet shop" required />
@@ -144,21 +142,6 @@ export default async function AdminCategoriesPage({
                 name="slug"
                 placeholder="Ex.: pet-shop"
               />
-            </div>
-            <div>
-              <FieldLabel htmlFor="new-category-icon">Ícone</FieldLabel>
-              <select
-                id="new-category-icon"
-                name="icon"
-                defaultValue="Tag"
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
-                {CATEGORY_ICON_OPTIONS.map((icon) => (
-                  <option key={icon.value} value={icon.value}>
-                    {icon.label}
-                  </option>
-                ))}
-              </select>
             </div>
             <div>
               <FieldLabel htmlFor="new-category-order">Ordem de exibição</FieldLabel>
@@ -175,6 +158,10 @@ export default async function AdminCategoriesPage({
                 Adicionar
               </Button>
             </div>
+            <div className="sm:col-span-2 lg:col-span-4">
+              <FieldLabel htmlFor="new-category-icon">Ícone (emoji WhatsApp)</FieldLabel>
+              <CategoryIconPicker id="new-category-icon" name="icon" />
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -183,7 +170,7 @@ export default async function AdminCategoriesPage({
         {categories.map((category) => (
           <Card key={category.id}>
             <CardContent className="space-y-4 p-4">
-              <form action={updateCategoryAction} className="grid gap-3 lg:grid-cols-6">
+              <form action={updateCategoryAction} className="grid gap-3 lg:grid-cols-5">
                 <input type="hidden" name="id" value={category.id} />
                 <div>
                   <FieldLabel>Nome</FieldLabel>
@@ -192,20 +179,6 @@ export default async function AdminCategoriesPage({
                 <div>
                   <FieldLabel>Identificador na URL</FieldLabel>
                   <Input name="slug" defaultValue={category.slug} />
-                </div>
-                <div>
-                  <FieldLabel>Ícone</FieldLabel>
-                  <select
-                    name="icon"
-                    defaultValue={category.icon}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                  >
-                    {CATEGORY_ICON_OPTIONS.map((icon) => (
-                      <option key={icon.value} value={icon.value}>
-                        {icon.label}
-                      </option>
-                    ))}
-                  </select>
                 </div>
                 <div>
                   <FieldLabel>Ordem</FieldLabel>
@@ -231,6 +204,10 @@ export default async function AdminCategoriesPage({
                   <Button type="submit" variant="outline" className="w-full">
                     Salvar
                   </Button>
+                </div>
+                <div className="lg:col-span-5">
+                  <FieldLabel>Ícone (emoji WhatsApp)</FieldLabel>
+                  <CategoryIconPicker name="icon" defaultValue={category.icon} />
                 </div>
               </form>
 
