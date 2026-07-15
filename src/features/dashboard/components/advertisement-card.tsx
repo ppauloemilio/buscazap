@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdvertisementCover } from "@/components/advertisement/advertisement-cover";
 import { FavoriteButton } from "@/features/favorites/favorite-button";
+import {
+  formatAdvertisementLocation,
+  getServiceAreaLabel,
+} from "@/config/service-area";
 import type { Advertisement } from "@/domain/entities";
 import {
   buildWhatsAppLink,
@@ -22,9 +26,11 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
     `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZap e gostaria de mais informações.`
   );
 
-  const locationLabel = advertisement.location.neighborhood
-    ? `${advertisement.location.neighborhood}, ${advertisement.location.city}`
-    : advertisement.location.city;
+  const locationLabel = formatAdvertisementLocation({
+    city: advertisement.location.city,
+    neighborhood: advertisement.location.neighborhood,
+  });
+  const serviceAreaLabel = getServiceAreaLabel(advertisement.serviceArea);
 
   const hasReviews = advertisement.reviewCount > 0;
 
@@ -84,9 +90,18 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
           {advertisement.description}
         </p>
 
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          <MapPin className="h-2.5 w-2.5 shrink-0" />
-          <span className="line-clamp-1">{locationLabel}</span>
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <MapPin className="h-2.5 w-2.5 shrink-0" />
+            <span className="line-clamp-1 font-medium text-foreground/80">
+              {locationLabel}
+            </span>
+          </div>
+          {serviceAreaLabel && (
+            <p className="pl-3.5 text-[10px] text-muted-foreground">
+              {serviceAreaLabel}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-1.5 pt-0.5">

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { CategoryIcon } from "@/components/category/category-icon";
 import type { SearchCategoryOption } from "@/features/dashboard/components/hero-search";
 import { CitySelect } from "@/features/search/components/city-select";
+import { NeighborhoodSelect } from "@/features/search/components/neighborhood-select";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 import {
   buildSearchHref,
@@ -18,25 +19,30 @@ import {
 interface SearchFormProps {
   readonly initialQuery?: string;
   readonly initialCity?: string;
+  readonly initialNeighborhood?: string;
   readonly initialCategory?: string;
   readonly initialPremium?: boolean;
   readonly initialSort?: string;
   readonly cities?: readonly string[];
+  readonly neighborhoods?: readonly string[];
   readonly categories?: readonly SearchCategoryOption[];
 }
 
 export function SearchForm({
   initialQuery = "",
   initialCity = "",
+  initialNeighborhood = "",
   initialCategory,
   initialPremium,
   initialSort,
   cities = POPULAR_CITIES,
+  neighborhoods = [],
   categories = [],
 }: SearchFormProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [city, setCity] = useState(initialCity);
+  const [neighborhood, setNeighborhood] = useState(initialNeighborhood);
   const [category, setCategory] = useState(initialCategory || "all");
   const [showFilters, setShowFilters] = useState(true);
 
@@ -44,6 +50,10 @@ export function SearchForm({
     setQuery(initialQuery);
     setCategory(initialCategory || "all");
   }, [initialQuery, initialCategory]);
+
+  useEffect(() => {
+    setNeighborhood(initialNeighborhood);
+  }, [initialNeighborhood]);
 
   useEffect(() => {
     if (initialCity) {
@@ -59,10 +69,12 @@ export function SearchForm({
   function navigate(next?: {
     readonly query?: string;
     readonly city?: string;
+    readonly neighborhood?: string;
     readonly category?: string;
   }) {
     const resolvedQuery = next?.query ?? query;
     const resolvedCity = next?.city ?? city;
+    const resolvedNeighborhood = next?.neighborhood ?? neighborhood;
     const resolvedCategory = next?.category ?? category;
 
     setPreferredCity(resolvedCity);
@@ -70,10 +82,13 @@ export function SearchForm({
     const href = buildSearchHref({
       query: resolvedQuery,
       city: resolvedCity,
+      neighborhood: resolvedCity ? resolvedNeighborhood : undefined,
       category: resolvedCategory === "all" ? undefined : resolvedCategory,
     });
 
-    const params = new URLSearchParams(href.includes("?") ? href.split("?")[1] : "");
+    const params = new URLSearchParams(
+      href.includes("?") ? href.split("?")[1] : ""
+    );
     if (initialPremium) params.set("premium", "true");
     if (initialSort) params.set("sort", initialSort);
 
@@ -91,8 +106,8 @@ export function SearchForm({
       onSubmit={handleSearch}
       className="rounded-xl border bg-card p-4 shadow-sm md:p-5"
     >
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <div className="relative min-w-0 flex-1 basis-full sm:basis-64">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
@@ -103,18 +118,29 @@ export function SearchForm({
             aria-label="Termo de busca"
           />
         </div>
-        <div className="relative sm:w-52">
-          <CitySelect
-            cities={cities}
-            value={city}
-            onChange={(nextCity) => {
-              setCity(nextCity);
-              setPreferredCity(nextCity);
-            }}
-            id="search-city"
-            className="sm:w-52"
-          />
-        </div>
+        <CitySelect
+          cities={cities}
+          value={city}
+          onChange={(nextCity) => {
+            setCity(nextCity);
+            setNeighborhood("");
+            setPreferredCity(nextCity);
+            navigate({ city: nextCity, neighborhood: "" });
+          }}
+          id="search-city"
+          className="sm:w-44"
+        />
+        <NeighborhoodSelect
+          neighborhoods={neighborhoods}
+          value={neighborhood}
+          disabled={!city}
+          onChange={(nextNeighborhood) => {
+            setNeighborhood(nextNeighborhood);
+            navigate({ neighborhood: nextNeighborhood });
+          }}
+          id="search-neighborhood"
+          className="sm:w-44"
+        />
         <Button type="submit" variant="whatsapp" className="sm:w-auto">
           <Search className="h-4 w-4" />
           Buscar
@@ -161,7 +187,11 @@ export function SearchForm({
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
               >
-                <CategoryIcon icon={item.icon} size="sm" className="text-[11px]" />
+                <CategoryIcon
+                  icon={item.icon}
+                  size="sm"
+                  className="text-[11px]"
+                />
                 {item.name}
               </button>
             ))}

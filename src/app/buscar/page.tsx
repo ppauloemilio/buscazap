@@ -8,6 +8,7 @@ import {
 import {
   getCategoriesWithCounts,
   listCityNamesForSearch,
+  listNeighborhoodNamesForSearch,
 } from "@/application/services/catalog-service";
 import { PageHeader } from "@/components/layout/page-header";
 import { AdvertisementCard } from "@/features/dashboard/components/advertisement-card";
@@ -19,6 +20,7 @@ interface SearchPageProps {
   readonly searchParams: Promise<{
     readonly q?: string;
     readonly city?: string;
+    readonly neighborhood?: string;
     readonly category?: string;
     readonly type?: string;
     readonly premium?: string;
@@ -34,13 +36,16 @@ function buildDescription(
   count: number,
   query?: string,
   city?: string,
+  neighborhood?: string,
   category?: string
 ): string {
   const parts: string[] = [];
 
   if (query) parts.push(`"${query}"`);
   if (category) parts.push(`em ${category}`);
-  if (city) parts.push(`na cidade de ${city}`);
+  if (neighborhood && city) parts.push(`em ${neighborhood}, ${city}`);
+  else if (city) parts.push(`na cidade de ${city}`);
+  else if (neighborhood) parts.push(`no bairro ${neighborhood}`);
 
   if (parts.length === 0) {
     return `${count} anúncio(s) encontrado(s)`;
@@ -51,19 +56,21 @@ function buildDescription(
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
-  const [categoryName, cityNames, categories] = await Promise.all([
+  const [categoryName, cityNames, neighborhoods, categories] = await Promise.all([
     params.category
       ? getCategoryNameBySlug(params.category).then(
           (name) => name ?? params.category
         )
       : Promise.resolve(undefined),
     listCityNamesForSearch(),
+    listNeighborhoodNamesForSearch(params.city),
     getCategoriesWithCounts(),
   ]);
 
   const results = await searchAdvertisements({
     query: params.q ?? "",
     city: params.city,
+    neighborhood: params.neighborhood,
     category: params.category,
     premium: params.premium === "true",
     sort: params.sort,
@@ -73,6 +80,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     results.length,
     params.q,
     params.city,
+    params.neighborhood,
     categoryName
   );
 
@@ -83,10 +91,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <SearchForm
           initialQuery={params.q ?? ""}
           initialCity={params.city ?? ""}
+          initialNeighborhood={params.neighborhood ?? ""}
           initialCategory={params.category}
           initialPremium={params.premium === "true"}
           initialSort={params.sort}
           cities={cityNames}
+          neighborhoods={neighborhoods}
           categories={categories.map((item) => ({
             name: item.name,
             slug: item.slug,

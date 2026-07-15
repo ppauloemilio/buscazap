@@ -8,6 +8,7 @@ import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES } from "@/config/pricing";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
+import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { Badge } from "@/components/ui/badge";
@@ -148,20 +149,28 @@ export default async function AdminEditAdvertisementPage({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium">Bairro (opcional)</label>
+            <label className="mb-1 block text-sm font-medium">Bairro</label>
             <Input
               name="neighborhood"
               defaultValue={advertisement.neighborhood ?? ""}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">WhatsApp do anúncio</label>
-            <Input
-              name="whatsappNumber"
-              defaultValue={advertisement.whatsappNumber}
+              placeholder="Ex.: Nazaré, Marco..."
               required
+              minLength={2}
             />
           </div>
+          <ServiceAreaField
+            defaultValue={advertisement.serviceArea}
+            showHint={false}
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">WhatsApp do anúncio</label>
+          <Input
+            name="whatsappNumber"
+            defaultValue={advertisement.whatsappNumber}
+            required
+          />
         </div>
 
         <div>

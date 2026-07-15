@@ -324,6 +324,7 @@ export async function createAdvertisementAction(formData: FormData) {
     city: formData.get("city"),
     state: formData.get("state"),
     neighborhood: formData.get("neighborhood") || undefined,
+    serviceArea: formData.get("serviceArea"),
     whatsappNumber: formData.get("whatsappNumber"),
     withPremium: formData.get("withPremium") === "on",
   });
@@ -355,6 +356,7 @@ export async function createAdvertisementAction(formData: FormData) {
     city: parsed.data.city,
     state: parsed.data.state,
     neighborhood: parsed.data.neighborhood,
+    serviceArea: parsed.data.serviceArea,
     whatsappNumber: parsed.data.whatsappNumber,
     withPremium: parsed.data.withPremium,
   };

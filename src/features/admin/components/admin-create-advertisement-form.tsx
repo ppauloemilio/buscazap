@@ -6,6 +6,7 @@ import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES } from "@/config/pricing";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
+import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -120,8 +121,21 @@ export function AdminCreateAdvertisementForm({
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium">Bairro (opcional)</label>
-              <Input name="neighborhood" placeholder="Ex.: Centro" />
+              <label className="mb-1 block text-xs font-medium">Bairro</label>
+              <Input
+                name="neighborhood"
+                placeholder="Ex.: Centro, Nazaré..."
+                required
+                minLength={2}
+              />
+            </div>
+            <div>
+              <ServiceAreaField
+                id={`serviceArea-${providerId}`}
+                labelClassName="mb-1 block text-xs font-medium"
+                selectClassName="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                showHint={false}
+              />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium">WhatsApp do anúncio</label>

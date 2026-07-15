@@ -14,6 +14,10 @@ import { FavoriteButton } from "@/features/favorites/favorite-button";
 import { ReviewForm } from "@/features/dashboard/components/review-form";
 import { StickyWhatsAppCta } from "@/features/dashboard/components/sticky-whatsapp-cta";
 import {
+  formatAdvertisementLocation,
+  getServiceAreaLabel,
+} from "@/config/service-area";
+import {
   buildWhatsAppLink,
   formatRating,
   getAdvertisementTypeLabel,
@@ -54,9 +58,12 @@ export default async function AdvertisementPage({ params }: AdvertisementPagePro
     `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZap e gostaria de mais informações.`
   );
 
-  const locationLabel = advertisement.location.neighborhood
-    ? `${advertisement.location.neighborhood}, ${advertisement.location.city} - ${advertisement.location.state}`
-    : `${advertisement.location.city} - ${advertisement.location.state}`;
+  const locationLabel = formatAdvertisementLocation({
+    city: advertisement.location.city,
+    state: advertisement.location.state,
+    neighborhood: advertisement.location.neighborhood,
+  });
+  const serviceAreaLabel = getServiceAreaLabel(advertisement.serviceArea);
 
   const hasReviews = advertisement.reviewCount > 0;
 
@@ -128,9 +135,16 @@ export default async function AdvertisementPage({ params }: AdvertisementPagePro
             className="mb-4 text-base leading-relaxed"
           />
 
-          <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4 shrink-0 text-whatsapp" />
-            {locationLabel}
+          <div className="mb-4 space-y-1">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4 shrink-0 text-whatsapp" />
+              <span className="font-medium text-foreground">{locationLabel}</span>
+            </div>
+            {serviceAreaLabel && (
+              <p className="pl-6 text-sm text-muted-foreground">
+                Atendimento: {serviceAreaLabel}
+              </p>
+            )}
           </div>
 
           {(advertisement.providerBusinessHours ||

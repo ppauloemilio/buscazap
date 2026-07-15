@@ -1,4 +1,8 @@
-import type { AdvertisementStatus, AdvertisementType } from "@/domain/enums";
+import type {
+  AdvertisementStatus,
+  AdvertisementType,
+  ServiceArea,
+} from "@/domain/enums";
 
 export interface Category {
   readonly id: string;
@@ -22,6 +26,7 @@ export interface Advertisement {
   readonly status: AdvertisementStatus;
   readonly category: string;
   readonly location: Location;
+  readonly serviceArea: ServiceArea;
   readonly rating: number;
   readonly reviewCount: number;
   readonly imageUrl?: string;

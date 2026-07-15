@@ -25,6 +25,14 @@ export enum AdvertisementType {
   SERVICE = "SERVICE",
 }
 
+/** Área onde o anunciante atende. */
+export enum ServiceArea {
+  NEIGHBORHOOD_ONLY = "NEIGHBORHOOD_ONLY",
+  NEARBY = "NEARBY",
+  CITY_WIDE = "CITY_WIDE",
+  ON_REQUEST = "ON_REQUEST",
+}
+
 export enum PaymentType {
   SUBSCRIPTION = "SUBSCRIPTION",
   PREMIUM_BOOST = "PREMIUM_BOOST",

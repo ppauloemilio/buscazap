@@ -1,4 +1,4 @@
-import type { AdvertisementType } from "@/domain/enums";
+import type { AdvertisementType, ServiceArea } from "@/domain/enums";
 import type { SearchFilters } from "@/domain/entities";
 import { AdvertisementStatus, ProviderStatus } from "@/domain/enums";
 import { getCategoryBySlug } from "@/application/services/catalog-service";
@@ -55,6 +55,15 @@ export async function findPublicAdvertisements(
     const cityQuery = normalizeSearchText(filters.city.trim());
     results = results.filter((ad) =>
       normalizeSearchText(ad.location.city).includes(cityQuery)
+    );
+  }
+
+  if (filters.neighborhood?.trim()) {
+    const neighborhoodQuery = normalizeSearchText(filters.neighborhood.trim());
+    results = results.filter((ad) =>
+      normalizeSearchText(ad.location.neighborhood ?? "").includes(
+        neighborhoodQuery
+      )
     );
   }
 
@@ -235,6 +244,7 @@ export async function createAdvertisement(input: {
   city: string;
   state: string;
   neighborhood?: string;
+  serviceArea?: ServiceArea;
   whatsappNumber: string;
   withPremium?: boolean;
 }) {
@@ -249,6 +259,7 @@ export async function createAdvertisement(input: {
       city: input.city,
       state: input.state,
       neighborhood: input.neighborhood,
+      serviceArea: input.serviceArea,
       whatsappNumber: input.whatsappNumber,
       status: "APPROVED",
     },

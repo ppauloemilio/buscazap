@@ -98,6 +98,39 @@ export async function listCityNamesForSearch() {
   );
 }
 
+export async function listNeighborhoodNamesForSearch(city?: string) {
+  markDataFetchDynamic();
+
+  const cityFilter = city?.trim();
+  const rows = await prisma.advertisement.findMany({
+    where: {
+      status: AdvertisementStatus.APPROVED,
+      neighborhood: { not: null },
+    },
+    select: { city: true, neighborhood: true },
+  });
+
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "");
+
+  const cityQuery = cityFilter ? normalize(cityFilter) : null;
+
+  const names = rows
+    .filter((row) => {
+      if (!row.neighborhood?.trim()) return false;
+      if (!cityQuery) return true;
+      return normalize(row.city).includes(cityQuery);
+    })
+    .map((row) => row.neighborhood!.trim());
+
+  return Array.from(new Set(names)).sort((a, b) =>
+    a.localeCompare(b, "pt-BR")
+  );
+}
+
 export async function getCategoriesWithCounts(): Promise<Category[]> {
   const [categories, grouped] = await Promise.all([
     listActiveCategories(),

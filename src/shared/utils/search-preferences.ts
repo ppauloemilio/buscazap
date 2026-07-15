@@ -29,6 +29,7 @@ export function setPreferredCity(city: string): void {
 export function buildSearchHref(input: {
   readonly query?: string;
   readonly city?: string;
+  readonly neighborhood?: string;
   readonly category?: string;
   readonly type?: string;
 }): string {
@@ -36,6 +37,9 @@ export function buildSearchHref(input: {
 
   if (input.query?.trim()) params.set("q", input.query.trim());
   if (input.city?.trim()) params.set("city", input.city.trim());
+  if (input.neighborhood?.trim()) {
+    params.set("neighborhood", input.neighborhood.trim());
+  }
   if (input.category?.trim()) params.set("category", input.category.trim());
   if (input.type && input.type !== "all") params.set("type", input.type);
 

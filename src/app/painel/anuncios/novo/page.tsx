@@ -5,6 +5,7 @@ import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { AdvertisementImageFields } from "@/features/panel/components/advertisement-image-fields";
+import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { getCurrentProvider, canProviderPublish } from "@/lib/provider-session";
 import {
@@ -131,11 +132,23 @@ export default async function NewAdvertisementPage({
           </div>
         </div>
 
-        <div>
-          <label htmlFor="neighborhood" className="mb-1 block text-sm font-medium">
-            Bairro (opcional)
-          </label>
-          <Input id="neighborhood" name="neighborhood" />
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div>
+            <label htmlFor="neighborhood" className="mb-1 block text-sm font-medium">
+              Bairro
+            </label>
+            <Input
+              id="neighborhood"
+              name="neighborhood"
+              placeholder="Ex.: Nazaré, Marco, Centro..."
+              required
+              minLength={2}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Onde você está ou atende principalmente.
+            </p>
+          </div>
+          <ServiceAreaField />
         </div>
 
         <div>

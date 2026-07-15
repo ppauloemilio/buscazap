@@ -3,6 +3,7 @@ import {
   AdvertisementType,
   PaymentStatus,
   ProviderStatus,
+  ServiceArea,
   UserRole,
 } from "@/domain/enums";
 import { PRICING } from "@/config/pricing";
@@ -388,6 +389,7 @@ export async function createAdvertisementAsAdmin(input: {
   readonly city: string;
   readonly state: string;
   readonly neighborhood?: string;
+  readonly serviceArea?: ServiceArea;
   readonly whatsappNumber?: string;
 }) {
   const provider = await prisma.provider.findUnique({
@@ -445,6 +447,7 @@ export async function createAdvertisementAsAdmin(input: {
     city: input.city,
     state: input.state,
     neighborhood: input.neighborhood,
+    serviceArea: input.serviceArea,
     whatsappNumber,
   });
 
@@ -497,6 +500,7 @@ export async function findAdvertisementForAdminEdit(advertisementId: string) {
     city: advertisement.city,
     state: advertisement.state,
     neighborhood: advertisement.neighborhood,
+    serviceArea: advertisement.serviceArea,
     whatsappNumber: advertisement.whatsappNumber,
     status: advertisement.status,
     provider: advertisement.provider,
@@ -515,6 +519,7 @@ export async function updateAdvertisementAsAdmin(input: {
   readonly city: string;
   readonly state: string;
   readonly neighborhood?: string;
+  readonly serviceArea?: ServiceArea;
   readonly whatsappNumber: string;
 }) {
   const existing = await prisma.advertisement.findUnique({
@@ -549,6 +554,7 @@ export async function updateAdvertisementAsAdmin(input: {
       city: input.city,
       state: input.state,
       neighborhood: input.neighborhood || null,
+      serviceArea: input.serviceArea,
       whatsappNumber,
     },
   });

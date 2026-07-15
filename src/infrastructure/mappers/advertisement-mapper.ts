@@ -3,7 +3,11 @@ import type {
   AdvertisementImage as PrismaAdvertisementImage,
 } from "@prisma/client";
 import type { Advertisement } from "@/domain/entities";
-import { AdvertisementStatus, AdvertisementType } from "@/domain/enums";
+import {
+  AdvertisementStatus,
+  AdvertisementType,
+  ServiceArea,
+} from "@/domain/enums";
 import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { isPremiumActive } from "@/lib/provider-session";
@@ -56,6 +60,7 @@ export function mapAdvertisementToEntity(
       state: ad.state,
       neighborhood: ad.neighborhood ?? undefined,
     },
+    serviceArea: (ad.serviceArea as ServiceArea) || ServiceArea.CITY_WIDE,
     rating: ad.rating,
     reviewCount: ad.reviewCount,
     imageUrl: coverImageUrl ? resolveAdvertisementImageUrl(coverImageUrl) : undefined,

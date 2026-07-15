@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AdvertisementType } from "@/domain/enums";
+import { AdvertisementType, ServiceArea } from "@/domain/enums";
 import { CATEGORY_OTHER_VALUE } from "@/config/advertisement-form";
 import { isPilotCity } from "@/config/pricing";
 import { normalizeWhatsAppIdentity } from "@/lib/whatsapp";
@@ -9,6 +9,11 @@ const optionalEmail = z.preprocess((value) => {
   const trimmed = value.trim().toLowerCase();
   return trimmed.length === 0 ? null : trimmed;
 }, z.string().email("E-mail inválido").nullable());
+
+const requiredNeighborhood = z.preprocess(
+  (value) => (typeof value === "string" ? value.trim() : value),
+  z.string().min(2, "Informe o bairro")
+);
 
 const whatsappIdentity = z
   .string()
@@ -165,7 +170,10 @@ export const createAdvertisementSchema = z
     ),
     city: z.string().min(2, "Informe a cidade"),
     state: z.string().length(2, "UF deve ter 2 letras"),
-    neighborhood: z.string().optional(),
+    neighborhood: requiredNeighborhood,
+    serviceArea: z.nativeEnum(ServiceArea, {
+      errorMap: () => ({ message: "Selecione a área de atendimento" }),
+    }),
     whatsappNumber: z.string().min(10, "WhatsApp inválido"),
     withPremium: z.boolean().optional(),
   })
@@ -222,7 +230,10 @@ export const adminCreateAdvertisementSchema = z
     ),
     city: z.string().min(2, "Informe a cidade"),
     state: z.string().length(2, "UF deve ter 2 letras"),
-    neighborhood: z.string().optional(),
+    neighborhood: requiredNeighborhood,
+    serviceArea: z.nativeEnum(ServiceArea, {
+      errorMap: () => ({ message: "Selecione a área de atendimento" }),
+    }),
     whatsappNumber: z.string().min(10, "WhatsApp inválido"),
   })
   .superRefine((data, ctx) => {
@@ -263,7 +274,10 @@ export const adminUpdateAdvertisementSchema = z
     ),
     city: z.string().min(2, "Informe a cidade"),
     state: z.string().length(2, "UF deve ter 2 letras"),
-    neighborhood: z.string().optional(),
+    neighborhood: requiredNeighborhood,
+    serviceArea: z.nativeEnum(ServiceArea, {
+      errorMap: () => ({ message: "Selecione a área de atendimento" }),
+    }),
     whatsappNumber: z.string().min(10, "WhatsApp inválido"),
   })
   .superRefine((data, ctx) => {

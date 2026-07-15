@@ -449,6 +449,7 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
     city: formData.get("city"),
     state: formData.get("state"),
     neighborhood: formData.get("neighborhood") || undefined,
+    serviceArea: formData.get("serviceArea"),
     whatsappNumber: formData.get("whatsappNumber"),
   });
 
@@ -484,6 +485,7 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
       city: parsed.data.city,
       state: parsed.data.state,
       neighborhood: parsed.data.neighborhood,
+      serviceArea: parsed.data.serviceArea,
       whatsappNumber: parsed.data.whatsappNumber,
     });
     advertisementId = advertisement.id;
@@ -540,6 +542,7 @@ export async function adminUpdateAdvertisementAction(formData: FormData) {
     city: formData.get("city"),
     state: formData.get("state"),
     neighborhood: formData.get("neighborhood") || undefined,
+    serviceArea: formData.get("serviceArea"),
     whatsappNumber: formData.get("whatsappNumber"),
   });
 
@@ -571,6 +574,7 @@ export async function adminUpdateAdvertisementAction(formData: FormData) {
       city: parsed.data.city,
       state: parsed.data.state,
       neighborhood: parsed.data.neighborhood,
+      serviceArea: parsed.data.serviceArea,
       whatsappNumber: parsed.data.whatsappNumber,
     });
 
