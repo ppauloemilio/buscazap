@@ -19,6 +19,7 @@ export default async function HomePage() {
     <>
       <HeroSearch
         cities={data.cityNames}
+        neighborhoodsByCity={data.neighborhoodsByCity}
         categories={data.categories.map((category) => ({
           name: category.name,
           slug: category.slug,

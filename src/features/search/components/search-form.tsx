@@ -108,19 +108,20 @@ export function SearchForm({
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <div className="relative min-w-0 flex-1 basis-full sm:basis-64">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             placeholder="O que você procura?"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-10"
+            className="h-8 pl-8 text-xs md:text-sm"
             aria-label="Termo de busca"
           />
         </div>
         <CitySelect
           cities={cities}
           value={city}
+          compact
           onChange={(nextCity) => {
             setCity(nextCity);
             setNeighborhood("");
@@ -128,21 +129,22 @@ export function SearchForm({
             navigate({ city: nextCity, neighborhood: "" });
           }}
           id="search-city"
-          className="sm:w-44"
+          className="sm:w-28"
         />
         <NeighborhoodSelect
           neighborhoods={neighborhoods}
           value={neighborhood}
+          compact
           disabled={!city}
           onChange={(nextNeighborhood) => {
             setNeighborhood(nextNeighborhood);
             navigate({ neighborhood: nextNeighborhood });
           }}
           id="search-neighborhood"
-          className="sm:w-44"
+          className="sm:w-28"
         />
-        <Button type="submit" variant="whatsapp" className="sm:w-auto">
-          <Search className="h-4 w-4" />
+        <Button type="submit" variant="whatsapp" size="sm" className="h-8 px-3 text-xs sm:w-auto">
+          <Search className="h-3.5 w-3.5" />
           Buscar
         </Button>
       </div>

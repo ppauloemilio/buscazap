@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryIcon } from "@/components/category/category-icon";
 import { CitySelect } from "@/features/search/components/city-select";
+import { NeighborhoodSelect } from "@/features/search/components/neighborhood-select";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
+import { neighborhoodsForCity } from "@/shared/utils/neighborhoods";
 import {
   buildSearchHref,
   getPreferredCity,
@@ -20,18 +22,26 @@ export interface SearchCategoryOption {
   readonly icon: string;
 }
 
+export interface CityNeighborhoodGroup {
+  readonly city: string;
+  readonly neighborhoods: readonly string[];
+}
+
 interface HeroSearchProps {
   readonly cities?: readonly string[];
+  readonly neighborhoodsByCity?: readonly CityNeighborhoodGroup[];
   readonly categories?: readonly SearchCategoryOption[];
 }
 
 export function HeroSearch({
   cities = POPULAR_CITIES,
+  neighborhoodsByCity = [],
   categories = [],
 }: HeroSearchProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
   const [category, setCategory] = useState("all");
   const [showFilters, setShowFilters] = useState(true);
 
@@ -40,13 +50,17 @@ export function HeroSearch({
     if (preferredCity) setCity(preferredCity);
   }, []);
 
+  const neighborhoods = neighborhoodsForCity(neighborhoodsByCity, city);
+
   function goToSearch(input?: {
     readonly query?: string;
     readonly city?: string;
+    readonly neighborhood?: string;
     readonly category?: string;
   }) {
     const resolvedQuery = input?.query ?? query;
     const resolvedCity = input?.city ?? city;
+    const resolvedNeighborhood = input?.neighborhood ?? neighborhood;
     const resolvedCategory = input?.category ?? category;
 
     setPreferredCity(resolvedCity);
@@ -54,6 +68,7 @@ export function HeroSearch({
       buildSearchHref({
         query: resolvedQuery,
         city: resolvedCity,
+        neighborhood: resolvedCity ? resolvedNeighborhood : undefined,
         category: resolvedCategory === "all" ? undefined : resolvedCategory,
       })
     );
@@ -78,31 +93,40 @@ export function HeroSearch({
           onSubmit={handleSearch}
           className="mx-auto max-w-2xl space-y-2.5 rounded-2xl border bg-card p-4 shadow-lg md:p-5"
         >
-          <div className="flex flex-col gap-2.5 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Ex.: gás, água, delivery, dentista..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="pl-10"
+                className="h-8 pl-8 text-xs md:text-sm"
                 aria-label="Termo de busca"
                 autoFocus
               />
             </div>
-            <div className="relative sm:w-48">
-              <CitySelect
-                cities={cities}
-                value={city}
-                onChange={(nextCity) => {
-                  setCity(nextCity);
-                  setPreferredCity(nextCity);
-                }}
-                id="hero-city"
-                className="sm:w-48"
-              />
-            </div>
+            <CitySelect
+              cities={cities}
+              value={city}
+              compact
+              onChange={(nextCity) => {
+                setCity(nextCity);
+                setNeighborhood("");
+                setPreferredCity(nextCity);
+              }}
+              id="hero-city"
+              className="sm:w-28"
+            />
+            <NeighborhoodSelect
+              neighborhoods={neighborhoods}
+              value={neighborhood}
+              compact
+              disabled={!city}
+              onChange={setNeighborhood}
+              id="hero-neighborhood"
+              className="sm:w-28"
+            />
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -115,7 +139,7 @@ export function HeroSearch({
               {showFilters ? "Ocultar categorias" : "Categorias"}
             </button>
 
-            <Button type="submit" variant="whatsapp" size="sm" className="h-9 px-4">
+            <Button type="submit" variant="whatsapp" size="sm" className="h-8 px-3 text-xs">
               <Search className="h-3.5 w-3.5" />
               Buscar
             </Button>

@@ -5,6 +5,7 @@ import {
   getCatalogStats,
   getCategoriesWithCounts,
   listCityNamesForSearch,
+  listNeighborhoodsByCityForSearch,
 } from "@/application/services/catalog-service";
 import { getHomepageSettings } from "@/application/services/homepage-settings-service";
 import { PILOT_CITIES } from "@/config/pricing";
@@ -14,6 +15,10 @@ export interface DashboardData {
   readonly stats: DashboardStats;
   readonly categories: readonly Category[];
   readonly cityNames: readonly string[];
+  readonly neighborhoodsByCity: ReadonlyArray<{
+    readonly city: string;
+    readonly neighborhoods: readonly string[];
+  }>;
   readonly homeAdvertisements: readonly Advertisement[];
   readonly homepageSettings: HomepageSettings;
 }
@@ -27,6 +32,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     totalProviders,
     categories,
     cityNames,
+    neighborhoodsByCity,
   ] = await Promise.all([
     getHomepageAdvertisements(),
     getHomepageSettings(),
@@ -35,6 +41,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     prisma.provider.count({ where: { role: "PROVIDER" } }),
     getCategoriesWithCounts(),
     listCityNamesForSearch(),
+    listNeighborhoodsByCityForSearch(),
   ]);
 
   return {
@@ -46,6 +53,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
     categories,
     cityNames,
+    neighborhoodsByCity,
     homeAdvertisements,
     homepageSettings,
   };

@@ -131,6 +131,39 @@ export async function listNeighborhoodNamesForSearch(city?: string) {
   );
 }
 
+export async function listNeighborhoodsByCityForSearch(): Promise<
+  ReadonlyArray<{ readonly city: string; readonly neighborhoods: readonly string[] }>
+> {
+  markDataFetchDynamic();
+
+  const rows = await prisma.advertisement.findMany({
+    where: {
+      status: AdvertisementStatus.APPROVED,
+      neighborhood: { not: null },
+    },
+    select: { city: true, neighborhood: true },
+  });
+
+  const byCity = new Map<string, Set<string>>();
+
+  for (const row of rows) {
+    const neighborhood = row.neighborhood?.trim();
+    const city = row.city.trim();
+    if (!neighborhood || !city) continue;
+
+    const set = byCity.get(city) ?? new Set<string>();
+    set.add(neighborhood);
+    byCity.set(city, set);
+  }
+
+  return Array.from(byCity.entries())
+    .map(([city, set]) => ({
+      city,
+      neighborhoods: Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR")),
+    }))
+    .sort((a, b) => a.city.localeCompare(b.city, "pt-BR"));
+}
+
 export async function getCategoriesWithCounts(): Promise<Category[]> {
   const [categories, grouped] = await Promise.all([
     listActiveCategories(),
