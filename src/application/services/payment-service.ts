@@ -76,7 +76,16 @@ async function getProviderPaymentProfile(providerId: string) {
     throw new Error("PROVIDER_NOT_FOUND");
   }
 
-  return provider;
+  if (!provider.email) {
+    throw new Error(
+      "Cadastre um e-mail no seu perfil para pagar com PIX. Sem e-mail, peça ao admin para liberar a assinatura manualmente."
+    );
+  }
+
+  return {
+    ...provider,
+    email: provider.email,
+  };
 }
 
 export async function createSubscriptionPayment(providerId: string) {

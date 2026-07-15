@@ -5,9 +5,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import {
+  createProviderAsAdmin,
   createReport,
   deleteAdvertisementAsAdmin,
   deleteProviderAsAdmin,
+  resetProviderPasswordAsAdmin,
   updateAdvertisementStatusAsAdmin,
   updateProviderStatusAsAdmin,
   updateReportStatusAsAdmin,
@@ -21,7 +23,11 @@ import {
 import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
-import { loginProviderSchema } from "@/schemas/provider-schemas";
+import {
+  adminCreateProviderSchema,
+  adminResetProviderPasswordSchema,
+  loginAdminSchema,
+} from "@/schemas/provider-schemas";
 import { UserRole } from "@/domain/enums";
 
 function redirectWithAdminError(path: string, message: string): never {
@@ -29,7 +35,7 @@ function redirectWithAdminError(path: string, message: string): never {
 }
 
 export async function loginAdminAction(formData: FormData) {
-  const parsed = loginProviderSchema.safeParse({
+  const parsed = loginAdminSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
@@ -340,5 +346,76 @@ export async function adminRegisterPremiumBoostAction(formData: FormData) {
   revalidatePath("/");
 
   redirect("/admin/anuncios?saved=1&manual=premium");
+}
+
+export async function adminCreateProviderAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const parsed = adminCreateProviderSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    whatsapp: formData.get("whatsapp"),
+    password: formData.get("password"),
+    grantTrial: formData.get("grantTrial") === "true" ? "true" : "false",
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `/admin/usuarios?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
+    );
+  }
+
+  try {
+    const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+    await createProviderAsAdmin({
+      adminId: admin.id,
+      name: parsed.data.name,
+      email: parsed.data.email,
+      whatsapp: parsed.data.whatsapp,
+      passwordHash,
+      grantTrial: parsed.data.grantTrial,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível criar o usuário";
+    redirect(`/admin/usuarios?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin");
+  redirect("/admin/usuarios?saved=1&manual=created");
+}
+
+export async function adminResetProviderPasswordAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const parsed = adminResetProviderPasswordSchema.safeParse({
+    providerId: formData.get("providerId"),
+    newPassword: formData.get("newPassword"),
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `/admin/usuarios?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
+    );
+  }
+
+  try {
+    const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
+    await resetProviderPasswordAsAdmin({
+      adminId: admin.id,
+      providerId: parsed.data.providerId,
+      passwordHash,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível redefinir a senha";
+    redirect(`/admin/usuarios?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/usuarios");
+  redirect("/admin/usuarios?saved=1&manual=password");
 }
 

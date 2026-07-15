@@ -48,27 +48,19 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               <Input id="name" name="name" placeholder="Seu nome" required />
             </div>
             <div>
-              <label htmlFor="email" className="mb-1 block text-sm font-medium">
-                E-mail
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="seu@email.com"
-                required
-              />
-            </div>
-            <div>
               <label htmlFor="whatsapp" className="mb-1 block text-sm font-medium">
                 WhatsApp
               </label>
               <Input
                 id="whatsapp"
                 name="whatsapp"
-                placeholder="(11) 99999-9999"
+                placeholder="(91) 99999-9999"
                 required
+                autoComplete="tel"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Seu WhatsApp será o login da conta
+              </p>
             </div>
             <div>
               <label htmlFor="password" className="mb-1 block text-sm font-medium">
@@ -80,6 +72,18 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 type="password"
                 placeholder="Mínimo 6 caracteres"
                 required
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="mb-1 block text-sm font-medium">
+                E-mail{" "}
+                <span className="font-normal text-muted-foreground">(opcional)</span>
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Para pagar PIX e recuperar senha"
               />
             </div>
             <div>

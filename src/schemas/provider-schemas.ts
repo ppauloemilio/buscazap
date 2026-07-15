@@ -2,11 +2,33 @@ import { z } from "zod";
 import { AdvertisementType } from "@/domain/enums";
 import { CATEGORY_OTHER_VALUE } from "@/config/advertisement-form";
 import { isPilotCity } from "@/config/pricing";
+import { normalizeWhatsAppIdentity } from "@/lib/whatsapp";
+
+const optionalEmail = z.preprocess((value) => {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim().toLowerCase();
+  return trimmed.length === 0 ? null : trimmed;
+}, z.string().email("E-mail inválido").nullable());
+
+const whatsappIdentity = z
+  .string()
+  .min(1, "Informe o WhatsApp")
+  .transform((value, ctx) => {
+    const normalized = normalizeWhatsAppIdentity(value);
+    if (!normalized) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "WhatsApp inválido. Use DDD + número (ex.: 91 99999-9999)",
+      });
+      return z.NEVER;
+    }
+    return normalized;
+  });
 
 export const registerProviderSchema = z.object({
-  name: z.string().min(3, "Nome deve ter ao menos 3 caracteres"),
-  email: z.string().email("E-mail inválido"),
-  whatsapp: z.string().min(10, "WhatsApp inválido"),
+  name: z.string().trim().min(3, "Nome deve ter ao menos 3 caracteres"),
+  email: optionalEmail,
+  whatsapp: whatsappIdentity,
   password: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
   referralCode: z.preprocess(
     (value) => {
@@ -18,13 +40,24 @@ export const registerProviderSchema = z.object({
   ),
 });
 
+/** Login do anunciante: WhatsApp ou e-mail + senha */
 export const loginProviderSchema = z.object({
-  email: z.string().email("E-mail inválido"),
+  login: z.string().trim().min(3, "Informe WhatsApp ou e-mail"),
+  password: z.string().min(1, "Informe a senha"),
+});
+
+/** Login do admin continua por e-mail */
+export const loginAdminSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("E-mail inválido"),
   password: z.string().min(1, "Informe a senha"),
 });
 
 export const requestPasswordResetSchema = z.object({
-  email: z.string().email("E-mail inválido"),
+  login: z.string().trim().min(3, "Informe WhatsApp ou e-mail"),
 });
 
 export const resetPasswordSchema = z
@@ -66,16 +99,13 @@ const optionalTrimmedString = (min: number, message: string) =>
   );
 
 export const updateProviderProfileSchema = z.object({
-  name: z.string().min(3, "Nome deve ter ao menos 3 caracteres"),
-  email: z.string().email("E-mail inválido"),
-  whatsapp: z.string().min(10, "WhatsApp inválido"),
+  name: z.string().trim().min(3, "Nome deve ter ao menos 3 caracteres"),
+  email: optionalEmail,
+  whatsapp: whatsappIdentity,
   age: optionalAge,
   state: z.preprocess(
     (value) => (value === "" ? undefined : value),
-    z
-      .string()
-      .length(2, "UF deve ter 2 letras")
-      .optional()
+    z.string().length(2, "UF deve ter 2 letras").optional()
   ),
   city: optionalTrimmedString(2, "Cidade deve ter ao menos 2 caracteres"),
   neighborhood: optionalTrimmedString(2, "Bairro deve ter ao menos 2 caracteres"),
@@ -154,6 +184,21 @@ export const createAdvertisementSchema = z
     }
   });
 
+export const adminCreateProviderSchema = z.object({
+  name: z.string().trim().min(3, "Nome deve ter ao menos 3 caracteres"),
+  email: optionalEmail,
+  whatsapp: whatsappIdentity,
+  password: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
+  grantTrial: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true"),
+});
+
+export const adminResetProviderPasswordSchema = z.object({
+  providerId: z.string().min(1),
+  newPassword: z.string().min(6, "Nova senha deve ter ao menos 6 caracteres"),
+});
+
 export function resolveAdvertisementCategory(input: {
   readonly category: string;
   readonly customCategory?: string;
@@ -170,3 +215,4 @@ export type LoginProviderInput = z.infer<typeof loginProviderSchema>;
 export type UpdateProviderProfileInput = z.infer<typeof updateProviderProfileSchema>;
 export type UpdateProviderPasswordInput = z.infer<typeof updateProviderPasswordSchema>;
 export type CreateAdvertisementInput = z.infer<typeof createAdvertisementSchema>;
+export type AdminCreateProviderInput = z.infer<typeof adminCreateProviderSchema>;

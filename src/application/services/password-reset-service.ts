@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { PASSWORD_RESET_CONFIG } from "@/config/password-reset";
 import { ProviderStatus } from "@/domain/enums";
+import { findProviderByLogin } from "@/application/services/provider-auth-service";
 import {
   buildPasswordResetUrl,
   sendPasswordResetEmail,
@@ -12,16 +13,20 @@ import {
 import { prisma } from "@/lib/prisma";
 
 const GENERIC_SUCCESS_MESSAGE =
-  "Se o e-mail estiver cadastrado, você receberá instruções para redefinir a senha em instantes.";
+  "Se a conta tiver e-mail cadastrado, você receberá instruções para redefinir a senha em instantes.";
 
-export async function requestPasswordReset(email: string): Promise<string> {
-  const normalizedEmail = email.trim().toLowerCase();
-  const provider = await prisma.provider.findUnique({
-    where: { email: normalizedEmail },
-  });
+const NO_EMAIL_MESSAGE =
+  "Esta conta não tem e-mail cadastrado. Peça ao administrador do BuscaZap para redefinir sua senha.";
+
+export async function requestPasswordReset(login: string): Promise<string> {
+  const provider = await findProviderByLogin(login);
 
   if (!provider || provider.status === ProviderStatus.BLOCKED) {
     return GENERIC_SUCCESS_MESSAGE;
+  }
+
+  if (!provider.email) {
+    return NO_EMAIL_MESSAGE;
   }
 
   const recentToken = await prisma.passwordResetToken.findFirst({

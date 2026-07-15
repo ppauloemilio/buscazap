@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { adminCreateProviderAction } from "@/actions/admin-actions";
 import { listAdminProviders } from "@/application/services/admin-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminProviderActions } from "@/features/admin/components/admin-provider-actions";
@@ -9,8 +10,10 @@ import {
 } from "@/config/admin";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PRICING } from "@/config/pricing";
 
 interface AdminUsersPageProps {
   readonly searchParams: Promise<{
@@ -122,7 +125,11 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
           {params.manual === "subscription"
             ? "Assinatura registrada com sucesso (dinheiro/permuta)."
-            : "Status do usuário atualizado."}
+            : params.manual === "created"
+              ? "Anunciante cadastrado com sucesso."
+              : params.manual === "password"
+                ? "Senha redefinida. Informe o anunciante pelo WhatsApp."
+                : "Status do usuário atualizado."}
         </p>
       )}
       {params.deleted === "1" && (
@@ -130,6 +137,78 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
           Usuário excluído.
         </p>
       )}
+
+      <Card className="mb-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Novo anunciante</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Cadastro rápido para captação presencial. WhatsApp é o login principal;
+            e-mail é opcional.
+          </p>
+          <form action={adminCreateProviderAction} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label htmlFor="new-name" className="mb-1 block text-xs font-medium">
+                Nome
+              </label>
+              <Input id="new-name" name="name" placeholder="Nome completo" required />
+            </div>
+            <div>
+              <label htmlFor="new-whatsapp" className="mb-1 block text-xs font-medium">
+                WhatsApp
+              </label>
+              <Input
+                id="new-whatsapp"
+                name="whatsapp"
+                placeholder="(91) 99999-9999"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="new-password" className="mb-1 block text-xs font-medium">
+                Senha inicial
+              </label>
+              <Input
+                id="new-password"
+                name="password"
+                type="text"
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="new-email" className="mb-1 block text-xs font-medium">
+                E-mail (opcional)
+              </label>
+              <Input
+                id="new-email"
+                name="email"
+                type="email"
+                placeholder="Para PIX e recuperação"
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <label className="flex items-center gap-2 pb-2 text-xs">
+                <input
+                  type="checkbox"
+                  name="grantTrial"
+                  value="true"
+                  defaultChecked
+                  className="rounded border"
+                />
+                Trial de {PRICING.LAUNCH_TRIAL_DAYS} dias
+              </label>
+            </div>
+            <div className="flex items-end">
+              <Button type="submit" className="w-full" variant="whatsapp">
+                Cadastrar
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       {providers.length === 0 ? (
         <Card>
@@ -160,9 +239,11 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                         <Badge variant="secondary">Sem assinatura</Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{provider.email}</p>
                     <p className="text-sm text-muted-foreground">
                       WhatsApp: {provider.whatsapp}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {provider.email ?? "Sem e-mail"}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {provider.advertisementsCount} anúncio(s) ·{" "}

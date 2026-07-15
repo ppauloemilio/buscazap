@@ -26,6 +26,7 @@ import {
   applyReferralOnRegistration,
   generateUniqueReferralCode,
 } from "@/application/services/referral-service";
+import { findProviderByLogin } from "@/application/services/provider-auth-service";
 import {
   createAdvertisementSchema,
   loginProviderSchema,
@@ -117,12 +118,21 @@ export async function registerProviderAction(formData: FormData) {
     );
   }
 
-  const existing = await prisma.provider.findUnique({
-    where: { email: parsed.data.email },
+  const existingWhatsapp = await prisma.provider.findUnique({
+    where: { whatsapp: parsed.data.whatsapp },
   });
 
-  if (existing) {
-    redirect(`/cadastro?error=${encodeURIComponent("E-mail já cadastrado")}`);
+  if (existingWhatsapp) {
+    redirect(`/cadastro?error=${encodeURIComponent("WhatsApp já cadastrado")}`);
+  }
+
+  if (parsed.data.email) {
+    const existingEmail = await prisma.provider.findUnique({
+      where: { email: parsed.data.email },
+    });
+    if (existingEmail) {
+      redirect(`/cadastro?error=${encodeURIComponent("E-mail já cadastrado")}`);
+    }
   }
 
   if (parsed.data.referralCode) {
@@ -148,6 +158,7 @@ export async function registerProviderAction(formData: FormData) {
   const provider = await prisma.provider.create({
     data: {
       ...accountData,
+      email: accountData.email,
       passwordHash,
       role: "PROVIDER",
       referralCode,
@@ -197,7 +208,7 @@ export async function redeemReferralPremiumAction(formData: FormData) {
 
 export async function loginProviderAction(formData: FormData) {
   const parsed = loginProviderSchema.safeParse({
-    email: formData.get("email"),
+    login: formData.get("login") ?? formData.get("email"),
     password: formData.get("password"),
   });
 
@@ -207,9 +218,7 @@ export async function loginProviderAction(formData: FormData) {
     );
   }
 
-  const provider = await prisma.provider.findUnique({
-    where: { email: parsed.data.email },
-  });
+  const provider = await findProviderByLogin(parsed.data.login);
 
   if (!provider) {
     redirect(`/entrar?error=${encodeURIComponent("Credenciais inválidas")}`);
@@ -559,7 +568,7 @@ export async function updateProviderProfileAction(formData: FormData) {
     );
   }
 
-  if (parsed.data.email !== provider.email) {
+  if (parsed.data.email && parsed.data.email !== provider.email) {
     const existing = await prisma.provider.findUnique({
       where: { email: parsed.data.email },
     });
@@ -567,6 +576,18 @@ export async function updateProviderProfileAction(formData: FormData) {
     if (existing && existing.id !== provider.id) {
       redirect(
         `/painel/perfil?error=${encodeURIComponent("Este e-mail já está em uso")}`
+      );
+    }
+  }
+
+  if (parsed.data.whatsapp !== provider.whatsapp) {
+    const existingWhatsapp = await prisma.provider.findUnique({
+      where: { whatsapp: parsed.data.whatsapp },
+    });
+
+    if (existingWhatsapp && existingWhatsapp.id !== provider.id) {
+      redirect(
+        `/painel/perfil?error=${encodeURIComponent("Este WhatsApp já está em uso")}`
       );
     }
   }

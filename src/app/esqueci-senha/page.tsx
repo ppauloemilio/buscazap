@@ -27,7 +27,7 @@ export default async function ForgotPasswordPage({
     <>
       <PageHeader
         title="Esqueci minha senha"
-        description="Informe seu e-mail para receber o link de redefinição"
+        description="Informe seu WhatsApp ou e-mail para recuperar o acesso"
       />
       <section className="container mx-auto max-w-md px-4 py-10">
         <div className="rounded-xl border bg-card p-6">
@@ -38,7 +38,7 @@ export default async function ForgotPasswordPage({
           {params.sent === "1" && (
             <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
               {params.message ??
-                "Se o e-mail estiver cadastrado, você receberá instruções em instantes."}
+                "Se a conta tiver e-mail, você receberá instruções em instantes."}
             </p>
           )}
 
@@ -51,17 +51,19 @@ export default async function ForgotPasswordPage({
           {params.sent !== "1" && (
             <form action={requestPasswordResetAction} className="space-y-4">
               <div>
-                <label htmlFor="email" className="mb-1.5 block text-sm font-medium">
-                  E-mail da conta
+                <label htmlFor="login" className="mb-1.5 block text-sm font-medium">
+                  WhatsApp ou e-mail
                 </label>
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="seu@email.com"
+                  id="login"
+                  name="login"
+                  placeholder="(91) 99999-9999 ou seu@email.com"
                   required
-                  autoComplete="email"
+                  autoComplete="username"
                 />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Sem e-mail cadastrado? Peça ao administrador para redefinir sua senha.
+                </p>
               </div>
               <Button type="submit" variant="whatsapp" className="w-full">
                 Enviar link de redefinição

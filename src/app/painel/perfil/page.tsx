@@ -73,28 +73,29 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="mb-1 block text-sm font-medium">
-                    E-mail
-                  </label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    defaultValue={provider.email}
-                    required
-                  />
-                </div>
-
-                <div>
                   <label htmlFor="whatsapp" className="mb-1 block text-sm font-medium">
-                    WhatsApp
+                    WhatsApp (login)
                   </label>
                   <Input
                     id="whatsapp"
                     name="whatsapp"
                     defaultValue={provider.whatsapp}
-                    placeholder="(11) 99999-9999"
+                    placeholder="(91) 99999-9999"
                     required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="mb-1 block text-sm font-medium">
+                    E-mail{" "}
+                    <span className="font-normal text-muted-foreground">(opcional)</span>
+                  </label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    defaultValue={provider.email ?? ""}
+                    placeholder="Para PIX e recuperação de senha"
                   />
                 </div>
 

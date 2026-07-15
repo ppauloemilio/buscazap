@@ -3,6 +3,7 @@
 import {
   adminDeleteProviderAction,
   adminRegisterSubscriptionAction,
+  adminResetProviderPasswordAction,
   moderateProviderAction,
 } from "@/actions/admin-actions";
 import { MANUAL_PAYMENT_METHODS } from "@/config/manual-payment";
@@ -63,6 +64,16 @@ export function AdminProviderActions({
     }
   }
 
+  function handleResetPassword(event: React.FormEvent<HTMLFormElement>) {
+    if (
+      !window.confirm(
+        `Redefinir a senha de "${name}"? Informe a nova senha ao anunciante pelo WhatsApp.`
+      )
+    ) {
+      event.preventDefault();
+    }
+  }
+
   return (
     <div className="space-y-2">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -118,6 +129,25 @@ export function AdminProviderActions({
         />
         <Button type="submit" size="sm" variant="whatsapp">
           Registrar assinatura
+        </Button>
+      </form>
+
+      <form
+        action={adminResetProviderPasswordAction}
+        onSubmit={handleResetPassword}
+        className="flex flex-col gap-1.5 rounded-lg border border-dashed p-2 sm:flex-row sm:items-center"
+      >
+        <input type="hidden" name="providerId" value={providerId} />
+        <Input
+          name="newPassword"
+          type="text"
+          placeholder="Nova senha (mín. 6)"
+          minLength={6}
+          required
+          className="h-9 sm:max-w-[180px]"
+        />
+        <Button type="submit" size="sm" variant="outline">
+          Redefinir senha
         </Button>
       </form>
     </div>

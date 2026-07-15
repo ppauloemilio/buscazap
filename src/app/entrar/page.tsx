@@ -44,15 +44,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
           <form action={loginProviderAction} className="space-y-2.5">
             <div>
-              <label htmlFor="email" className="mb-1 block text-sm font-medium">
-                E-mail
+              <label htmlFor="login" className="mb-1 block text-sm font-medium">
+                WhatsApp ou e-mail
               </label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="seu@email.com"
+                id="login"
+                name="login"
+                placeholder="(91) 99999-9999 ou seu@email.com"
                 required
+                autoComplete="username"
               />
             </div>
             <div>

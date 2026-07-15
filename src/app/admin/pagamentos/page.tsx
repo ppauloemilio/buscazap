@@ -81,7 +81,10 @@ export default async function AdminPaymentsPage() {
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {payment.provider.name} ({payment.provider.email})
+                    {payment.provider.name}
+                    {payment.provider.email
+                      ? ` (${payment.provider.email})`
+                      : ` · ${payment.provider.whatsapp}`}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {payment.createdAt.toLocaleString("pt-BR")}

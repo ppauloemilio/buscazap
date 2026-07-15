@@ -13,19 +13,19 @@ import {
 
 export async function requestPasswordResetAction(formData: FormData) {
   const parsed = requestPasswordResetSchema.safeParse({
-    email: formData.get("email"),
+    login: formData.get("login") ?? formData.get("email"),
   });
 
   if (!parsed.success) {
     redirect(
-      `/esqueci-senha?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "E-mail inválido")}`
+      `/esqueci-senha?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
     );
   }
 
   let message: string;
 
   try {
-    message = await requestPasswordReset(parsed.data.email);
+    message = await requestPasswordReset(parsed.data.login);
   } catch (error) {
     if (isRedirectError(error)) {
       throw error;

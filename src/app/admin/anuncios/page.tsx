@@ -125,7 +125,10 @@ export default async function AdminAdvertisementsPage({
                       {ad.category} · {ad.city}/{ad.state}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Anunciante: {ad.provider.name} ({ad.provider.email})
+                      Anunciante: {ad.provider.name}
+                      {ad.provider.email ? ` (${ad.provider.email})` : ""}
+                      {" · "}
+                      {ad.provider.whatsapp}
                     </p>
                     {ad.premiumActive && ad.premiumExpiresAt && (
                       <p className="mt-1 text-xs text-muted-foreground">

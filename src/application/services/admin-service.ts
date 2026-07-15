@@ -1,4 +1,6 @@
 import { AdvertisementStatus, PaymentStatus, ProviderStatus, UserRole } from "@/domain/enums";
+import { PRICING } from "@/config/pricing";
+import { generateUniqueReferralCode } from "@/application/services/referral-service";
 import { prisma } from "@/lib/prisma";
 import { hasActiveSubscription, isPremiumActive } from "@/lib/provider-session";
 
@@ -259,6 +261,104 @@ export async function updateProviderStatusAsAdmin(input: {
   return updated;
 }
 
+export async function createProviderAsAdmin(input: {
+  readonly adminId: string;
+  readonly name: string;
+  readonly whatsapp: string;
+  readonly email: string | null;
+  readonly passwordHash: string;
+  readonly grantTrial: boolean;
+}) {
+  const existingWhatsapp = await prisma.provider.findUnique({
+    where: { whatsapp: input.whatsapp },
+    select: { id: true },
+  });
+  if (existingWhatsapp) {
+    throw new Error("WhatsApp já cadastrado");
+  }
+
+  if (input.email) {
+    const existingEmail = await prisma.provider.findUnique({
+      where: { email: input.email },
+      select: { id: true },
+    });
+    if (existingEmail) {
+      throw new Error("E-mail já cadastrado");
+    }
+  }
+
+  const referralCode = await generateUniqueReferralCode();
+  let subscriptionExpiresAt: Date | null = null;
+  if (input.grantTrial) {
+    subscriptionExpiresAt = new Date();
+    subscriptionExpiresAt.setDate(
+      subscriptionExpiresAt.getDate() + PRICING.LAUNCH_TRIAL_DAYS
+    );
+  }
+
+  const provider = await prisma.provider.create({
+    data: {
+      name: input.name,
+      email: input.email,
+      whatsapp: input.whatsapp,
+      passwordHash: input.passwordHash,
+      role: UserRole.PROVIDER,
+      referralCode,
+      subscriptionExpiresAt,
+    },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "CREATE_PROVIDER",
+    entityType: "Provider",
+    entityId: provider.id,
+    metadata: {
+      name: provider.name,
+      email: provider.email,
+      whatsapp: provider.whatsapp,
+      grantTrial: input.grantTrial,
+    },
+  });
+
+  return provider;
+}
+
+export async function resetProviderPasswordAsAdmin(input: {
+  readonly adminId: string;
+  readonly providerId: string;
+  readonly passwordHash: string;
+}) {
+  const provider = await prisma.provider.findUnique({
+    where: { id: input.providerId },
+    select: { id: true, name: true, email: true, role: true },
+  });
+
+  if (!provider) {
+    throw new Error("Usuário não encontrado");
+  }
+
+  if (provider.role === UserRole.ADMIN) {
+    throw new Error("Não é possível redefinir senha de administradores por aqui");
+  }
+
+  await prisma.provider.update({
+    where: { id: input.providerId },
+    data: { passwordHash: input.passwordHash },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "RESET_PROVIDER_PASSWORD",
+    entityType: "Provider",
+    entityId: provider.id,
+    metadata: {
+      name: provider.name,
+      email: provider.email,
+    },
+  });
+}
+
 export async function deleteProviderAsAdmin(input: {
   readonly adminId: string;
   readonly providerId: string;
@@ -322,6 +422,7 @@ export async function listAdminAdvertisements(filters?: {
           id: true,
           name: true,
           email: true,
+          whatsapp: true,
         },
       },
       premiumBoosts: {
@@ -487,7 +588,7 @@ export async function listAdminPayments(limit = 30) {
     take: limit,
     include: {
       provider: {
-        select: { name: true, email: true },
+        select: { name: true, email: true, whatsapp: true },
       },
     },
   });
