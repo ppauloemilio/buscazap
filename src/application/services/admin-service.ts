@@ -6,12 +6,14 @@ import {
   UserRole,
 } from "@/domain/enums";
 import { PRICING } from "@/config/pricing";
+import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
 import { createAdvertisement } from "@/application/services/advertisement-service";
 import {
   registerCategorySuggestion,
   resolveAdvertisementCategoryFromCatalog,
 } from "@/application/services/category-matching-service";
 import { generateUniqueReferralCode } from "@/application/services/referral-service";
+import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { prisma } from "@/lib/prisma";
 import {
   canProviderPublish,
@@ -462,6 +464,110 @@ export async function createAdvertisementAsAdmin(input: {
   });
 
   return result.advertisement;
+}
+
+export async function findAdvertisementForAdminEdit(advertisementId: string) {
+  const advertisement = await prisma.advertisement.findUnique({
+    where: { id: advertisementId },
+    include: {
+      provider: {
+        select: { id: true, name: true, whatsapp: true },
+      },
+      images: {
+        orderBy: { sortOrder: "asc" },
+      },
+    },
+  });
+
+  if (!advertisement) {
+    return null;
+  }
+
+  const cover = advertisement.images.find(
+    (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.COVER
+  );
+
+  return {
+    id: advertisement.id,
+    title: advertisement.title,
+    description: advertisement.description,
+    type: advertisement.type,
+    category: advertisement.category,
+    isCustomCategory: advertisement.isCustomCategory,
+    city: advertisement.city,
+    state: advertisement.state,
+    neighborhood: advertisement.neighborhood,
+    whatsappNumber: advertisement.whatsappNumber,
+    status: advertisement.status,
+    provider: advertisement.provider,
+    coverImageUrl: cover ? resolveAdvertisementImageUrl(cover.url) : null,
+  };
+}
+
+export async function updateAdvertisementAsAdmin(input: {
+  readonly adminId: string;
+  readonly advertisementId: string;
+  readonly title: string;
+  readonly description: string;
+  readonly type: AdvertisementType;
+  readonly category: string;
+  readonly customCategory?: string;
+  readonly city: string;
+  readonly state: string;
+  readonly neighborhood?: string;
+  readonly whatsappNumber: string;
+}) {
+  const existing = await prisma.advertisement.findUnique({
+    where: { id: input.advertisementId },
+    select: { id: true, providerId: true, title: true },
+  });
+
+  if (!existing) {
+    throw new Error("Anúncio não encontrado");
+  }
+
+  const whatsappNumber =
+    normalizeWhatsAppIdentity(input.whatsappNumber) ?? input.whatsappNumber;
+
+  const categoryResolution = await resolveAdvertisementCategoryFromCatalog({
+    category: input.category,
+    customCategory: input.customCategory,
+  });
+
+  if (categoryResolution.isCustomCategory) {
+    await registerCategorySuggestion(categoryResolution.categoryName);
+  }
+
+  const updated = await prisma.advertisement.update({
+    where: { id: input.advertisementId },
+    data: {
+      title: input.title,
+      description: input.description,
+      type: input.type,
+      category: categoryResolution.categoryName,
+      isCustomCategory: categoryResolution.isCustomCategory,
+      city: input.city,
+      state: input.state,
+      neighborhood: input.neighborhood || null,
+      whatsappNumber,
+    },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "UPDATE_ADVERTISEMENT",
+    entityType: "Advertisement",
+    entityId: updated.id,
+    metadata: {
+      providerId: existing.providerId,
+      title: updated.title,
+      category: categoryResolution.categoryName,
+      city: updated.city,
+      state: updated.state,
+    },
+  });
+
+  return updated;
 }
 
 export async function deleteProviderAsAdmin(input: {

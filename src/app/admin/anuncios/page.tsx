@@ -139,9 +139,14 @@ export default async function AdminAdvertisementsPage({
                       </p>
                     )}
                   </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/anuncio/${ad.id}`}>Ver público</Link>
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/admin/anuncios/${ad.id}/editar`}>Editar</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/anuncio/${ad.id}`}>Ver público</Link>
+                    </Button>
+                  </div>
                 </div>
 
                 <AdminAdvertisementActions

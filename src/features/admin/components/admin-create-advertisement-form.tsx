@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { adminCreateAdvertisementAction } from "@/actions/admin-actions";
 import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
+import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES } from "@/config/pricing";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Category } from "@/domain/entities";
 import { AdvertisementType } from "@/domain/enums";
+import { ImagePlus } from "lucide-react";
 
 interface AdminCreateAdvertisementFormProps {
   readonly providerId: string;
@@ -18,6 +20,8 @@ interface AdminCreateAdvertisementFormProps {
   readonly canPublish: boolean;
   readonly categories: readonly Category[];
 }
+
+const ACCEPT = ADVERTISEMENT_IMAGE_LIMITS.allowedMimeTypes.join(",");
 
 export function AdminCreateAdvertisementForm({
   providerId,
@@ -53,7 +57,11 @@ export function AdminCreateAdvertisementForm({
       </div>
 
       {open && (
-        <form action={adminCreateAdvertisementAction} className="space-y-2">
+        <form
+          action={adminCreateAdvertisementAction}
+          encType="multipart/form-data"
+          className="space-y-2"
+        >
           <input type="hidden" name="providerId" value={providerId} />
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="sm:col-span-2">
@@ -88,7 +96,8 @@ export function AdminCreateAdvertisementForm({
             </div>
             <div className="sm:col-span-2">
               <AdvertisementCategoryFields categories={categories} />
-            </div>            <div>
+            </div>
+            <div>
               <label className="mb-1 block text-xs font-medium">Cidade</label>
               <Input
                 name="city"
@@ -119,9 +128,26 @@ export function AdminCreateAdvertisementForm({
               <label className="mb-1 block text-xs font-medium">WhatsApp do anúncio</label>
               <Input name="whatsappNumber" defaultValue={defaultWhatsapp} required />
             </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium">Foto de capa (opcional)</label>
+              <div className="flex items-center gap-2 rounded-lg border border-dashed p-2">
+                <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <input
+                    name="coverImage"
+                    type="file"
+                    accept={ACCEPT}
+                    className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
+                  />
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    JPG, PNG ou WebP · máx. 5 MB. Você também pode adicionar/trocar depois na edição.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            O anúncio já entra publicado. O anunciante poderá editar e adicionar fotos depois no painel.
+            O anúncio já entra publicado. Após salvar, você poderá editar os dados e a foto.
           </p>
           <Button type="submit" size="sm" variant="whatsapp">
             Publicar anúncio

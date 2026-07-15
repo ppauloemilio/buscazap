@@ -237,6 +237,44 @@ export const adminCreateAdvertisementSchema = z
     }
   });
 
+export const adminUpdateAdvertisementSchema = z
+  .object({
+    advertisementId: z.string().min(1),
+    title: z.string().min(5, "Título deve ter ao menos 5 caracteres"),
+    description: z.string().min(20, "Descrição deve ter ao menos 20 caracteres"),
+    type: z.nativeEnum(AdvertisementType),
+    category: z.string().min(1, "Selecione uma categoria"),
+    customCategory: z.preprocess(
+      (value) => {
+        if (typeof value !== "string") return undefined;
+        const trimmed = value.trim();
+        return trimmed.length === 0 ? undefined : trimmed;
+      },
+      z.string().min(2, "Categoria deve ter ao menos 2 caracteres").max(50).optional()
+    ),
+    city: z.string().min(2, "Informe a cidade"),
+    state: z.string().length(2, "UF deve ter 2 letras"),
+    neighborhood: z.string().optional(),
+    whatsappNumber: z.string().min(10, "WhatsApp inválido"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.category === CATEGORY_OTHER_VALUE && !data.customCategory) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe a categoria desejada",
+        path: ["customCategory"],
+      });
+    }
+
+    if (!isPilotCity(data.city, data.state)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "No momento, anúncios só podem ser criados em Belém ou Ananindeua (PA)",
+        path: ["city"],
+      });
+    }
+  });
+
 export function resolveAdvertisementCategory(input: {
   readonly category: string;
   readonly customCategory?: string;

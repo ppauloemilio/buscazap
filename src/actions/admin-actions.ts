@@ -11,6 +11,7 @@ import {
   deleteAdvertisementAsAdmin,
   deleteProviderAsAdmin,
   resetProviderPasswordAsAdmin,
+  updateAdvertisementAsAdmin,
   updateAdvertisementStatusAsAdmin,
   updateProviderStatusAsAdmin,
   updateReportStatusAsAdmin,
@@ -21,13 +22,23 @@ import {
   registerManualPremiumBoostAsAdmin,
   registerManualSubscriptionAsAdmin,
 } from "@/application/services/admin-manual-billing-service";
+import {
+  ADVERTISEMENT_IMAGE_KIND,
+} from "@/config/advertisement-images";
+import {
+  replaceAdvertisementCover,
+  saveAdvertisementImages,
+} from "@/application/services/advertisement-image-service";
+import { deleteProviderAdvertisement } from "@/application/services/advertisement-service";
 import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import { getCurrentAdmin } from "@/lib/admin-session";
+import { validateImageFile } from "@/lib/image-upload";
 import { prisma } from "@/lib/prisma";
 import {
   adminCreateAdvertisementSchema,
   adminCreateProviderSchema,
   adminResetProviderPasswordSchema,
+  adminUpdateAdvertisementSchema,
   loginAdminSchema,
 } from "@/schemas/provider-schemas";
 import { UserRole } from "@/domain/enums";
@@ -426,10 +437,7 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
   if (!admin) redirect("/admin/entrar");
 
   const providerId = formData.get("providerId");
-  const redirectBase =
-    typeof providerId === "string" && providerId
-      ? `/admin/usuarios`
-      : "/admin/usuarios";
+  const redirectBase = "/admin/usuarios";
 
   const parsed = adminCreateAdvertisementSchema.safeParse({
     providerId: formData.get("providerId"),
@@ -450,7 +458,19 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
     );
   }
 
+  const coverFile = formData.get("coverImage");
+  const hasCover =
+    coverFile instanceof File && coverFile.size > 0;
+
+  if (hasCover) {
+    const coverValidationError = validateImageFile(coverFile, "Foto de capa");
+    if (coverValidationError) {
+      redirect(`${redirectBase}?error=${encodeURIComponent(coverValidationError)}`);
+    }
+  }
+
   let advertisementId: string;
+  let providerOwnerId: string = parsed.data.providerId;
 
   try {
     const advertisement = await createAdvertisementAsAdmin({
@@ -467,10 +487,24 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
       whatsappNumber: parsed.data.whatsappNumber,
     });
     advertisementId = advertisement.id;
+    providerOwnerId = advertisement.providerId ?? parsed.data.providerId;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Não foi possível criar o anúncio";
     redirect(`${redirectBase}?error=${encodeURIComponent(message)}`);
+  }
+
+  if (hasCover) {
+    try {
+      await saveAdvertisementImages(advertisementId, coverFile, []);
+    } catch (error) {
+      await deleteProviderAdvertisement(providerOwnerId, advertisementId);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível enviar a foto do anúncio";
+      redirect(`${redirectBase}?error=${encodeURIComponent(message)}`);
+    }
   }
 
   revalidatePath("/admin/usuarios");
@@ -481,7 +515,93 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
   revalidatePath(`/anuncio/${advertisementId}`);
 
   redirect(
-    `/admin/usuarios?saved=1&manual=ad&adId=${encodeURIComponent(advertisementId)}`
+    `/admin/anuncios/${advertisementId}/editar?saved=1`
   );
+}
+
+export async function adminUpdateAdvertisementAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const advertisementIdRaw = formData.get("advertisementId");
+  const advertisementId =
+    typeof advertisementIdRaw === "string" ? advertisementIdRaw : "";
+  const redirectBase = advertisementId
+    ? `/admin/anuncios/${advertisementId}/editar`
+    : "/admin/anuncios";
+
+  const parsed = adminUpdateAdvertisementSchema.safeParse({
+    advertisementId: formData.get("advertisementId"),
+    title: formData.get("title"),
+    description: formData.get("description"),
+    type: formData.get("type"),
+    category: formData.get("category"),
+    customCategory: formData.get("customCategory"),
+    city: formData.get("city"),
+    state: formData.get("state"),
+    neighborhood: formData.get("neighborhood") || undefined,
+    whatsappNumber: formData.get("whatsappNumber"),
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `${redirectBase}?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
+    );
+  }
+
+  const coverFile = formData.get("coverImage");
+  const hasCover = coverFile instanceof File && coverFile.size > 0;
+
+  if (hasCover) {
+    const coverValidationError = validateImageFile(coverFile, "Foto de capa");
+    if (coverValidationError) {
+      redirect(`${redirectBase}?error=${encodeURIComponent(coverValidationError)}`);
+    }
+  }
+
+  try {
+    await updateAdvertisementAsAdmin({
+      adminId: admin.id,
+      advertisementId: parsed.data.advertisementId,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      type: parsed.data.type,
+      category: parsed.data.category,
+      customCategory: parsed.data.customCategory,
+      city: parsed.data.city,
+      state: parsed.data.state,
+      neighborhood: parsed.data.neighborhood,
+      whatsappNumber: parsed.data.whatsappNumber,
+    });
+
+    if (hasCover) {
+      const existingCover = await prisma.advertisementImage.findFirst({
+        where: {
+          advertisementId: parsed.data.advertisementId,
+          kind: ADVERTISEMENT_IMAGE_KIND.COVER,
+        },
+        select: { id: true },
+      });
+
+      if (existingCover) {
+        await replaceAdvertisementCover(parsed.data.advertisementId, coverFile);
+      } else {
+        await saveAdvertisementImages(parsed.data.advertisementId, coverFile, []);
+      }
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível atualizar o anúncio";
+    redirect(`${redirectBase}?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/anuncios");
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+  revalidatePath(`/anuncio/${parsed.data.advertisementId}`);
+  revalidatePath(redirectBase);
+
+  redirect(`${redirectBase}?saved=1`);
 }
 

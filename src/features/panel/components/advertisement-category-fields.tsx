@@ -7,12 +7,24 @@ import { Input } from "@/components/ui/input";
 
 interface AdvertisementCategoryFieldsProps {
   readonly categories: readonly Category[];
+  readonly defaultCategory?: string;
 }
 
 export function AdvertisementCategoryFields({
   categories,
+  defaultCategory,
 }: AdvertisementCategoryFieldsProps) {
-  const [category, setCategory] = useState(categories[0]?.name ?? "");
+  const knownCategory = Boolean(
+    defaultCategory && categories.some((item) => item.name === defaultCategory)
+  );
+  const initialCategory = knownCategory
+    ? (defaultCategory as string)
+    : defaultCategory
+      ? CATEGORY_OTHER_VALUE
+      : categories[0]?.name ?? "";
+  const customDefault = knownCategory ? undefined : defaultCategory;
+
+  const [category, setCategory] = useState(initialCategory);
   const isOther = category === CATEGORY_OTHER_VALUE;
 
   return (
@@ -29,9 +41,9 @@ export function AdvertisementCategoryFields({
           value={category}
           onChange={(event) => setCategory(event.target.value)}
         >
-          {categories.map((category) => (
-            <option key={category.id} value={category.name}>
-              {category.name}
+          {categories.map((item) => (
+            <option key={item.id} value={item.name}>
+              {item.name}
             </option>
           ))}
           <option value={CATEGORY_OTHER_VALUE}>Outro</option>
@@ -53,6 +65,7 @@ export function AdvertisementCategoryFields({
             required
             minLength={2}
             maxLength={50}
+            defaultValue={customDefault}
           />
           <p className="mt-1 text-xs text-muted-foreground">
             Se for parecida com uma categoria existente, usaremos a oficial automaticamente.
