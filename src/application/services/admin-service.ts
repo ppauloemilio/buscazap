@@ -1,8 +1,24 @@
-import { AdvertisementStatus, PaymentStatus, ProviderStatus, UserRole } from "@/domain/enums";
+import {
+  AdvertisementStatus,
+  AdvertisementType,
+  PaymentStatus,
+  ProviderStatus,
+  UserRole,
+} from "@/domain/enums";
 import { PRICING } from "@/config/pricing";
+import { createAdvertisement } from "@/application/services/advertisement-service";
+import {
+  registerCategorySuggestion,
+  resolveAdvertisementCategoryFromCatalog,
+} from "@/application/services/category-matching-service";
 import { generateUniqueReferralCode } from "@/application/services/referral-service";
 import { prisma } from "@/lib/prisma";
-import { hasActiveSubscription, isPremiumActive } from "@/lib/provider-session";
+import {
+  canProviderPublish,
+  hasActiveSubscription,
+  isPremiumActive,
+} from "@/lib/provider-session";
+import { normalizeWhatsAppIdentity } from "@/lib/whatsapp";
 
 const PUBLIC_AD_STATUSES = [AdvertisementStatus.APPROVED] as const;
 
@@ -357,6 +373,95 @@ export async function resetProviderPasswordAsAdmin(input: {
       email: provider.email,
     },
   });
+}
+
+export async function createAdvertisementAsAdmin(input: {
+  readonly adminId: string;
+  readonly providerId: string;
+  readonly title: string;
+  readonly description: string;
+  readonly type: AdvertisementType;
+  readonly category: string;
+  readonly customCategory?: string;
+  readonly city: string;
+  readonly state: string;
+  readonly neighborhood?: string;
+  readonly whatsappNumber?: string;
+}) {
+  const provider = await prisma.provider.findUnique({
+    where: { id: input.providerId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      whatsapp: true,
+      role: true,
+      status: true,
+      subscriptionExpiresAt: true,
+    },
+  });
+
+  if (!provider) {
+    throw new Error("Anunciante não encontrado");
+  }
+
+  if (provider.role === UserRole.ADMIN) {
+    throw new Error("Não é possível criar anúncio para administrador");
+  }
+
+  if (provider.status === ProviderStatus.BLOCKED) {
+    throw new Error("Anunciante bloqueado — reative antes de criar anúncio");
+  }
+
+  if (!canProviderPublish(provider)) {
+    throw new Error(
+      "Anunciante sem assinatura/trial ativo. Ative o trial ou registre a assinatura antes."
+    );
+  }
+
+  const whatsappNumber =
+    normalizeWhatsAppIdentity(input.whatsappNumber ?? "") ??
+    normalizeWhatsAppIdentity(provider.whatsapp) ??
+    provider.whatsapp;
+
+  const categoryResolution = await resolveAdvertisementCategoryFromCatalog({
+    category: input.category,
+    customCategory: input.customCategory,
+  });
+
+  if (categoryResolution.isCustomCategory) {
+    await registerCategorySuggestion(categoryResolution.categoryName);
+  }
+
+  const result = await createAdvertisement({
+    providerId: provider.id,
+    title: input.title,
+    description: input.description,
+    type: input.type,
+    category: categoryResolution.categoryName,
+    isCustomCategory: categoryResolution.isCustomCategory,
+    city: input.city,
+    state: input.state,
+    neighborhood: input.neighborhood,
+    whatsappNumber,
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "CREATE_ADVERTISEMENT_FOR_PROVIDER",
+    entityType: "Advertisement",
+    entityId: result.advertisement.id,
+    metadata: {
+      providerId: provider.id,
+      providerName: provider.name,
+      title: input.title,
+      category: categoryResolution.categoryName,
+      city: input.city,
+      state: input.state,
+    },
+  });
+
+  return result.advertisement;
 }
 
 export async function deleteProviderAsAdmin(input: {

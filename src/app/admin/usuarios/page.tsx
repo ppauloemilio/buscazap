@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { adminCreateProviderAction } from "@/actions/admin-actions";
 import { listAdminProviders } from "@/application/services/admin-service";
+import { getCategoriesWithCounts } from "@/application/services/catalog-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
+import { AdminCreateAdvertisementForm } from "@/features/admin/components/admin-create-advertisement-form";
 import { AdminProviderActions } from "@/features/admin/components/admin-provider-actions";
 import {
   formatAdminPaymentBreakdown,
@@ -23,6 +25,7 @@ interface AdminUsersPageProps {
     readonly status?: string;
     readonly subscription?: string;
     readonly manual?: string;
+    readonly adId?: string;
   }>;
 }
 
@@ -31,10 +34,13 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   if (!admin) redirect("/admin/entrar");
 
   const params = await searchParams;
-  const providers = await listAdminProviders({
-    status: params.status,
-    subscription: params.subscription,
-  });
+  const [providers, categories] = await Promise.all([
+    listAdminProviders({
+      status: params.status,
+      subscription: params.subscription,
+    }),
+    getCategoriesWithCounts(),
+  ]);
 
   function buildFilterUrl(overrides: {
     readonly status?: string;
@@ -126,10 +132,24 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
           {params.manual === "subscription"
             ? "Assinatura registrada com sucesso (dinheiro/permuta)."
             : params.manual === "created"
-              ? "Anunciante cadastrado com sucesso."
+              ? "Anunciante cadastrado com sucesso. Agora você pode criar o primeiro anúncio abaixo."
               : params.manual === "password"
                 ? "Senha redefinida. Informe o anunciante pelo WhatsApp."
-                : "Status do usuário atualizado."}
+                : params.manual === "ad"
+                  ? "Anúncio publicado com sucesso."
+                  : "Status do usuário atualizado."}
+          {params.manual === "ad" && params.adId ? (
+            <>
+              {" "}
+              <Link
+                href={`/anuncio/${params.adId}`}
+                className="underline"
+                target="_blank"
+              >
+                Ver anúncio público
+              </Link>
+            </>
+          ) : null}
         </p>
       )}
       {params.deleted === "1" && (
@@ -286,6 +306,15 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                   name={provider.name}
                   advertisementsCount={provider.advertisementsCount}
                   subscriptionActive={provider.subscriptionActive}
+                />
+
+                <AdminCreateAdvertisementForm
+                  providerId={provider.id}
+                  providerName={provider.name}
+                  defaultWhatsapp={provider.whatsapp}
+                  defaultOpen={provider.advertisementsCount === 0}
+                  canPublish={provider.subscriptionActive}
+                  categories={categories}
                 />
               </CardContent>
             </Card>

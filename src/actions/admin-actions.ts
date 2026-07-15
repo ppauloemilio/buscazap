@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import {
+  createAdvertisementAsAdmin,
   createProviderAsAdmin,
   createReport,
   deleteAdvertisementAsAdmin,
@@ -24,6 +25,7 @@ import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
 import {
+  adminCreateAdvertisementSchema,
   adminCreateProviderSchema,
   adminResetProviderPasswordSchema,
   loginAdminSchema,
@@ -417,5 +419,69 @@ export async function adminResetProviderPasswordAction(formData: FormData) {
 
   revalidatePath("/admin/usuarios");
   redirect("/admin/usuarios?saved=1&manual=password");
+}
+
+export async function adminCreateAdvertisementAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const providerId = formData.get("providerId");
+  const redirectBase =
+    typeof providerId === "string" && providerId
+      ? `/admin/usuarios`
+      : "/admin/usuarios";
+
+  const parsed = adminCreateAdvertisementSchema.safeParse({
+    providerId: formData.get("providerId"),
+    title: formData.get("title"),
+    description: formData.get("description"),
+    type: formData.get("type"),
+    category: formData.get("category"),
+    customCategory: formData.get("customCategory"),
+    city: formData.get("city"),
+    state: formData.get("state"),
+    neighborhood: formData.get("neighborhood") || undefined,
+    whatsappNumber: formData.get("whatsappNumber"),
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `${redirectBase}?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
+    );
+  }
+
+  let advertisementId: string;
+
+  try {
+    const advertisement = await createAdvertisementAsAdmin({
+      adminId: admin.id,
+      providerId: parsed.data.providerId,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      type: parsed.data.type,
+      category: parsed.data.category,
+      customCategory: parsed.data.customCategory,
+      city: parsed.data.city,
+      state: parsed.data.state,
+      neighborhood: parsed.data.neighborhood,
+      whatsappNumber: parsed.data.whatsappNumber,
+    });
+    advertisementId = advertisement.id;
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível criar o anúncio";
+    redirect(`${redirectBase}?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin/anuncios");
+  revalidatePath("/admin");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+  revalidatePath(`/anuncio/${advertisementId}`);
+
+  redirect(
+    `/admin/usuarios?saved=1&manual=ad&adId=${encodeURIComponent(advertisementId)}`
+  );
 }
 
