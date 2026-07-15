@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ALL_WHATSAPP_EMOJIS,
   DEFAULT_CATEGORY_EMOJI,
@@ -30,17 +30,9 @@ export function CategoryIconPicker({
   const [activeGroup, setActiveGroup] = useState<string>(
     WHATSAPP_EMOJI_GROUPS[0]?.id ?? "smileys"
   );
-  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-        setQuery("");
-      }
-    }
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -49,10 +41,9 @@ export function CategoryIconPicker({
       }
     }
 
-    document.addEventListener("mousedown", handlePointerDown);
+    // Não fecha ao rolar a página (mousedown na scrollbar fechava o painel).
     document.addEventListener("keydown", handleEscape);
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleEscape);
     };
   }, [open]);
@@ -84,7 +75,7 @@ export function CategoryIconPicker({
   }
 
   return (
-    <div ref={rootRef} className="relative space-y-1.5">
+    <div className="relative space-y-1.5">
       <input type="hidden" id={id} name={name} value={value} />
 
       <div className="flex items-center gap-2">
