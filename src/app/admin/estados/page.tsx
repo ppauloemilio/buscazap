@@ -1,14 +1,11 @@
 import { redirect } from "next/navigation";
 import {
   createStateAction,
-  deleteStateAction,
-  updateStateAction,
 } from "@/actions/admin-catalog-actions";
 import { listAdminStates } from "@/application/services/admin-catalog-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
-import { AdminDeleteButton } from "@/features/admin/components/admin-delete-button";
+import { AdminStatesBulkList } from "@/features/admin/components/admin-states-bulk-list";
 import { getCurrentAdmin } from "@/lib/admin-session";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,6 +15,7 @@ interface AdminStatesPageProps {
     readonly error?: string;
     readonly saved?: string;
     readonly deleted?: string;
+    readonly bulk?: string;
   }>;
 }
 
@@ -30,84 +28,55 @@ export default async function AdminStatesPage({ searchParams }: AdminStatesPageP
 
   return (
     <AdminLayout>
-      <h2 className="mb-6 text-xl font-semibold">Estados</h2>
+      <h2 className="mb-3 text-lg font-semibold">Estados</h2>
 
       {params.error && (
-        <p className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+        <p className="mb-3 rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">
           {params.error}
         </p>
       )}
       {params.saved === "1" && (
-        <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
-          Estado salvo com sucesso.
+        <p className="mb-3 rounded-lg bg-whatsapp/10 p-2.5 text-sm text-whatsapp">
+          {params.bulk === "activate"
+            ? "Estados ativados com sucesso."
+            : params.bulk === "deactivate"
+              ? "Estados desativados com sucesso."
+              : "Estado salvo com sucesso."}
         </p>
       )}
       {params.deleted === "1" && (
-        <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
+        <p className="mb-3 rounded-lg bg-whatsapp/10 p-2.5 text-sm text-whatsapp">
           Estado excluído.
         </p>
       )}
 
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-4">
+        <CardHeader className="p-3 pb-2">
           <CardTitle className="text-base">Novo estado</CardTitle>
         </CardHeader>
-        <CardContent>
-          <form action={createStateAction} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <CardContent className="p-3 pt-0">
+          <form action={createStateAction} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <Input name="uf" placeholder="UF" maxLength={2} required />
             <Input name="name" placeholder="Nome do estado" required />
             <Input name="sortOrder" type="number" min={0} defaultValue={0} placeholder="Ordem" />
-            <Button type="submit">Adicionar</Button>
+            <Button type="submit" size="sm">
+              Adicionar
+            </Button>
           </form>
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        {states.map((state) => (
-          <Card key={state.id}>
-            <CardContent className="space-y-4 p-4">
-              <form action={updateStateAction} className="grid gap-3 lg:grid-cols-5">
-                <input type="hidden" name="id" value={state.id} />
-                <Input name="uf" defaultValue={state.uf} maxLength={2} required />
-                <Input name="name" defaultValue={state.name} required />
-                <Input
-                  name="sortOrder"
-                  type="number"
-                  min={0}
-                  defaultValue={state.sortOrder}
-                />
-                <select
-                  name="isActive"
-                  defaultValue={state.isActive ? "true" : "false"}
-                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                >
-                  <option value="true">Ativo</option>
-                  <option value="false">Inativo</option>
-                </select>
-                <Button type="submit" variant="outline">
-                  Salvar
-                </Button>
-              </form>
-
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <Badge variant={state.isActive ? "whatsapp" : "secondary"}>
-                    {state.isActive ? "Ativo" : "Inativo"}
-                  </Badge>
-                  <span>{state.citiesCount} cidade(s)</span>
-                  <span>{state.usageCount} uso(s) em anúncios/usuários</span>
-                </div>
-                <AdminDeleteButton
-                  action={deleteStateAction}
-                  id={state.id}
-                  label="Excluir"
-                  confirmMessage={`Excluir o estado ${state.uf} — ${state.name}?`}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <AdminStatesBulkList
+        states={states.map((state) => ({
+          id: state.id,
+          uf: state.uf,
+          name: state.name,
+          sortOrder: state.sortOrder,
+          isActive: state.isActive,
+          citiesCount: state.citiesCount,
+          usageCount: state.usageCount,
+        }))}
+      />
     </AdminLayout>
   );
 }

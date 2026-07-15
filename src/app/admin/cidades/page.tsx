@@ -1,16 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  createCityAction,
-  deleteCityAction,
-  updateCityAction,
-} from "@/actions/admin-catalog-actions";
+import { createCityAction } from "@/actions/admin-catalog-actions";
 import { listAdminCities } from "@/application/services/admin-catalog-service";
 import { listAllStates } from "@/application/services/catalog-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
-import { AdminDeleteButton } from "@/features/admin/components/admin-delete-button";
+import { AdminCitiesBulkList } from "@/features/admin/components/admin-cities-bulk-list";
 import { getCurrentAdmin } from "@/lib/admin-session";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +16,7 @@ interface AdminCitiesPageProps {
     readonly saved?: string;
     readonly deleted?: string;
     readonly stateId?: string;
+    readonly bulk?: string;
   }>;
 }
 
@@ -41,9 +37,9 @@ export default async function AdminCitiesPage({ searchParams }: AdminCitiesPageP
 
   return (
     <AdminLayout>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl font-semibold">Cidades</h2>
-        <div className="flex flex-wrap gap-2">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-semibold">Cidades</h2>
+        <div className="flex flex-wrap gap-1.5">
           <Button variant={!params.stateId ? "default" : "outline"} size="sm" asChild>
             <Link href={buildFilterUrl()}>Todas</Link>
           </Button>
@@ -61,27 +57,31 @@ export default async function AdminCitiesPage({ searchParams }: AdminCitiesPageP
       </div>
 
       {params.error && (
-        <p className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+        <p className="mb-3 rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">
           {params.error}
         </p>
       )}
       {params.saved === "1" && (
-        <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
-          Cidade salva com sucesso.
+        <p className="mb-3 rounded-lg bg-whatsapp/10 p-2.5 text-sm text-whatsapp">
+          {params.bulk === "activate"
+            ? "Cidades ativadas com sucesso."
+            : params.bulk === "deactivate"
+              ? "Cidades desativadas com sucesso."
+              : "Cidade salva com sucesso."}
         </p>
       )}
       {params.deleted === "1" && (
-        <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
+        <p className="mb-3 rounded-lg bg-whatsapp/10 p-2.5 text-sm text-whatsapp">
           Cidade excluída.
         </p>
       )}
 
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-4">
+        <CardHeader className="p-3 pb-2">
           <CardTitle className="text-base">Nova cidade</CardTitle>
         </CardHeader>
-        <CardContent>
-          <form action={createCityAction} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <CardContent className="p-3 pt-0">
+          <form action={createCityAction} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <Input name="name" placeholder="Nome da cidade" required />
             <select
               name="stateId"
@@ -96,72 +96,29 @@ export default async function AdminCitiesPage({ searchParams }: AdminCitiesPageP
                 </option>
               ))}
             </select>
-            <Button type="submit">Adicionar</Button>
+            <Button type="submit" size="sm">
+              Adicionar
+            </Button>
           </form>
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        {cities.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-sm text-muted-foreground">
-              Nenhuma cidade encontrada.
-            </CardContent>
-          </Card>
-        ) : (
-          cities.map((city) => (
-            <Card key={city.id}>
-              <CardContent className="space-y-4 p-4">
-                <form action={updateCityAction} className="grid gap-3 lg:grid-cols-4">
-                  <input type="hidden" name="id" value={city.id} />
-                  <Input name="name" defaultValue={city.name} required />
-                  <select
-                    name="stateId"
-                    defaultValue={city.stateId}
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                    required
-                  >
-                    {states.map((state) => (
-                      <option key={state.id} value={state.id}>
-                        {state.uf} — {state.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    name="isActive"
-                    defaultValue={city.isActive ? "true" : "false"}
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                  >
-                    <option value="true">Ativa</option>
-                    <option value="false">Inativa</option>
-                  </select>
-                  <Button type="submit" variant="outline">
-                    Salvar
-                  </Button>
-                </form>
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                    <Badge variant={city.isActive ? "whatsapp" : "secondary"}>
-                      {city.isActive ? "Ativa" : "Inativa"}
-                    </Badge>
-                    <span>
-                      {city.name}/{city.stateUf}
-                    </span>
-                    <span>{city.usageCount} anúncio(s)</span>
-                  </div>
-                  <AdminDeleteButton
-                    action={deleteCityAction}
-                    id={city.id}
-                    label="Excluir"
-                    confirmMessage={`Excluir a cidade ${city.name}/${city.stateUf}?`}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+      <AdminCitiesBulkList
+        filterStateId={params.stateId}
+        states={states.map((state) => ({
+          id: state.id,
+          uf: state.uf,
+          name: state.name,
+        }))}
+        cities={cities.map((city) => ({
+          id: city.id,
+          name: city.name,
+          stateId: city.stateId,
+          stateUf: city.stateUf,
+          isActive: city.isActive,
+          usageCount: city.usageCount,
+        }))}
+      />
     </AdminLayout>
   );
 }

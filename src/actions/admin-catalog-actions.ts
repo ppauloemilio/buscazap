@@ -15,6 +15,8 @@ import {
   updateCategoryAsAdmin,
   updateCityAsAdmin,
   updateStateAsAdmin,
+  bulkSetCitiesActiveAsAdmin,
+  bulkSetStatesActiveAsAdmin,
 } from "@/application/services/admin-catalog-service";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import {
@@ -322,6 +324,37 @@ export async function deleteStateAction(formData: FormData) {
   redirect("/admin/estados?deleted=1");
 }
 
+function collectBulkIds(formData: FormData): string[] {
+  return formData
+    .getAll("ids")
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
+}
+
+export async function bulkSetStatesActiveAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const isActiveRaw = formData.get("isActive");
+  const isActive = isActiveRaw === "true";
+  const ids = collectBulkIds(formData);
+
+  try {
+    await bulkSetStatesActiveAsAdmin({
+      adminId: admin.id,
+      ids,
+      isActive,
+    });
+  } catch (error) {
+    redirectWithCatalogError(
+      "/admin/estados",
+      error instanceof Error ? error.message : "Não foi possível atualizar os estados"
+    );
+  }
+
+  revalidateCatalogPaths();
+  redirect(`/admin/estados?saved=1&bulk=${isActive ? "activate" : "deactivate"}`);
+}
+
 export async function createCityAction(formData: FormData) {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/entrar");
@@ -399,4 +432,38 @@ export async function deleteCityAction(formData: FormData) {
 
   revalidateCatalogPaths();
   redirect("/admin/cidades?deleted=1");
+}
+
+export async function bulkSetCitiesActiveAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const isActiveRaw = formData.get("isActive");
+  const isActive = isActiveRaw === "true";
+  const ids = collectBulkIds(formData);
+  const stateId = formData.get("stateId");
+  const redirectBase =
+    typeof stateId === "string" && stateId
+      ? `/admin/cidades?stateId=${encodeURIComponent(stateId)}&`
+      : "/admin/cidades?";
+
+  try {
+    await bulkSetCitiesActiveAsAdmin({
+      adminId: admin.id,
+      ids,
+      isActive,
+    });
+  } catch (error) {
+    redirectWithCatalogError(
+      typeof stateId === "string" && stateId
+        ? `/admin/cidades?stateId=${encodeURIComponent(stateId)}`
+        : "/admin/cidades",
+      error instanceof Error ? error.message : "Não foi possível atualizar as cidades"
+    );
+  }
+
+  revalidateCatalogPaths();
+  redirect(
+    `${redirectBase}saved=1&bulk=${isActive ? "activate" : "deactivate"}`
+  );
 }

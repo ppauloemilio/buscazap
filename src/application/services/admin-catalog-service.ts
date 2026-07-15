@@ -295,6 +295,35 @@ export async function updateStateAsAdmin(input: {
   return state;
 }
 
+export async function bulkSetStatesActiveAsAdmin(input: {
+  readonly adminId: string;
+  readonly ids: readonly string[];
+  readonly isActive: boolean;
+}) {
+  const uniqueIds = [...new Set(input.ids)].filter(Boolean);
+  if (uniqueIds.length === 0) {
+    throw new Error("Selecione ao menos um estado");
+  }
+
+  const result = await prisma.catalogState.updateMany({
+    where: { id: { in: uniqueIds } },
+    data: { isActive: input.isActive },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: input.isActive ? "BULK_ACTIVATE_STATES" : "BULK_DEACTIVATE_STATES",
+    entityType: "CatalogState",
+    metadata: {
+      ids: uniqueIds,
+      count: result.count,
+      isActive: input.isActive,
+    },
+  });
+
+  return result.count;
+}
+
 export async function deleteStateAsAdmin(input: {
   readonly adminId: string;
   readonly id: string;
@@ -417,6 +446,35 @@ export async function updateCityAsAdmin(input: {
   });
 
   return city;
+}
+
+export async function bulkSetCitiesActiveAsAdmin(input: {
+  readonly adminId: string;
+  readonly ids: readonly string[];
+  readonly isActive: boolean;
+}) {
+  const uniqueIds = [...new Set(input.ids)].filter(Boolean);
+  if (uniqueIds.length === 0) {
+    throw new Error("Selecione ao menos uma cidade");
+  }
+
+  const result = await prisma.catalogCity.updateMany({
+    where: { id: { in: uniqueIds } },
+    data: { isActive: input.isActive },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: input.isActive ? "BULK_ACTIVATE_CITIES" : "BULK_DEACTIVATE_CITIES",
+    entityType: "CatalogCity",
+    metadata: {
+      ids: uniqueIds,
+      count: result.count,
+      isActive: input.isActive,
+    },
+  });
+
+  return result.count;
 }
 
 export async function deleteCityAsAdmin(input: {
