@@ -77,12 +77,12 @@ export function AdvertisementImagesEditor({
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {galleryImages.map((image) => (
               <div key={image.id} className="space-y-1.5">
-                <div className="relative aspect-square overflow-hidden rounded-lg border">
+                <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
                   <Image
                     src={image.url}
                     alt={`Foto da galeria de ${title}`}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     sizes="200px"
                   />
                 </div>
@@ -109,12 +109,12 @@ export function AdvertisementImagesEditor({
             Foto de capa
           </label>
           {coverImage && (
-            <div className="relative mb-2 aspect-[4/3] max-w-sm overflow-hidden rounded-lg border">
+            <div className="relative mb-2 aspect-square max-w-sm overflow-hidden rounded-lg border bg-muted sm:aspect-[4/3]">
               <Image
                 src={coverImage.url}
                 alt={`Capa do anúncio ${title}`}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="384px"
               />
             </div>

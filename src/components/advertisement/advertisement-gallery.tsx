@@ -21,12 +21,12 @@ export function AdvertisementGallery({
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-xl border">
+      <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted sm:aspect-[4/3]">
         <Image
           src={selectedImage}
           alt={`${title} — foto ${selectedIndex + 1}`}
           fill
-          className="object-cover"
+          className="object-contain"
           sizes="(max-width: 1024px) 100vw, 50vw"
           priority
         />
@@ -40,7 +40,7 @@ export function AdvertisementGallery({
               type="button"
               onClick={() => setSelectedIndex(index)}
               className={cn(
-                "relative h-16 w-16 shrink-0 overflow-hidden rounded-md border-2 transition-colors",
+                "relative h-16 w-16 shrink-0 overflow-hidden rounded-md border-2 bg-muted transition-colors",
                 selectedIndex === index
                   ? "border-whatsapp"
                   : "border-transparent opacity-80 hover:opacity-100"
@@ -51,7 +51,7 @@ export function AdvertisementGallery({
                 src={url}
                 alt=""
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="64px"
               />
             </button>

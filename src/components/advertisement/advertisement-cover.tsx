@@ -19,6 +19,8 @@ interface AdvertisementCoverProps {
   readonly className?: string;
   readonly priority?: boolean;
   readonly compact?: boolean;
+  /** cover = preenche/corta; contain = encaixa a imagem inteira na área */
+  readonly fit?: "cover" | "contain";
 }
 
 export function AdvertisementCover({
@@ -28,6 +30,7 @@ export function AdvertisementCover({
   className,
   priority = false,
   compact = false,
+  fit = "contain",
 }: AdvertisementCoverProps) {
   if (imageUrl) {
     return (
@@ -35,11 +38,14 @@ export function AdvertisementCover({
         src={imageUrl}
         alt={`Capa do anúncio ${title}`}
         fill
-        className={cn("object-cover", className)}
+        className={cn(
+          fit === "contain" ? "object-contain bg-muted" : "object-cover",
+          className
+        )}
         sizes={
           compact
             ? "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
-            : "(max-width: 768px) 100vw, 33vw"
+            : "(max-width: 768px) 100vw, 50vw"
         }
         priority={priority}
       />

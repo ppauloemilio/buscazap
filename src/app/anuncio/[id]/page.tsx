@@ -5,6 +5,7 @@ import { Star, MapPin, MessageCircle, Crown, ArrowLeft, Clock, Zap } from "lucid
 import { getAdvertisementById } from "@/application/services/search-service";
 import { listAdvertisementReviews } from "@/application/services/review-service";
 import { AdvertisementCover } from "@/components/advertisement/advertisement-cover";
+import { AdvertisementDescription } from "@/components/advertisement/advertisement-description";
 import { AdvertisementGallery } from "@/components/advertisement/advertisement-gallery";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,12 +84,13 @@ export default async function AdvertisementPage({ params }: AdvertisementPagePro
               title={advertisement.title}
             />
           ) : (
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl border">
+            <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted sm:aspect-[4/3]">
               <AdvertisementCover
                 title={advertisement.title}
                 category={advertisement.category}
                 imageUrl={advertisement.imageUrl}
                 priority
+                fit="contain"
               />
             </div>
           )}
@@ -121,7 +123,10 @@ export default async function AdvertisementPage({ params }: AdvertisementPagePro
             {advertisement.title}
           </h1>
 
-          <p className="mb-4 text-muted-foreground">{advertisement.description}</p>
+          <AdvertisementDescription
+            text={advertisement.description}
+            className="mb-4 text-base leading-relaxed"
+          />
 
           <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0 text-whatsapp" />

@@ -30,12 +30,13 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
 
   return (
     <Card className="group overflow-hidden transition-shadow hover:shadow-md">
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <AdvertisementCover
           title={advertisement.title}
           category={advertisement.category}
           imageUrl={advertisement.imageUrl}
           compact
+          fit="contain"
         />
         {advertisement.isPremium && (
           <Badge
@@ -79,7 +80,7 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
           </h3>
         </Link>
 
-        <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+        <p className="line-clamp-2 whitespace-pre-line text-[11px] leading-snug text-muted-foreground">
           {advertisement.description}
         </p>
 

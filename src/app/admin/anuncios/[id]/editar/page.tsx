@@ -8,6 +8,7 @@ import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES } from "@/config/pricing";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
+import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,13 +93,11 @@ export default async function AdminEditAdvertisementPage({
 
         <div>
           <label className="mb-1 block text-sm font-medium">Descrição</label>
-          <textarea
-            name="description"
+          <DescriptionEditor
             defaultValue={advertisement.description}
             required
             minLength={20}
-            rows={4}
-            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            rows={10}
           />
         </div>
 
@@ -171,7 +170,7 @@ export default async function AdminEditAdvertisementPage({
             <img
               src={advertisement.coverImageUrl}
               alt="Capa atual"
-              className="mb-2 h-32 w-32 rounded-md border object-cover"
+              className="mb-2 h-40 w-full max-w-sm rounded-md border bg-muted object-contain"
             />
           )}
           <input

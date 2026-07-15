@@ -5,6 +5,7 @@ import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { AdvertisementImageFields } from "@/features/panel/components/advertisement-image-fields";
+import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { getCurrentProvider, canProviderPublish } from "@/lib/provider-session";
 import {
   getCategoriesWithCounts,
@@ -64,13 +65,7 @@ export default async function NewAdvertisementPage({
           <label htmlFor="description" className="mb-1 block text-sm font-medium">
             Descrição
           </label>
-          <textarea
-            id="description"
-            name="description"
-            required
-            rows={3}
-            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
+          <DescriptionEditor required minLength={20} rows={8} />
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2">

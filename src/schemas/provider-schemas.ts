@@ -149,7 +149,10 @@ export const updateProviderPasswordSchema = z
 export const createAdvertisementSchema = z
   .object({
     title: z.string().min(5, "Título deve ter ao menos 5 caracteres"),
-    description: z.string().min(20, "Descrição deve ter ao menos 20 caracteres"),
+    description: z
+      .string()
+      .min(20, "Descrição deve ter ao menos 20 caracteres")
+      .max(5000, "Descrição muito longa"),
     type: z.nativeEnum(AdvertisementType),
     category: z.string().min(1, "Selecione uma categoria"),
     customCategory: z.preprocess(
@@ -203,7 +206,10 @@ export const adminCreateAdvertisementSchema = z
   .object({
     providerId: z.string().min(1, "Selecione o anunciante"),
     title: z.string().min(5, "Título deve ter ao menos 5 caracteres"),
-    description: z.string().min(20, "Descrição deve ter ao menos 20 caracteres"),
+    description: z
+      .string()
+      .min(20, "Descrição deve ter ao menos 20 caracteres")
+      .max(5000, "Descrição muito longa"),
     type: z.nativeEnum(AdvertisementType),
     category: z.string().min(1, "Selecione uma categoria"),
     customCategory: z.preprocess(
@@ -241,7 +247,10 @@ export const adminUpdateAdvertisementSchema = z
   .object({
     advertisementId: z.string().min(1),
     title: z.string().min(5, "Título deve ter ao menos 5 caracteres"),
-    description: z.string().min(20, "Descrição deve ter ao menos 20 caracteres"),
+    description: z
+      .string()
+      .min(20, "Descrição deve ter ao menos 20 caracteres")
+      .max(5000, "Descrição muito longa"),
     type: z.nativeEnum(AdvertisementType),
     category: z.string().min(1, "Selecione uma categoria"),
     customCategory: z.preprocess(

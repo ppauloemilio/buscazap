@@ -6,6 +6,7 @@ import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES } from "@/config/pricing";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
+import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Category } from "@/domain/entities";
@@ -70,13 +71,11 @@ export function AdminCreateAdvertisementForm({
             </div>
             <div className="sm:col-span-2">
               <label className="mb-1 block text-xs font-medium">Descrição</label>
-              <textarea
-                name="description"
+              <DescriptionEditor
                 required
                 minLength={20}
-                rows={3}
-                placeholder="Descreva o serviço de forma clara para o cliente..."
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                rows={8}
+                placeholder={"Ex.:\nFILÉ DE GÓ FRITA — R$ 22,00\nFRANGO FRITO — R$ 20,00"}
               />
             </div>
             <div>
