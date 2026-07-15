@@ -17,6 +17,28 @@ const PAYMENT_STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Cancelado",
 };
 
+const MANUAL_METHOD_LABELS: Record<string, string> = {
+  CASH: "Dinheiro",
+  BARTER: "Permuta",
+  OTHER: "Outro",
+};
+
+function getManualMethodLabel(payment: {
+  readonly pixCopyPaste: string;
+  readonly referenceId: string | null;
+}): string | null {
+  const raw =
+    payment.pixCopyPaste.startsWith("manual:")
+      ? payment.pixCopyPaste
+      : payment.referenceId?.startsWith("manual:")
+        ? payment.referenceId
+        : null;
+
+  if (!raw) return null;
+  const method = raw.replace("manual:", "");
+  return MANUAL_METHOD_LABELS[method] ?? "Manual";
+}
+
 export default async function AdminPaymentsPage() {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/entrar");
@@ -35,7 +57,10 @@ export default async function AdminPaymentsPage() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {payments.map((payment) => (
+          {payments.map((payment) => {
+            const manualLabel = getManualMethodLabel(payment);
+
+            return (
             <Card key={payment.id}>
               <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -51,6 +76,9 @@ export default async function AdminPaymentsPage() {
                     >
                       {PAYMENT_STATUS_LABELS[payment.status] ?? payment.status}
                     </Badge>
+                    {manualLabel && (
+                      <Badge variant="secondary">Manual · {manualLabel}</Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {payment.provider.name} ({payment.provider.email})
@@ -64,7 +92,8 @@ export default async function AdminPaymentsPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </AdminLayout>

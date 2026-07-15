@@ -19,6 +19,7 @@ interface AdminUsersPageProps {
     readonly deleted?: string;
     readonly status?: string;
     readonly subscription?: string;
+    readonly manual?: string;
   }>;
 }
 
@@ -119,7 +120,9 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
       )}
       {params.saved === "1" && (
         <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
-          Status do usuário atualizado.
+          {params.manual === "subscription"
+            ? "Assinatura registrada com sucesso (dinheiro/permuta)."
+            : "Status do usuário atualizado."}
         </p>
       )}
       {params.deleted === "1" && (

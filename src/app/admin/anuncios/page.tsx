@@ -18,6 +18,7 @@ interface AdminAdsPageProps {
     readonly status?: string;
     readonly premium?: string;
     readonly providerId?: string;
+    readonly manual?: string;
   }>;
 }
 
@@ -86,7 +87,9 @@ export default async function AdminAdvertisementsPage({
       )}
       {params.saved === "1" && (
         <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
-          Status do anúncio atualizado.
+          {params.manual === "premium"
+            ? "Destaque premium registrado com sucesso (dinheiro/permuta)."
+            : "Status do anúncio atualizado."}
         </p>
       )}
       {params.deleted === "1" && (

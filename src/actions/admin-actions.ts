@@ -13,6 +13,11 @@ import {
   updateReportStatusAsAdmin,
 } from "@/application/services/admin-service";
 import { updateHomepageSettings } from "@/application/services/homepage-settings-service";
+import {
+  parseManualPaymentMethod,
+  registerManualPremiumBoostAsAdmin,
+  registerManualSubscriptionAsAdmin,
+} from "@/application/services/admin-manual-billing-service";
 import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
@@ -252,5 +257,88 @@ export async function updateHomepageSettingsAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin/home");
   redirect("/admin/home?saved=1");
+}
+
+export async function adminRegisterSubscriptionAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const providerId = formData.get("providerId");
+  const notesRaw = formData.get("notes");
+
+  if (typeof providerId !== "string" || !providerId) {
+    redirect("/admin/usuarios");
+  }
+
+  try {
+    const method = parseManualPaymentMethod(formData.get("method"));
+    const notes =
+      typeof notesRaw === "string" && notesRaw.trim().length > 0
+        ? notesRaw.trim().slice(0, 200)
+        : undefined;
+
+    await registerManualSubscriptionAsAdmin({
+      adminId: admin.id,
+      providerId,
+      method,
+      notes,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível registrar a assinatura";
+    redirect(`/admin/usuarios?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin/pagamentos");
+  revalidatePath("/admin");
+  revalidatePath("/painel");
+  revalidatePath("/painel/assinatura");
+
+  redirect("/admin/usuarios?saved=1&manual=subscription");
+}
+
+export async function adminRegisterPremiumBoostAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const advertisementId = formData.get("advertisementId");
+  const notesRaw = formData.get("notes");
+
+  if (typeof advertisementId !== "string" || !advertisementId) {
+    redirect("/admin/anuncios");
+  }
+
+  try {
+    const method = parseManualPaymentMethod(formData.get("method"));
+    const notes =
+      typeof notesRaw === "string" && notesRaw.trim().length > 0
+        ? notesRaw.trim().slice(0, 200)
+        : undefined;
+
+    await registerManualPremiumBoostAsAdmin({
+      adminId: admin.id,
+      advertisementId,
+      method,
+      notes,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível registrar o destaque premium";
+    redirect(`/admin/anuncios?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/anuncios");
+  revalidatePath("/admin/pagamentos");
+  revalidatePath("/admin");
+  revalidatePath("/painel/anuncios");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+
+  redirect("/admin/anuncios?saved=1&manual=premium");
 }
 
