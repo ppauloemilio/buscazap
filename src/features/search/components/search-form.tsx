@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, Filter, SlidersHorizontal } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryIcon } from "@/components/category/category-icon";
@@ -137,45 +137,39 @@ export function SearchForm({
         </button>
 
         {showFilters && (
-          <div className="space-y-2">
-            <p className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              <Filter className="h-3 w-3" />
-              Filtrar por categoria
-            </p>
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setCategory("all");
+                navigate({ category: "all" });
+              }}
+              className={`rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                category === "all"
+                  ? "bg-whatsapp text-whatsapp-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              Todas
+            </button>
+            {categories.map((item) => (
               <button
+                key={item.slug}
                 type="button"
                 onClick={() => {
-                  setCategory("all");
-                  navigate({ category: "all" });
+                  setCategory(item.slug);
+                  navigate({ category: item.slug });
                 }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  category === "all"
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                  category === item.slug
                     ? "bg-whatsapp text-whatsapp-foreground"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
               >
-                Todas
+                <CategoryIcon icon={item.icon} size="sm" className="text-[11px]" />
+                {item.name}
               </button>
-              {categories.map((item) => (
-                <button
-                  key={item.slug}
-                  type="button"
-                  onClick={() => {
-                    setCategory(item.slug);
-                    navigate({ category: item.slug });
-                  }}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                    category === item.slug
-                      ? "bg-whatsapp text-whatsapp-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  }`}
-                >
-                  <CategoryIcon icon={item.icon} size="sm" />
-                  {item.name}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         )}
       </div>

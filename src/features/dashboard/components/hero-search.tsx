@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, Filter, SlidersHorizontal } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryIcon } from "@/components/category/category-icon";
-import { POPULAR_SEARCHES } from "@/config/quick-searches";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 import {
   buildSearchHref,
@@ -78,9 +77,9 @@ export function HeroSearch({
 
         <form
           onSubmit={handleSearch}
-          className="mx-auto max-w-2xl space-y-3 rounded-2xl border bg-card p-4 shadow-lg md:p-6"
+          className="mx-auto max-w-2xl space-y-2.5 rounded-2xl border bg-card p-4 shadow-lg md:p-5"
         >
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-2.5 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -113,79 +112,59 @@ export function HeroSearch({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <button
               type="button"
               onClick={() => setShowFilters((current) => !current)}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
+              <SlidersHorizontal className="h-3 w-3" />
               {showFilters ? "Ocultar categorias" : "Categorias"}
             </button>
 
-            <Button type="submit" variant="whatsapp" size="lg">
-              <Search className="h-4 w-4" />
+            <Button type="submit" variant="whatsapp" size="sm" className="h-9 px-4">
+              <Search className="h-3.5 w-3.5" />
               Buscar
             </Button>
           </div>
 
           {showFilters && (
-            <div className="space-y-2 border-t pt-3 text-left">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Categorias
-              </p>
-              <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1 border-t pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCategory("all");
+                  goToSearch({ category: "all" });
+                }}
+                className={`rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                  category === "all"
+                    ? "bg-whatsapp text-whatsapp-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                Todas
+              </button>
+              {categories.map((item) => (
                 <button
+                  key={item.slug}
                   type="button"
                   onClick={() => {
-                    setCategory("all");
-                    goToSearch({ category: "all" });
+                    setCategory(item.slug);
+                    goToSearch({ category: item.slug });
                   }}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                    category === "all"
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                    category === item.slug
                       ? "bg-whatsapp text-whatsapp-foreground"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
-                  Todas
+                  <CategoryIcon icon={item.icon} size="sm" className="text-[11px]" />
+                  {item.name}
                 </button>
-                {categories.map((item) => (
-                  <button
-                    key={item.slug}
-                    type="button"
-                    onClick={() => {
-                      setCategory(item.slug);
-                      goToSearch({ category: item.slug });
-                    }}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                      category === item.slug
-                        ? "bg-whatsapp text-whatsapp-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    <CategoryIcon icon={item.icon} size="sm" />
-                    {item.name}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
           )}
         </form>
-
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Filter className="h-4 w-4" />
-          <span>Populares:</span>
-          {POPULAR_SEARCHES.map((term) => (
-            <button
-              key={term}
-              type="button"
-              onClick={() => goToSearch({ query: term })}
-              className="rounded-full bg-muted px-3 py-1 text-xs font-medium transition-colors hover:bg-whatsapp/10 hover:text-whatsapp"
-            >
-              {term}
-            </button>
-          ))}
-        </div>
       </div>
     </section>
   );

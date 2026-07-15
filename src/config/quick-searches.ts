@@ -15,12 +15,3 @@ export const URGENT_SEARCHES = [
   { label: "Eletricista", query: "eletricista", icon: Zap },
   { label: "Encanação", query: "encanador", icon: Wrench },
 ] as const;
-
-export const POPULAR_SEARCHES = [
-  "Eletricista",
-  "Dentista",
-  "Delivery",
-  "Mecânico",
-  "Gás",
-  "Água",
-] as const;
