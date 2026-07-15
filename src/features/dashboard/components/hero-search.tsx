@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, MapPin, Filter, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CategoryIcon } from "@/components/category/category-icon";
 import { POPULAR_SEARCHES } from "@/config/quick-searches";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 import {
@@ -13,24 +14,26 @@ import {
   setPreferredCity,
 } from "@/shared/utils/search-preferences";
 
-interface HeroSearchProps {
-  readonly cities?: readonly string[];
+export interface SearchCategoryOption {
+  readonly name: string;
+  readonly slug: string;
+  readonly icon: string;
 }
 
-const SEARCH_TYPES = [
-  { value: "all", label: "Tudo" },
-  { value: "PROFESSIONAL", label: "Profissionais" },
-  { value: "COMPANY", label: "Empresas" },
-  { value: "PRODUCT", label: "Produtos" },
-  { value: "SERVICE", label: "Serviços" },
-] as const;
+interface HeroSearchProps {
+  readonly cities?: readonly string[];
+  readonly categories?: readonly SearchCategoryOption[];
+}
 
-export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
+export function HeroSearch({
+  cities = POPULAR_CITIES,
+  categories = [],
+}: HeroSearchProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("");
-  const [searchType, setSearchType] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
+  const [category, setCategory] = useState("all");
+  const [showFilters, setShowFilters] = useState(true);
   const [cityReady, setCityReady] = useState(false);
 
   useEffect(() => {
@@ -39,17 +42,21 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
     setCityReady(true);
   }, []);
 
-  function goToSearch(nextQuery?: string, nextCity?: string, nextType?: string) {
-    const resolvedQuery = nextQuery ?? query;
-    const resolvedCity = nextCity ?? city;
-    const resolvedType = nextType ?? searchType;
+  function goToSearch(input?: {
+    readonly query?: string;
+    readonly city?: string;
+    readonly category?: string;
+  }) {
+    const resolvedQuery = input?.query ?? query;
+    const resolvedCity = input?.city ?? city;
+    const resolvedCategory = input?.category ?? category;
 
     setPreferredCity(resolvedCity);
     router.push(
       buildSearchHref({
         query: resolvedQuery,
         city: resolvedCity,
-        type: resolvedType,
+        category: resolvedCategory === "all" ? undefined : resolvedCategory,
       })
     );
   }
@@ -66,8 +73,7 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
           Encontre o <span className="text-whatsapp">Whatsapp</span> do que você precisa
         </h1>
         <p className="mb-4 text-base text-muted-foreground md:mb-5 md:text-lg">
-          Profissionais, empresas, produtos e serviços na sua cidade.
-          Busque e fale direto no WhatsApp.
+          Busque por categoria na sua cidade e fale direto no WhatsApp.
         </p>
 
         <form
@@ -114,7 +120,7 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
               className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              {showFilters ? "Ocultar filtros" : "Filtros"}
+              {showFilters ? "Ocultar categorias" : "Categorias"}
             </button>
 
             <Button type="submit" variant="whatsapp" size="lg">
@@ -124,21 +130,44 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
           </div>
 
           {showFilters && (
-            <div className="flex flex-wrap gap-2 border-t pt-3">
-              {SEARCH_TYPES.map((type) => (
+            <div className="space-y-2 border-t pt-3 text-left">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Categorias
+              </p>
+              <div className="flex flex-wrap gap-2">
                 <button
-                  key={type.value}
                   type="button"
-                  onClick={() => setSearchType(type.value)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    searchType === type.value
+                  onClick={() => {
+                    setCategory("all");
+                    goToSearch({ category: "all" });
+                  }}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                    category === "all"
                       ? "bg-whatsapp text-whatsapp-foreground"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
-                  {type.label}
+                  Todas
                 </button>
-              ))}
+                {categories.map((item) => (
+                  <button
+                    key={item.slug}
+                    type="button"
+                    onClick={() => {
+                      setCategory(item.slug);
+                      goToSearch({ category: item.slug });
+                    }}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      category === item.slug
+                        ? "bg-whatsapp text-whatsapp-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    <CategoryIcon icon={item.icon} size="sm" />
+                    {item.name}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </form>
@@ -150,7 +179,7 @@ export function HeroSearch({ cities = POPULAR_CITIES }: HeroSearchProps) {
             <button
               key={term}
               type="button"
-              onClick={() => goToSearch(term)}
+              onClick={() => goToSearch({ query: term })}
               className="rounded-full bg-muted px-3 py-1 text-xs font-medium transition-colors hover:bg-whatsapp/10 hover:text-whatsapp"
             >
               {term}

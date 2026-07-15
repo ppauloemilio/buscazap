@@ -24,17 +24,15 @@ export async function getDashboardData(): Promise<DashboardData> {
     catalogStats,
     totalAdvertisements,
     totalProviders,
+    categories,
   ] = await Promise.all([
     getHomepageAdvertisements(),
     getHomepageSettings(),
     getCatalogStats(),
     prisma.advertisement.count(),
     prisma.provider.count({ where: { role: "PROVIDER" } }),
+    getCategoriesWithCounts(),
   ]);
-
-  const categories = homepageSettings.showPopularCategories
-    ? await getCategoriesWithCounts()
-    : [];
 
   return {
     stats: {

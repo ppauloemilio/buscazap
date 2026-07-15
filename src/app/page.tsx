@@ -17,7 +17,14 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroSearch cities={data.cityNames} />
+      <HeroSearch
+        cities={data.cityNames}
+        categories={data.categories.map((category) => ({
+          name: category.name,
+          slug: category.slug,
+          icon: category.icon,
+        }))}
+      />
       {homepageSettings.showUrgentSearches && <UrgentSearches />}
       {isAdmin && <StatsSection stats={data.stats} />}
       <AdvertisementSection

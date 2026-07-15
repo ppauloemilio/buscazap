@@ -2,52 +2,51 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, SlidersHorizontal } from "lucide-react";
+import { Search, MapPin, Filter, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CategoryIcon } from "@/components/category/category-icon";
+import type { SearchCategoryOption } from "@/features/dashboard/components/hero-search";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 import {
+  buildSearchHref,
   getPreferredCity,
   setPreferredCity,
 } from "@/shared/utils/search-preferences";
 
-const SEARCH_TYPES = [
-  { value: "all", label: "Tudo" },
-  { value: "PROFESSIONAL", label: "Profissionais" },
-  { value: "COMPANY", label: "Empresas" },
-  { value: "PRODUCT", label: "Produtos" },
-  { value: "SERVICE", label: "Serviços" },
-] as const;
-
 interface SearchFormProps {
   readonly initialQuery?: string;
   readonly initialCity?: string;
-  readonly initialType?: string;
   readonly initialCategory?: string;
   readonly initialPremium?: boolean;
   readonly initialSort?: string;
   readonly cities?: readonly string[];
+  readonly categories?: readonly SearchCategoryOption[];
 }
 
 export function SearchForm({
   initialQuery = "",
   initialCity = "",
-  initialType = "all",
   initialCategory,
   initialPremium,
   initialSort,
   cities = POPULAR_CITIES,
+  categories = [],
 }: SearchFormProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [city, setCity] = useState(initialCity);
-  const [searchType, setSearchType] = useState(initialType || "all");
-  const [showFilters, setShowFilters] = useState(
-    Boolean(initialType && initialType !== "all")
-  );
+  const [category, setCategory] = useState(initialCategory || "all");
+  const [showFilters, setShowFilters] = useState(true);
+
+  useEffect(() => {
+    setQuery(initialQuery);
+    setCategory(initialCategory || "all");
+  }, [initialQuery, initialCategory]);
 
   useEffect(() => {
     if (initialCity) {
+      setCity(initialCity);
       setPreferredCity(initialCity);
       return;
     }
@@ -56,20 +55,34 @@ export function SearchForm({
     if (preferredCity) setCity(preferredCity);
   }, [initialCity]);
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    setPreferredCity(city);
+  function navigate(next?: {
+    readonly query?: string;
+    readonly city?: string;
+    readonly category?: string;
+  }) {
+    const resolvedQuery = next?.query ?? query;
+    const resolvedCity = next?.city ?? city;
+    const resolvedCategory = next?.category ?? category;
 
-    const params = new URLSearchParams();
-    if (query.trim()) params.set("q", query.trim());
-    if (city.trim()) params.set("city", city.trim());
-    if (searchType !== "all") params.set("type", searchType);
-    if (initialCategory) params.set("category", initialCategory);
+    setPreferredCity(resolvedCity);
+
+    const href = buildSearchHref({
+      query: resolvedQuery,
+      city: resolvedCity,
+      category: resolvedCategory === "all" ? undefined : resolvedCategory,
+    });
+
+    const params = new URLSearchParams(href.includes("?") ? href.split("?")[1] : "");
     if (initialPremium) params.set("premium", "true");
     if (initialSort) params.set("sort", initialSort);
 
     const qs = params.toString();
     router.push(qs ? `/buscar?${qs}` : "/buscar");
+  }
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    navigate();
   }
 
   return (
@@ -113,31 +126,58 @@ export function SearchForm({
         </Button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-3 space-y-2">
         <button
           type="button"
           onClick={() => setShowFilters((current) => !current)}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
-          {showFilters ? "Ocultar filtros" : "Filtros"}
+          {showFilters ? "Ocultar categorias" : "Categorias"}
         </button>
 
-        {showFilters &&
-          SEARCH_TYPES.map((type) => (
-            <button
-              key={type.value}
-              type="button"
-              onClick={() => setSearchType(type.value)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                searchType === type.value
-                  ? "bg-whatsapp text-whatsapp-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {type.label}
-            </button>
-          ))}
+        {showFilters && (
+          <div className="space-y-2">
+            <p className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <Filter className="h-3 w-3" />
+              Filtrar por categoria
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCategory("all");
+                  navigate({ category: "all" });
+                }}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  category === "all"
+                    ? "bg-whatsapp text-whatsapp-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                Todas
+              </button>
+              {categories.map((item) => (
+                <button
+                  key={item.slug}
+                  type="button"
+                  onClick={() => {
+                    setCategory(item.slug);
+                    navigate({ category: item.slug });
+                  }}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                    category === item.slug
+                      ? "bg-whatsapp text-whatsapp-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  <CategoryIcon icon={item.icon} size="sm" />
+                  {item.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </form>
   );

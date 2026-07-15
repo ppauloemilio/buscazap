@@ -9,12 +9,19 @@ import { markDataFetchDynamic } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { isPremiumActive } from "@/lib/provider-session";
 
+function normalizeSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+}
+
 async function matchesCategoryName(category: string, filter: string): Promise<boolean> {
   const bySlug = await getCategoryBySlug(filter);
   if (bySlug) {
     return category === bySlug.name;
   }
-  return category.toLowerCase() === filter.toLowerCase();
+  return normalizeSearchText(category) === normalizeSearchText(filter);
 }
 
 export async function findPublicAdvertisements(
@@ -29,14 +36,11 @@ export async function findPublicAdvertisements(
     where: {
       status: AdvertisementStatus.APPROVED,
       provider: { status: ProviderStatus.ACTIVE },
-      ...(filters.city
-        ? { city: { contains: filters.city } }
-        : {}),
       ...(filters.type ? { type: filters.type } : {}),
     },
     include: {
       images: {
-        where: { kind: "COVER" },
+        where: { kind: ADVERTISEMENT_IMAGE_KIND.COVER },
         take: 1,
       },
     },
@@ -47,13 +51,20 @@ export async function findPublicAdvertisements(
     .map(mapAdvertisementToEntity)
     .filter((ad) => ad.status !== AdvertisementStatus.BLOCKED);
 
+  if (filters.city?.trim()) {
+    const cityQuery = normalizeSearchText(filters.city.trim());
+    results = results.filter((ad) =>
+      normalizeSearchText(ad.location.city).includes(cityQuery)
+    );
+  }
+
   if (filters.query) {
-    const query = filters.query.toLowerCase();
+    const query = normalizeSearchText(filters.query);
     results = results.filter(
       (ad) =>
-        ad.title.toLowerCase().includes(query) ||
-        ad.description.toLowerCase().includes(query) ||
-        ad.category.toLowerCase().includes(query)
+        normalizeSearchText(ad.title).includes(query) ||
+        normalizeSearchText(ad.description).includes(query) ||
+        normalizeSearchText(ad.category).includes(query)
     );
   }
 

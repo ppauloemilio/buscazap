@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { AdvertisementType } from "@/domain/enums";
 import {
   getCategoryNameBySlug,
   searchAdvertisements,
 } from "@/application/services/search-service";
-import { listCityNamesForSearch } from "@/application/services/catalog-service";
+import {
+  getCategoriesWithCounts,
+  listCityNamesForSearch,
+} from "@/application/services/catalog-service";
 import { PageHeader } from "@/components/layout/page-header";
 import { AdvertisementCard } from "@/features/dashboard/components/advertisement-card";
 import { SearchForm } from "@/features/search/components/search-form";
@@ -49,25 +51,20 @@ function buildDescription(
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
-  const [categoryName, cityNames] = await Promise.all([
+  const [categoryName, cityNames, categories] = await Promise.all([
     params.category
       ? getCategoryNameBySlug(params.category).then(
           (name) => name ?? params.category
         )
       : Promise.resolve(undefined),
     listCityNamesForSearch(),
+    getCategoriesWithCounts(),
   ]);
-
-  const type =
-    params.type && params.type in AdvertisementType
-      ? (params.type as AdvertisementType)
-      : undefined;
 
   const results = await searchAdvertisements({
     query: params.q ?? "",
     city: params.city,
     category: params.category,
-    type,
     premium: params.premium === "true",
     sort: params.sort,
   });
@@ -86,11 +83,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <SearchForm
           initialQuery={params.q ?? ""}
           initialCity={params.city ?? ""}
-          initialType={params.type ?? "all"}
           initialCategory={params.category}
           initialPremium={params.premium === "true"}
           initialSort={params.sort}
           cities={cityNames}
+          categories={categories.map((item) => ({
+            name: item.name,
+            slug: item.slug,
+            icon: item.icon,
+          }))}
         />
 
         {results.length > 0 ? (
