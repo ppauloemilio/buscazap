@@ -227,3 +227,22 @@ model HomepageSetting {
   showCityExplorer      Boolean  @default(false)
   updatedAt             DateTime @updatedAt
 }
+
+model ProviderLead {
+  id           String   @id @default(cuid())
+  name         String
+  whatsapp     String
+  city         String
+  state        String   @default("PA")
+  neighborhood String
+  serviceArea  String
+  adTitle      String
+  photoUrl     String?
+  status       String   @default("NEW")
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([whatsapp, createdAt])
+}

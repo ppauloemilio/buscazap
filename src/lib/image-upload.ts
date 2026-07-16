@@ -40,16 +40,17 @@ function canUseVercelBlob(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 }
 
-export async function uploadAdvertisementImage(
+async function storeImageFile(
   file: File,
-  advertisementId: string,
-  filenamePrefix: string
+  storagePath: string,
+  localDir: string,
+  publicPathPrefix: string
 ): Promise<string> {
   const extension = sanitizeExtension(file.name);
-  const storagePath = `ads/${advertisementId}/${filenamePrefix}-${Date.now()}${extension}`;
+  const fullStoragePath = `${storagePath}${extension}`;
 
   if (canUseVercelBlob()) {
-    const blob = await put(storagePath, file, {
+    const blob = await put(fullStoragePath, file, {
       access: getBlobAccessType(),
       addRandomSuffix: true,
     });
@@ -63,13 +64,39 @@ export async function uploadAdvertisementImage(
     );
   }
 
-  const uploadsDir = path.join(process.cwd(), "public", "uploads", "ads", advertisementId);
-  await mkdir(uploadsDir, { recursive: true });
-  const filename = `${filenamePrefix}-${Date.now()}${extension}`;
+  await mkdir(localDir, { recursive: true });
+  const filename = `${path.basename(storagePath)}${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadsDir, filename), buffer);
+  await writeFile(path.join(localDir, filename), buffer);
 
-  return `/uploads/ads/${advertisementId}/${filename}`;
+  return `${publicPathPrefix}/${filename}`;
+}
+
+export async function uploadAdvertisementImage(
+  file: File,
+  advertisementId: string,
+  filenamePrefix: string
+): Promise<string> {
+  const timestamp = Date.now();
+  return storeImageFile(
+    file,
+    `ads/${advertisementId}/${filenamePrefix}-${timestamp}`,
+    path.join(process.cwd(), "public", "uploads", "ads", advertisementId),
+    `/uploads/ads/${advertisementId}`
+  );
+}
+
+export async function uploadLeadImage(
+  file: File,
+  leadId: string
+): Promise<string> {
+  const timestamp = Date.now();
+  return storeImageFile(
+    file,
+    `leads/${leadId}/cover-${timestamp}`,
+    path.join(process.cwd(), "public", "uploads", "leads", leadId),
+    `/uploads/leads/${leadId}`
+  );
 }
 
 export function parseImageFiles(formData: FormData, fieldName: string): File[] {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAdminDashboardStats } from "@/application/services/admin-service";
+import { countNewProviderLeads } from "@/application/services/provider-lead-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { redirect } from "next/navigation";
@@ -10,13 +11,29 @@ export default async function AdminDashboardPage() {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/entrar");
 
-  const stats = await getAdminDashboardStats();
+  const [stats, newLeadsCount] = await Promise.all([
+    getAdminDashboardStats(),
+    countNewProviderLeads(),
+  ]);
 
   return (
     <AdminLayout>
       <h2 className="mb-3 text-lg font-semibold">Visão geral do piloto</h2>
 
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Leads novos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <p className="text-2xl font-bold">{newLeadsCount}</p>
+            <Button variant="link" className="h-auto p-0 text-xs" asChild>
+              <Link href="/admin/leads?status=NEW">Ver pré-cadastros</Link>
+            </Button>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="p-3 pb-1">
             <CardTitle className="text-xs font-medium text-muted-foreground">

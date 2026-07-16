@@ -11,6 +11,7 @@ import {
   ScrollText,
   Receipt,
   Home,
+  Handshake,
 } from "lucide-react";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/admin", label: "Visão geral", icon: LayoutDashboard },
   { href: "/admin/home", label: "Home", icon: Home },
+  { href: "/admin/leads", label: "Leads", icon: Handshake },
   { href: "/admin/usuarios", label: "Usuários", icon: Users },
   { href: "/admin/anuncios", label: "Anúncios", icon: Megaphone },
   { href: "/admin/categorias", label: "Categorias", icon: Tags },

@@ -33,6 +33,13 @@ export enum ServiceArea {
   ON_REQUEST = "ON_REQUEST",
 }
 
+export enum ProviderLeadStatus {
+  NEW = "NEW",
+  CONTACTED = "CONTACTED",
+  CONVERTED = "CONVERTED",
+  DISMISSED = "DISMISSED",
+}
+
 export enum PaymentType {
   SUBSCRIPTION = "SUBSCRIPTION",
   PREMIUM_BOOST = "PREMIUM_BOOST",

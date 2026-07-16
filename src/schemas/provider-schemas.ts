@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AdvertisementType, ServiceArea } from "@/domain/enums";
+import { AdvertisementType, ProviderLeadStatus, ServiceArea } from "@/domain/enums";
 import { CATEGORY_OTHER_VALUE } from "@/config/advertisement-form";
 import { isPilotCity } from "@/config/pricing";
 import { normalizeWhatsAppIdentity } from "@/lib/whatsapp";
@@ -209,6 +209,45 @@ export const adminUpdateProviderSchema = updateProviderProfileSchema.extend({
   providerId: z.string().min(1, "Usuário inválido"),
 });
 
+export const createProviderLeadSchema = z
+  .object({
+    name: z.string().trim().min(3, "Nome deve ter ao menos 3 caracteres"),
+    whatsapp: whatsappIdentity,
+    city: z.string().min(2, "Informe a cidade"),
+    state: z.string().length(2, "UF deve ter 2 letras").default("PA"),
+    neighborhood: requiredNeighborhood,
+    serviceArea: z.nativeEnum(ServiceArea, {
+      errorMap: () => ({ message: "Selecione a área de atendimento" }),
+    }),
+    adTitle: z
+      .string()
+      .trim()
+      .min(5, "Nome do anúncio deve ter ao menos 5 caracteres")
+      .max(80, "Nome do anúncio muito longo"),
+  })
+  .superRefine((data, ctx) => {
+    if (!isPilotCity(data.city, data.state)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "No momento, só aceitamos Belém ou Ananindeua (PA)",
+        path: ["city"],
+      });
+    }
+  });
+
+export const adminUpdateProviderLeadSchema = z.object({
+  leadId: z.string().min(1),
+  status: z.nativeEnum(ProviderLeadStatus),
+  notes: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return undefined;
+      const trimmed = value.trim();
+      return trimmed.length === 0 ? undefined : trimmed;
+    },
+    z.string().max(500).optional()
+  ),
+});
+
 export const adminResetProviderPasswordSchema = z.object({
   providerId: z.string().min(1),
   newPassword: z.string().min(6, "Nova senha deve ter ao menos 6 caracteres"),
@@ -320,3 +359,4 @@ export type UpdateProviderPasswordInput = z.infer<typeof updateProviderPasswordS
 export type CreateAdvertisementInput = z.infer<typeof createAdvertisementSchema>;
 export type AdminCreateProviderInput = z.infer<typeof adminCreateProviderSchema>;
 export type AdminUpdateProviderInput = z.infer<typeof adminUpdateProviderSchema>;
+export type CreateProviderLeadInput = z.infer<typeof createProviderLeadSchema>;
