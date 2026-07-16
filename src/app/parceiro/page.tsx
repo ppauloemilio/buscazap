@@ -150,15 +150,18 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                 />
               </div>
 
-              <div>
+              <div className="rounded-lg border border-dashed border-whatsapp/30 bg-whatsapp/5 p-3">
                 <label htmlFor="description" className="mb-1 block text-sm font-medium">
                   Descrição do anúncio
                 </label>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Use Negrito, Itálico e Lista abaixo para formatar o texto.
+                </p>
                 <DescriptionEditor
                   required
                   minLength={20}
-                  rows={6}
-                  placeholder="Conte o que você oferece, horários, o que inclui... Use as ferramentas para negrito, itálico e lista."
+                  rows={7}
+                  placeholder="Conte o que você oferece, horários, o que inclui..."
                 />
               </div>
 

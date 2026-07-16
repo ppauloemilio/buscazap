@@ -49,7 +49,8 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
             Interessados que preencheram{" "}
             <Link href="/parceiro" className="underline" target="_blank">
               /parceiro
-            </Link>
+            </Link>{" "}
+            (também /parceiros)
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
