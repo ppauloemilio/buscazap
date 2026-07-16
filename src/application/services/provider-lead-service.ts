@@ -38,6 +38,7 @@ export async function createProviderLead(
       neighborhood: input.neighborhood,
       serviceArea: input.serviceArea,
       adTitle: input.adTitle,
+      description: input.description,
       photoUrl: input.photoUrl,
       status: ProviderLeadStatus.NEW,
     },

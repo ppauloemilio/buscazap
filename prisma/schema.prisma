@@ -237,6 +237,7 @@ model ProviderLead {
   neighborhood String
   serviceArea  String
   adTitle      String
+  description  String?
   photoUrl     String?
   status       String   @default("NEW")
   notes        String?

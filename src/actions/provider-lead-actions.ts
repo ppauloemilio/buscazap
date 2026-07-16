@@ -23,6 +23,7 @@ export async function submitProviderLeadAction(formData: FormData) {
     neighborhood: formData.get("neighborhood"),
     serviceArea: formData.get("serviceArea"),
     adTitle: formData.get("adTitle"),
+    description: formData.get("description"),
   });
 
   if (!parsed.success) {

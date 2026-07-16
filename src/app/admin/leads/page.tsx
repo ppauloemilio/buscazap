@@ -6,6 +6,7 @@ import {
   listProviderLeads,
   resolveLeadPhotoUrl,
 } from "@/application/services/provider-lead-service";
+import { AdvertisementDescription } from "@/components/advertisement/advertisement-description";
 import {
   PROVIDER_LEAD_STATUS_LABELS,
   PROVIDER_LEAD_STATUS_OPTIONS,
@@ -124,6 +125,12 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                       <p className="text-sm font-medium text-foreground">
                         {lead.adTitle}
                       </p>
+                      {lead.description && (
+                        <AdvertisementDescription
+                          text={lead.description}
+                          className="line-clamp-4 text-sm text-muted-foreground"
+                        />
+                      )}
                       <p className="text-sm text-muted-foreground">
                         WhatsApp: {lead.whatsapp}
                       </p>

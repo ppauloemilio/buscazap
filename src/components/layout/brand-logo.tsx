@@ -7,6 +7,8 @@ interface BrandLogoProps {
   readonly className?: string;
   readonly iconSize?: number;
   readonly textClassName?: string;
+  /** When false, logo is not a link (useful on capture pages). */
+  readonly linked?: boolean;
 }
 
 export function BrandLogo({
@@ -14,9 +16,10 @@ export function BrandLogo({
   className,
   iconSize = 36,
   textClassName,
+  linked = true,
 }: BrandLogoProps) {
-  return (
-    <Link href="/" className={cn("flex items-center gap-2", className)}>
+  const content = (
+    <>
       <Image
         src="/buscazap-logo.png"
         alt="BuscaZap"
@@ -30,6 +33,18 @@ export function BrandLogo({
           Busca<span className="text-whatsapp">Zap</span>
         </span>
       )}
+    </>
+  );
+
+  if (!linked) {
+    return (
+      <div className={cn("flex items-center gap-2", className)}>{content}</div>
+    );
+  }
+
+  return (
+    <Link href="/" className={cn("flex items-center gap-2", className)}>
+      {content}
     </Link>
   );
 }

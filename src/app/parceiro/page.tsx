@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle, Handshake } from "lucide-react";
 import { submitProviderLeadAction } from "@/actions/provider-lead-actions";
-import { PageHeader } from "@/components/layout/page-header";
+import { DescriptionEditor } from "@/components/advertisement/description-editor";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,14 +29,23 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
   const params = await searchParams;
 
   return (
-    <>
-      <PageHeader
-        compact
-        title="Quero anunciar no BuscaZap"
-        description="Pré-cadastro rápido. Sem senha agora — nós entramos em contato no WhatsApp."
-      />
-      <section className="container mx-auto max-w-xl px-4 py-5">
-        <div className="rounded-xl border bg-card p-4 md:p-5">
+    <section className="min-h-screen bg-gradient-to-b from-whatsapp/5 to-background px-4 py-8">
+      <div className="container mx-auto max-w-xl">
+        <div className="mb-5 flex flex-col items-center text-center">
+          <BrandLogo iconSize={36} textClassName="text-xl" linked={false} />
+          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-whatsapp">
+            Pré-cadastro · piloto
+          </p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+            Quero anunciar no BuscaZap
+          </h1>
+          <p className="mt-1.5 max-w-md text-sm text-muted-foreground">
+            Só pedimos o essencial. Sem senha agora — falamos com você no WhatsApp
+            para publicar.
+          </p>
+        </div>
+
+        <div className="rounded-xl border bg-card p-4 shadow-sm md:p-5">
           <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-whatsapp/10">
             <Handshake className="h-5 w-5 text-whatsapp" />
           </div>
@@ -141,6 +151,18 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
               </div>
 
               <div>
+                <label htmlFor="description" className="mb-1 block text-sm font-medium">
+                  Descrição do anúncio
+                </label>
+                <DescriptionEditor
+                  required
+                  minLength={20}
+                  rows={6}
+                  placeholder="Conte o que você oferece, horários, o que inclui... Use as ferramentas para negrito, itálico e lista."
+                />
+              </div>
+
+              <div>
                 <label htmlFor="photo" className="mb-1 block text-sm font-medium">
                   Foto do anúncio
                 </label>
@@ -176,12 +198,12 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
           )}
 
           {params.sent === "1" && (
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/">Voltar para a home</Link>
-            </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              Pode fechar esta página. Entraremos em contato pelo WhatsApp.
+            </p>
           )}
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

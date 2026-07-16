@@ -224,6 +224,11 @@ export const createProviderLeadSchema = z
       .trim()
       .min(5, "Nome do anúncio deve ter ao menos 5 caracteres")
       .max(80, "Nome do anúncio muito longo"),
+    description: z
+      .string()
+      .trim()
+      .min(20, "Descrição deve ter ao menos 20 caracteres")
+      .max(5000, "Descrição muito longa"),
   })
   .superRefine((data, ctx) => {
     if (!isPilotCity(data.city, data.state)) {
