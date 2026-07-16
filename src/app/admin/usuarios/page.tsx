@@ -293,11 +293,18 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                       Cadastro em {provider.createdAt.toLocaleDateString("pt-BR")}
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/anuncios?providerId=${provider.id}`}>
-                      Ver anúncios
-                    </Link>
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/admin/usuarios/${provider.id}/editar`}>
+                        Editar
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/admin/anuncios?providerId=${provider.id}`}>
+                        Ver anúncios
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
 
                 <AdminProviderActions

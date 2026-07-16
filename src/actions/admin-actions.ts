@@ -13,6 +13,7 @@ import {
   resetProviderPasswordAsAdmin,
   updateAdvertisementAsAdmin,
   updateAdvertisementStatusAsAdmin,
+  updateProviderAsAdmin,
   updateProviderStatusAsAdmin,
   updateReportStatusAsAdmin,
 } from "@/application/services/admin-service";
@@ -39,6 +40,7 @@ import {
   adminCreateProviderSchema,
   adminResetProviderPasswordSchema,
   adminUpdateAdvertisementSchema,
+  adminUpdateProviderSchema,
   loginAdminSchema,
 } from "@/schemas/provider-schemas";
 import { UserRole } from "@/domain/enums";
@@ -398,6 +400,64 @@ export async function adminCreateProviderAction(formData: FormData) {
   revalidatePath("/admin/usuarios");
   revalidatePath("/admin");
   redirect("/admin/usuarios?saved=1&manual=created");
+}
+
+export async function adminUpdateProviderAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const providerIdRaw = formData.get("providerId");
+  const providerId = typeof providerIdRaw === "string" ? providerIdRaw : "";
+  const redirectBase = providerId
+    ? `/admin/usuarios/${providerId}/editar`
+    : "/admin/usuarios";
+
+  const parsed = adminUpdateProviderSchema.safeParse({
+    providerId: formData.get("providerId"),
+    name: formData.get("name"),
+    email: formData.get("email"),
+    whatsapp: formData.get("whatsapp"),
+    age: formData.get("age"),
+    state: formData.get("state"),
+    city: formData.get("city"),
+    neighborhood: formData.get("neighborhood"),
+    bio: formData.get("bio"),
+    businessHours: formData.get("businessHours"),
+    responseHint: formData.get("responseHint"),
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `${redirectBase}?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
+    );
+  }
+
+  try {
+    await updateProviderAsAdmin({
+      adminId: admin.id,
+      providerId: parsed.data.providerId,
+      name: parsed.data.name,
+      email: parsed.data.email,
+      whatsapp: parsed.data.whatsapp,
+      age: parsed.data.age,
+      state: parsed.data.state,
+      city: parsed.data.city,
+      neighborhood: parsed.data.neighborhood,
+      bio: parsed.data.bio,
+      businessHours: parsed.data.businessHours,
+      responseHint: parsed.data.responseHint,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível salvar o usuário";
+    redirect(`${redirectBase}?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/usuarios");
+  revalidatePath(`/admin/usuarios/${parsed.data.providerId}/editar`);
+  revalidatePath("/admin");
+
+  redirect(`/admin/usuarios/${parsed.data.providerId}/editar?saved=1`);
 }
 
 export async function adminResetProviderPasswordAction(formData: FormData) {

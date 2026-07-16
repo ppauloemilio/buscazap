@@ -205,6 +205,10 @@ export const adminCreateProviderSchema = z.object({
     .transform((value) => value === "true"),
 });
 
+export const adminUpdateProviderSchema = updateProviderProfileSchema.extend({
+  providerId: z.string().min(1, "Usuário inválido"),
+});
+
 export const adminResetProviderPasswordSchema = z.object({
   providerId: z.string().min(1),
   newPassword: z.string().min(6, "Nova senha deve ter ao menos 6 caracteres"),
@@ -315,3 +319,4 @@ export type UpdateProviderProfileInput = z.infer<typeof updateProviderProfileSch
 export type UpdateProviderPasswordInput = z.infer<typeof updateProviderPasswordSchema>;
 export type CreateAdvertisementInput = z.infer<typeof createAdvertisementSchema>;
 export type AdminCreateProviderInput = z.infer<typeof adminCreateProviderSchema>;
+export type AdminUpdateProviderInput = z.infer<typeof adminUpdateProviderSchema>;

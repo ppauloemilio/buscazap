@@ -280,6 +280,115 @@ export async function updateProviderStatusAsAdmin(input: {
   return updated;
 }
 
+export async function findProviderForAdminEdit(providerId: string) {
+  const provider = await prisma.provider.findUnique({
+    where: { id: providerId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      whatsapp: true,
+      age: true,
+      state: true,
+      city: true,
+      neighborhood: true,
+      bio: true,
+      businessHours: true,
+      responseHint: true,
+      status: true,
+      role: true,
+      createdAt: true,
+    },
+  });
+
+  if (!provider || provider.role === UserRole.ADMIN) {
+    return null;
+  }
+
+  return provider;
+}
+
+export async function updateProviderAsAdmin(input: {
+  readonly adminId: string;
+  readonly providerId: string;
+  readonly name: string;
+  readonly email: string | null;
+  readonly whatsapp: string;
+  readonly age?: number;
+  readonly state?: string;
+  readonly city?: string;
+  readonly neighborhood?: string;
+  readonly bio?: string;
+  readonly businessHours?: string;
+  readonly responseHint?: string;
+}) {
+  const provider = await prisma.provider.findUnique({
+    where: { id: input.providerId },
+  });
+
+  if (!provider) {
+    throw new Error("Usuário não encontrado");
+  }
+
+  if (provider.role === UserRole.ADMIN) {
+    throw new Error("Não é possível editar administradores");
+  }
+
+  if (provider.id === input.adminId) {
+    throw new Error("Você não pode editar sua própria conta por aqui");
+  }
+
+  if (input.email && input.email !== provider.email) {
+    const existingEmail = await prisma.provider.findUnique({
+      where: { email: input.email },
+      select: { id: true },
+    });
+    if (existingEmail && existingEmail.id !== provider.id) {
+      throw new Error("Este e-mail já está em uso");
+    }
+  }
+
+  if (input.whatsapp !== provider.whatsapp) {
+    const existingWhatsapp = await prisma.provider.findUnique({
+      where: { whatsapp: input.whatsapp },
+      select: { id: true },
+    });
+    if (existingWhatsapp && existingWhatsapp.id !== provider.id) {
+      throw new Error("Este WhatsApp já está em uso");
+    }
+  }
+
+  const updated = await prisma.provider.update({
+    where: { id: input.providerId },
+    data: {
+      name: input.name,
+      email: input.email,
+      whatsapp: input.whatsapp,
+      age: input.age ?? null,
+      state: input.state ?? null,
+      city: input.city ?? null,
+      neighborhood: input.neighborhood ?? null,
+      bio: input.bio ?? null,
+      businessHours: input.businessHours ?? null,
+      responseHint: input.responseHint ?? null,
+    },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "UPDATE_PROVIDER_PROFILE",
+    entityType: "Provider",
+    entityId: updated.id,
+    metadata: {
+      name: updated.name,
+      email: updated.email,
+      whatsapp: updated.whatsapp,
+    },
+  });
+
+  return updated;
+}
+
 export async function createProviderAsAdmin(input: {
   readonly adminId: string;
   readonly name: string;
