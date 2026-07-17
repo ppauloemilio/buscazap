@@ -8,7 +8,7 @@ import { ServiceAreaField } from "@/features/panel/components/service-area-field
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
-import { PILOT_CITIES, PRICING } from "@/config/pricing";
+import { PILOT_CITIES } from "@/config/pricing";
 
 export const metadata: Metadata = {
   title: "Quero anunciar",
@@ -34,7 +34,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
         <div className="mb-5 flex flex-col items-center text-center">
           <BrandLogo iconSize={36} textClassName="text-xl" linked={false} />
           <p className="mt-2 text-xs font-medium uppercase tracking-wide text-whatsapp">
-            Pré-cadastro · piloto
+            Pré-cadastro
           </p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
             Quero anunciar no BuscaZap
@@ -49,12 +49,6 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
           <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-whatsapp/10">
             <Handshake className="h-5 w-5 text-whatsapp" />
           </div>
-
-          <p className="mb-4 text-sm text-muted-foreground">
-            Estamos em piloto em Belém e Ananindeua. Preencha os dados abaixo e,
-            em breve, publicamos seu anúncio. O 1º mês é grátis (depois R${" "}
-            {PRICING.SUBSCRIPTION_AMOUNT.toFixed(2).replace(".", ",")}/mês).
-          </p>
 
           {params.sent === "1" && (
             <div className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
