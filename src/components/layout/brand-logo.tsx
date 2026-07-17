@@ -21,8 +21,8 @@ export function BrandLogo({
   const content = (
     <>
       <Image
-        src="/buscazap-logo.png"
-        alt="BuscaZap"
+        src="/buscazapp-logo.png"
+        alt="BuscaZapp"
         width={iconSize}
         height={iconSize}
         className="shrink-0 object-contain"
@@ -30,7 +30,7 @@ export function BrandLogo({
       />
       {showText && (
         <span className={cn("text-xl font-bold text-foreground", textClassName)}>
-          Busca<span className="text-whatsapp">Zap</span>
+          Busca<span className="text-whatsapp">Zapp</span>
         </span>
       )}
     </>

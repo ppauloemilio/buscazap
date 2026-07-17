@@ -8,10 +8,10 @@ export const PRICING = {
   REFERRALS_PER_PREMIUM_CREDIT: 5,
   LAUNCH_TRIAL_DAYS: 30,
   PAYMENT_EXPIRATION_MINUTES: 30,
-  PIX_KEY: "buscazap@pagamentos.com.br",
+  PIX_KEY: "buscazapp@pagamentos.com.br",
 } as const;
 
-export const PROVIDER_SESSION_COOKIE = "buscazap_provider_id";
+export const PROVIDER_SESSION_COOKIE = "buscazapp_provider_id";
 
 /** Cidades do piloto de lançamento. */
 export const PILOT_CITIES = [

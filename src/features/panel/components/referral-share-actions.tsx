@@ -15,7 +15,7 @@ export function ReferralShareActions({
 }: ReferralShareActionsProps) {
   const [copied, setCopied] = useState(false);
 
-  const shareMessage = `Cadastre-se no BuscaZap com meu código ${referralCode} e anuncie seu WhatsApp na região: ${inviteUrl}`;
+  const shareMessage = `Cadastre-se no BuscaZapp com meu código ${referralCode} e anuncie seu WhatsApp na região: ${inviteUrl}`;
   const shareHref = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
 
   async function handleCopy() {

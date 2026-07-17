@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <PageHeader
         compact
         title="Entrar"
-        description="Acesse sua conta no BuscaZap"
+        description="Acesse sua conta no BuscaZapp"
       />
       <section className="container mx-auto max-w-md px-4 py-5">
         <div className="rounded-xl border bg-card p-4">

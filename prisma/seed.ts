@@ -8,11 +8,11 @@ async function main() {
   const adminPasswordHash = await bcrypt.hash("admin123456", 10);
 
   await prisma.provider.upsert({
-    where: { email: "admin@buscazap.com.br" },
+    where: { email: "admin@buscazapp.com.br" },
     update: { role: "ADMIN", referralCode: "ADMIN001" },
     create: {
-      name: "Administrador BuscaZap",
-      email: "admin@buscazap.com.br",
+      name: "Administrador BuscaZapp",
+      email: "admin@buscazapp.com.br",
       whatsapp: "5511999999998",
       passwordHash: adminPasswordHash,
       role: "ADMIN",
@@ -21,11 +21,11 @@ async function main() {
   });
 
   const provider = await prisma.provider.upsert({
-    where: { email: "demo@buscazap.com.br" },
+    where: { email: "demo@buscazapp.com.br" },
     update: { role: "PROVIDER", referralCode: "DEMO0001", city: "Belém", state: "PA" },
     create: {
       name: "Demo Anunciante",
-      email: "demo@buscazap.com.br",
+      email: "demo@buscazapp.com.br",
       whatsapp: "5511999999999",
       passwordHash,
       role: "PROVIDER",
@@ -34,7 +34,7 @@ async function main() {
       state: "PA",
       city: "Belém",
       neighborhood: "Nazaré",
-      bio: "Anunciante de demonstração do BuscaZap.",
+      bio: "Anunciante de demonstração do BuscaZapp.",
       subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     },
   });
@@ -134,8 +134,8 @@ async function main() {
   }
 
   console.log("Seed concluído.");
-  console.log("Login demo: demo@buscazap.com.br / 123456");
-  console.log("Login admin: admin@buscazap.com.br / admin123456");
+  console.log("Login demo: demo@buscazapp.com.br / 123456");
+  console.log("Login admin: admin@buscazapp.com.br / admin123456");
 }
 
 main()

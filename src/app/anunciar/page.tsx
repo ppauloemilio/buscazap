@@ -24,7 +24,7 @@ export default async function AdvertisePage() {
     <>
       <PageHeader
         compact
-        title="Anuncie no BuscaZap"
+        title="Anuncie no BuscaZapp"
         description="Cadastre-se em Belém ou Ananindeua e seja encontrado no WhatsApp"
       />
       <section className="container mx-auto max-w-2xl px-4 py-5">

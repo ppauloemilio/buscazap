@@ -23,7 +23,7 @@ interface AdvertisementCardProps {
 export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
   const whatsappLink = buildWhatsAppLink(
     advertisement.whatsappNumber,
-    `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZap e gostaria de mais informações.`
+    `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZapp e gostaria de mais informações.`
   );
 
   const locationLabel = formatAdvertisementLocation({

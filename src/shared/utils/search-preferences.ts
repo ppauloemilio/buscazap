@@ -1,4 +1,4 @@
-const PREFERRED_CITY_KEY = "buscazap_preferred_city";
+const PREFERRED_CITY_KEY = "buscazapp_preferred_city";
 
 export function getPreferredCity(): string {
   if (typeof window === "undefined") return "";

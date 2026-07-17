@@ -7,7 +7,7 @@ export function getSiteUrl(): string {
     return fromEnv.replace(/\/$/, "");
   }
 
-  return "https://buscazap.com.br";
+  return "https://buscazapp.com.br";
 }
 
 export function buildAbsoluteUrl(path: string): string {

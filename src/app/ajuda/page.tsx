@@ -14,7 +14,7 @@ const FAQ_ITEMS = [
       "Use a barra de busca na página inicial. Informe o que procura e, se quiser, filtre por cidade e tipo de anúncio.",
   },
   {
-    question: "O BuscaZap cobra pelo contato?",
+    question: "O BuscaZapp cobra pelo contato?",
     answer:
       "Não. O contato é feito diretamente pelo WhatsApp, sem taxas da plataforma.",
   },
@@ -74,10 +74,10 @@ export default function HelpPage() {
           <p className="text-sm text-muted-foreground">
             Não encontrou o que precisa? Entre em contato pelo e-mail{" "}
             <a
-              href="mailto:suporte@buscazap.com.br"
+              href="mailto:suporte@buscazapp.com.br"
               className="font-medium text-whatsapp hover:underline"
             >
-              suporte@buscazap.com.br
+              suporte@buscazapp.com.br
             </a>
           </p>
         </div>

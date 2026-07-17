@@ -13,7 +13,7 @@ export default function AnanindeuaPage() {
       state="PA"
       slug="ananindeua"
       headline="WhatsApp em Ananindeua: serviços e delivery locais"
-      description="Ache gás, água, delivery e profissionais perto de você. Contato direto pelo WhatsApp no BuscaZap."
+      description="Ache gás, água, delivery e profissionais perto de você. Contato direto pelo WhatsApp no BuscaZapp."
     />
   );
 }

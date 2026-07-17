@@ -21,7 +21,7 @@ const response = await fetch("https://api.mercadopago.com/users/test", {
   },
   body: JSON.stringify({
     site_id: "MLB",
-    description: "Comprador BuscaZap",
+    description: "Comprador BuscaZapp",
   }),
 });
 

@@ -41,11 +41,11 @@ function splitPayerName(fullName: string): { firstName: string; lastName: string
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
 
   if (parts.length === 0) {
-    return { firstName: "Cliente", lastName: "BuscaZap" };
+    return { firstName: "Cliente", lastName: "BuscaZapp" };
   }
 
   if (parts.length === 1) {
-    return { firstName: parts[0], lastName: "BuscaZap" };
+    return { firstName: parts[0], lastName: "BuscaZapp" };
   }
 
   return {
@@ -144,7 +144,7 @@ export class MercadoPagoPixProvider implements PixProvider {
 
       if (detail.toLowerCase().includes("invalid users involved")) {
         throw new Error(
-          "Invalid users involved: em modo teste, MERCADOPAGO_TEST_PAYER_EMAIL na Vercel deve ser o e-mail do COMPRADOR de teste (test_user_...@testuser.com), não do vendedor nem demo@buscazap.com.br."
+          "Invalid users involved: em modo teste, MERCADOPAGO_TEST_PAYER_EMAIL na Vercel deve ser o e-mail do COMPRADOR de teste (test_user_...@testuser.com), não do vendedor nem demo@buscazapp.com.br."
         );
       }
 

@@ -40,7 +40,7 @@ export async function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="container mx-auto px-4 py-5 md:py-6">
       <div className="mb-4">
-        <h1 className="text-xl font-bold md:text-2xl">Administração BuscaZap</h1>
+        <h1 className="text-xl font-bold md:text-2xl">Administração BuscaZapp</h1>
           <p className="text-sm text-muted-foreground">
             Logado como {admin.name} ({admin.email})
           </p>

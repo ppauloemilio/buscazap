@@ -20,7 +20,7 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
   return (
     <>
       <PageHeader
-        title="Administração BuscaZap"
+        title="Administração BuscaZapp"
         description="Acesso restrito a administradores"
       />
       <section className="container mx-auto max-w-md px-4 py-10">

@@ -54,15 +54,15 @@ export function AdvertiserKit({
   inviteUrl,
   referralCode,
 }: AdvertiserKitProps) {
-  const statusText = `Anuncio no BuscaZap — me ache por WhatsApp em ${siteUrl}`;
+  const statusText = `Anuncio no BuscaZapp — me ache por WhatsApp em ${siteUrl}`;
 
   const storyText =
-    `Precisa de gás, água, delivery ou serviço local? Encontre meu WhatsApp no BuscaZap.\n` +
+    `Precisa de gás, água, delivery ou serviço local? Encontre meu WhatsApp no BuscaZapp.\n` +
     `${siteUrl}\n` +
     `Código de indicação: ${referralCode}`;
 
   const groupText =
-    `Olá! Sou ${providerName} e estou no BuscaZap.\n` +
+    `Olá! Sou ${providerName} e estou no BuscaZapp.\n` +
     `Quem precisar pode me achar lá ou indicar outros anunciantes com meu código ${referralCode}:\n` +
     `${inviteUrl}`;
 

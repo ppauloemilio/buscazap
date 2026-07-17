@@ -5,7 +5,7 @@ function getAppUrl(): string {
 }
 
 function getFromAddress(): string {
-  return process.env.RESEND_FROM_EMAIL ?? "BuscaZap <onboarding@resend.dev>";
+  return process.env.RESEND_FROM_EMAIL ?? "BuscaZapp <onboarding@resend.dev>";
 }
 
 export async function sendPasswordResetEmail(input: {
@@ -29,11 +29,11 @@ export async function sendPasswordResetEmail(input: {
   await resend.emails.send({
     from: getFromAddress(),
     to: input.to,
-    subject: "Redefinição de senha — BuscaZap",
+    subject: "Redefinição de senha — BuscaZapp",
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
         <h2 style="color: #111;">Olá, ${input.name}</h2>
-        <p>Recebemos uma solicitação para redefinir a senha da sua conta no BuscaZap.</p>
+        <p>Recebemos uma solicitação para redefinir a senha da sua conta no BuscaZapp.</p>
         <p>
           <a href="${input.resetUrl}" style="display: inline-block; background: #25D366; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
             Redefinir senha

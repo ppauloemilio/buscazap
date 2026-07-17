@@ -13,7 +13,7 @@ export default function BelemPage() {
       state="PA"
       slug="belem"
       headline="WhatsApp em Belém: gás, água, delivery e serviços"
-      description="Encontre anunciantes locais no BuscaZap e chame direto no WhatsApp. Rápido, sem app extra."
+      description="Encontre anunciantes locais no BuscaZapp e chame direto no WhatsApp. Rápido, sem app extra."
     />
   );
 }

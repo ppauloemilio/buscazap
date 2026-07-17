@@ -10,8 +10,8 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: {
-    default: "BuscaZap - Encontre profissionais e serviços no WhatsApp",
-    template: "%s | BuscaZap",
+    default: "BuscaZapp - Encontre profissionais e serviços no WhatsApp",
+    template: "%s | BuscaZapp",
   },
   description:
     "Busque profissionais, empresas, produtos e serviços na sua cidade. Contato direto via WhatsApp. Avaliações, favoritos e muito mais.",
@@ -24,16 +24,16 @@ export const metadata: Metadata = {
     "anúncios",
   ],
   openGraph: {
-    title: "BuscaZap - Encontre profissionais e serviços no WhatsApp",
+    title: "BuscaZapp - Encontre profissionais e serviços no WhatsApp",
     description:
       "Busque profissionais, empresas, produtos e serviços na sua cidade.",
     type: "website",
     locale: "pt_BR",
-    images: [{ url: "/buscazap-logo.png", alt: "BuscaZap" }],
+    images: [{ url: "/buscazapp-logo.png", alt: "BuscaZapp" }],
   },
   icons: {
-    icon: "/buscazap-logo.png",
-    apple: "/buscazap-logo.png",
+    icon: "/buscazapp-logo.png",
+    apple: "/buscazapp-logo.png",
   },
 };
 

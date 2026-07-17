@@ -16,7 +16,7 @@ const GENERIC_SUCCESS_MESSAGE =
   "Se a conta tiver e-mail cadastrado, você receberá instruções para redefinir a senha em instantes.";
 
 const NO_EMAIL_MESSAGE =
-  "Esta conta não tem e-mail cadastrado. Peça ao administrador do BuscaZap para redefinir sua senha.";
+  "Esta conta não tem e-mail cadastrado. Peça ao administrador do BuscaZapp para redefinir sua senha.";
 
 export async function requestPasswordReset(login: string): Promise<string> {
   const provider = await findProviderByLogin(login);

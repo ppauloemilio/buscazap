@@ -9,12 +9,12 @@ const SECTIONS = [
   {
     title: "1. Aceitação dos termos",
     content:
-      "Ao utilizar o BuscaZap, você concorda com estes termos de uso e com nossa política de privacidade.",
+      "Ao utilizar o BuscaZapp, você concorda com estes termos de uso e com nossa política de privacidade.",
   },
   {
     title: "2. Uso da plataforma",
     content:
-      "O BuscaZap é uma plataforma de intermediação de contatos. Não nos responsabilizamos pelas negociações realizadas entre consumidores e anunciantes.",
+      "O BuscaZapp é uma plataforma de intermediação de contatos. Não nos responsabilizamos pelas negociações realizadas entre consumidores e anunciantes.",
   },
   {
     title: "3. Anúncios",

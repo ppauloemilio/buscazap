@@ -27,7 +27,7 @@ export function Footer() {
         </nav>
 
         <p className="text-xs text-muted-foreground sm:text-right">
-          © {new Date().getFullYear()} BuscaZap
+          © {new Date().getFullYear()} BuscaZapp
         </p>
       </div>
     </footer>

@@ -106,7 +106,7 @@ export async function createSubscriptionPayment(providerId: string) {
     providerName: provider.name,
     type: PaymentType.SUBSCRIPTION,
     amount: PRICING.SUBSCRIPTION_AMOUNT,
-    description: "Assinatura mensal BuscaZap",
+    description: "Assinatura mensal BuscaZapp",
   });
 }
 

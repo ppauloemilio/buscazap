@@ -5,7 +5,7 @@ import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const STORAGE_KEY = "buscazap_favorites";
+const STORAGE_KEY = "buscazapp_favorites";
 
 function getSnapshot(): string {
   if (typeof window === "undefined") return "[]";
@@ -14,15 +14,15 @@ function getSnapshot(): string {
 
 function writeFavorites(ids: string[]) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-  window.dispatchEvent(new Event("buscazap-favorites"));
+  window.dispatchEvent(new Event("buscazapp-favorites"));
 }
 
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
-  window.addEventListener("buscazap-favorites", callback);
+  window.addEventListener("buscazapp-favorites", callback);
   return () => {
     window.removeEventListener("storage", callback);
-    window.removeEventListener("buscazap-favorites", callback);
+    window.removeEventListener("buscazapp-favorites", callback);
   };
 }
 

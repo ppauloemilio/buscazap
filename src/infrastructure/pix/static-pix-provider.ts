@@ -7,7 +7,7 @@ function generatePixTxId(): string {
 }
 
 function generatePixCopyPaste(amount: number, txId: string): string {
-  return `00020126580014BR.GOV.BCB.PIX0136${PRICING.PIX_KEY}520400005303986540${amount.toFixed(2)}5802BR5913BuscaZap Pag6009SAO PAULO62070503***6304${txId.slice(-4)}`;
+  return `00020126580014BR.GOV.BCB.PIX0136${PRICING.PIX_KEY}520400005303986540${amount.toFixed(2)}5802BR5914BuscaZapp Pag6009SAO PAULO62070503***6304${txId.slice(-4)}`;
 }
 
 export class StaticPixProvider implements PixProvider {

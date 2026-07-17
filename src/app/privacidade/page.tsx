@@ -24,7 +24,7 @@ const SECTIONS = [
   {
     title: "Seus direitos",
     content:
-      "Você pode solicitar acesso, correção ou exclusão dos seus dados entrando em contato pelo e-mail suporte@buscazap.com.br.",
+      "Você pode solicitar acesso, correção ou exclusão dos seus dados entrando em contato pelo e-mail suporte@buscazapp.com.br.",
   },
 ] as const;
 

@@ -37,7 +37,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
             Pré-cadastro
           </p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
-            Quero anunciar no BuscaZap
+            Quero anunciar no BuscaZapp
           </h1>
           <p className="mt-1.5 max-w-md text-sm text-muted-foreground">
             Só pedimos o essencial. Sem senha agora — falamos com você no WhatsApp

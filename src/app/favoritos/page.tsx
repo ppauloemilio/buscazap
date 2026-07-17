@@ -4,7 +4,7 @@ import { FavoritesList } from "@/features/favorites/favorites-list";
 
 export const metadata: Metadata = {
   title: "Favoritos",
-  description: "Anúncios que você salvou no BuscaZap.",
+  description: "Anúncios que você salvou no BuscaZapp.",
 };
 
 export default function FavoritesPage() {

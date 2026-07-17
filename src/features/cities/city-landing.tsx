@@ -18,7 +18,7 @@ interface CityLandingProps {
 export function buildCityMetadata(city: string, state: string): Metadata {
   return {
     title: `WhatsApp em ${city}/${state} — gás, água, delivery e serviços`,
-    description: `Encontre contacts de WhatsApp em ${city} no BuscaZap. Gás, água, delivery, serviços locais e mais — direto no seu celular.`,
+    description: `Encontre contacts de WhatsApp em ${city} no BuscaZapp. Gás, água, delivery, serviços locais e mais — direto no seu celular.`,
   };
 }
 

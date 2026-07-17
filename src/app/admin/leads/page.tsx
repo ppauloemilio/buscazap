@@ -97,7 +97,7 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
             const photoUrl = resolveLeadPhotoUrl(lead.photoUrl);
             const whatsappHref = buildWhatsAppLink(
               lead.whatsapp,
-              `Olá ${lead.name}! Aqui é do BuscaZap. Recebemos seu interesse em anunciar "${lead.adTitle}". Vamos finalizar seu cadastro?`
+              `Olá ${lead.name}! Aqui é do BuscaZapp. Recebemos seu interesse em anunciar "${lead.adTitle}". Vamos finalizar seu cadastro?`
             );
 
             return (
