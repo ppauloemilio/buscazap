@@ -8,6 +8,7 @@ import {
 import { listActiveCities, listActiveStates } from "@/application/services/catalog-service";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { getCurrentProvider } from "@/lib/provider-session";
+import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -79,8 +80,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                   <Input
                     id="whatsapp"
                     name="whatsapp"
-                    defaultValue={provider.whatsapp}
-                    placeholder="(91) 99999-9999"
+                    defaultValue={toLocalWhatsAppDigits(provider.whatsapp)}
+                    placeholder="91999999999"
                     required
                   />
                 </div>
@@ -95,7 +96,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                     name="email"
                     type="email"
                     defaultValue={provider.email ?? ""}
-                    placeholder="Para PIX e recuperação de senha"
+                    placeholder="Para recuperação de senha"
                   />
                 </div>
 

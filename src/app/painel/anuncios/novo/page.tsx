@@ -8,6 +8,7 @@ import { AdvertisementImageFields } from "@/features/panel/components/advertisem
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { getCurrentProvider, canProviderPublish } from "@/lib/provider-session";
+import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import {
   getCategoriesWithCounts,
   listActiveStates,
@@ -158,7 +159,8 @@ export default async function NewAdvertisementPage({
           <Input
             id="whatsappNumber"
             name="whatsappNumber"
-            defaultValue={provider.whatsapp}
+            defaultValue={toLocalWhatsAppDigits(provider.whatsapp)}
+            placeholder="91999999999"
             required
           />
         </div>

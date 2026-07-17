@@ -54,7 +54,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               <Input
                 id="whatsapp"
                 name="whatsapp"
-                placeholder="(91) 99999-9999"
+                placeholder="91999999999"
                 required
                 autoComplete="tel"
               />

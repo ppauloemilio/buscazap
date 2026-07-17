@@ -11,6 +11,7 @@ import {
   getAdminProviderStatusLabel,
 } from "@/config/admin";
 import { getCurrentAdmin } from "@/lib/admin-session";
+import { formatWhatsAppDisplay } from "@/lib/whatsapp";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -181,7 +182,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
               <Input
                 id="new-whatsapp"
                 name="whatsapp"
-                placeholder="(91) 99999-9999"
+                placeholder="91999999999"
                 required
               />
             </div>
@@ -260,7 +261,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      WhatsApp: {provider.whatsapp}
+                      WhatsApp: {formatWhatsAppDisplay(provider.whatsapp)}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {provider.email ?? "Sem e-mail"}

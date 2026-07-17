@@ -11,6 +11,7 @@ import {
 } from "@/config/admin";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { getCurrentAdmin } from "@/lib/admin-session";
+import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,8 +96,8 @@ export default async function AdminEditProviderPage({
             <Input
               id="whatsapp"
               name="whatsapp"
-              defaultValue={provider.whatsapp}
-              placeholder="(91) 99999-9999"
+              defaultValue={toLocalWhatsAppDigits(provider.whatsapp)}
+              placeholder="91999999999"
               required
             />
           </div>
@@ -111,7 +112,7 @@ export default async function AdminEditProviderPage({
               name="email"
               type="email"
               defaultValue={provider.email ?? ""}
-              placeholder="Para PIX e recuperação de senha"
+              placeholder="Para recuperação de senha"
             />
           </div>
 

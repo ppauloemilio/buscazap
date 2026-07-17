@@ -6,6 +6,7 @@ import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminAdvertisementActions } from "@/features/admin/components/admin-advertisement-actions";
 import { getAdminAdStatusLabel } from "@/config/admin";
 import { getCurrentAdmin } from "@/lib/admin-session";
+import { formatWhatsAppDisplay } from "@/lib/whatsapp";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -128,7 +129,7 @@ export default async function AdminAdvertisementsPage({
                       Anunciante: {ad.provider.name}
                       {ad.provider.email ? ` (${ad.provider.email})` : ""}
                       {" · "}
-                      {ad.provider.whatsapp}
+                      {formatWhatsAppDisplay(ad.provider.whatsapp)}
                     </p>
                     {ad.premiumActive && ad.premiumExpiresAt && (
                       <p className="mt-1 text-xs text-muted-foreground">

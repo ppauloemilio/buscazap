@@ -11,6 +11,7 @@ import { AdvertisementCategoryFields } from "@/features/panel/components/adverti
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { getCurrentAdmin } from "@/lib/admin-session";
+import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,7 +169,8 @@ export default async function AdminEditAdvertisementPage({
           <label className="mb-1 block text-sm font-medium">WhatsApp do anúncio</label>
           <Input
             name="whatsappNumber"
-            defaultValue={advertisement.whatsappNumber}
+            defaultValue={toLocalWhatsAppDigits(advertisement.whatsappNumber)}
+            placeholder="91999999999"
             required
           />
         </div>

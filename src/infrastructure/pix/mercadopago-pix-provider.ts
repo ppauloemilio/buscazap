@@ -64,7 +64,13 @@ function resolvePayerEmail(
     return testPayerEmail;
   }
 
-  return payerEmail;
+  const trimmed = payerEmail.trim();
+  if (trimmed.includes("@")) {
+    return trimmed;
+  }
+
+  // Fallback se o e-mail do pagador vier vazio (Mercado Pago exige o campo).
+  return "pagador@buscazapp.com.br";
 }
 
 function assertAccessToken(accessToken: string): void {

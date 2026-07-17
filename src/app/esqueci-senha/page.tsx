@@ -57,7 +57,7 @@ export default async function ForgotPasswordPage({
                 <Input
                   id="login"
                   name="login"
-                  placeholder="(91) 99999-9999 ou seu@email.com"
+                  placeholder="91999999999 ou seu@email.com"
                   required
                   autoComplete="username"
                 />

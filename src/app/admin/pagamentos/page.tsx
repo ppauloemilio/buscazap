@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { listAdminPayments } from "@/application/services/admin-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { getCurrentAdmin } from "@/lib/admin-session";
+import { formatWhatsAppDisplay } from "@/lib/whatsapp";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -84,7 +85,7 @@ export default async function AdminPaymentsPage() {
                     {payment.provider.name}
                     {payment.provider.email
                       ? ` (${payment.provider.email})`
-                      : ` · ${payment.provider.whatsapp}`}
+                      : ` · ${formatWhatsAppDisplay(payment.provider.whatsapp)}`}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {payment.createdAt.toLocaleString("pt-BR")}

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import type { Category } from "@/domain/entities";
 import { AdvertisementType } from "@/domain/enums";
 import { ImagePlus } from "lucide-react";
+import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 
 interface AdminCreateAdvertisementFormProps {
   readonly providerId: string;
@@ -139,7 +140,12 @@ export function AdminCreateAdvertisementForm({
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium">WhatsApp do anúncio</label>
-              <Input name="whatsappNumber" defaultValue={defaultWhatsapp} required />
+              <Input
+                name="whatsappNumber"
+                defaultValue={toLocalWhatsAppDigits(defaultWhatsapp)}
+                placeholder="91999999999"
+                required
+              />
             </div>
             <div className="sm:col-span-2">
               <label className="mb-1 block text-xs font-medium">Foto de capa (opcional)</label>

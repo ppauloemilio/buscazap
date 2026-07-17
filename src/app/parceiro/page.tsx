@@ -91,7 +91,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                   id="whatsapp"
                   name="whatsapp"
                   required
-                  placeholder="(91) 99999-9999"
+                  placeholder="91999999999"
                 />
               </div>
 

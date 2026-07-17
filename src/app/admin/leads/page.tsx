@@ -14,6 +14,7 @@ import {
 import { getServiceAreaLabel } from "@/config/service-area";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { getCurrentAdmin } from "@/lib/admin-session";
+import { formatWhatsAppDisplay } from "@/lib/whatsapp";
 import { buildWhatsAppLink } from "@/shared/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -133,7 +134,7 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                         />
                       )}
                       <p className="text-sm text-muted-foreground">
-                        WhatsApp: {lead.whatsapp}
+                        WhatsApp: {formatWhatsAppDisplay(lead.whatsapp)}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {lead.neighborhood}, {lead.city}/{lead.state}

@@ -22,13 +22,28 @@ export function normalizeWhatsAppIdentity(input: string): string | null {
   return digits;
 }
 
-export function formatWhatsAppDisplay(digits: string): string {
-  const normalized = normalizeWhatsAppIdentity(digits) ?? digits.replace(/\D/g, "");
-  if (normalized.length === 13) {
-    return `(${normalized.slice(2, 4)}) ${normalized.slice(4, 9)}-${normalized.slice(9)}`;
+/** DDD + número, sem DDI 55 — formato comum para login/exibição (ex.: 91983632551). */
+export function toLocalWhatsAppDigits(input: string): string {
+  const normalized = normalizeWhatsAppIdentity(input);
+  if (normalized) {
+    return normalized.slice(2);
   }
-  if (normalized.length === 12) {
-    return `(${normalized.slice(2, 4)}) ${normalized.slice(4, 8)}-${normalized.slice(8)}`;
+
+  const digits = input.replace(/\D/g, "");
+  if (digits.startsWith("55") && digits.length >= 12) {
+    return digits.slice(2);
+  }
+
+  return digits;
+}
+
+export function formatWhatsAppDisplay(digits: string): string {
+  const local = toLocalWhatsAppDigits(digits);
+  if (local.length === 11) {
+    return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  }
+  if (local.length === 10) {
+    return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
   }
   return digits;
 }

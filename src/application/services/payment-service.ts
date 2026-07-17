@@ -8,6 +8,7 @@ import {
   canRenewSubscription,
   hasActiveSubscription,
 } from "@/lib/provider-session";
+import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { activatePremiumBoost } from "@/application/services/premium-service";
 import { activateSubscription } from "@/application/services/subscription-service";
 
@@ -69,22 +70,22 @@ async function initiatePayment(input: {
 async function getProviderPaymentProfile(providerId: string) {
   const provider = await prisma.provider.findUnique({
     where: { id: providerId },
-    select: { email: true, name: true, subscriptionExpiresAt: true },
+    select: { email: true, name: true, whatsapp: true, subscriptionExpiresAt: true },
   });
 
   if (!provider) {
     throw new Error("PROVIDER_NOT_FOUND");
   }
 
-  if (!provider.email) {
-    throw new Error(
-      "Cadastre um e-mail no seu perfil para pagar com PIX. Sem e-mail, peça ao admin para liberar a assinatura manualmente."
-    );
-  }
+  // Mercado Pago exige e-mail do pagador; sem cadastro, usamos um proxy estável pelo WhatsApp.
+  const payerEmail =
+    provider.email?.trim() ||
+    `${toLocalWhatsAppDigits(provider.whatsapp)}@pagadores.buscazapp.com.br`;
 
   return {
-    ...provider,
-    email: provider.email,
+    name: provider.name,
+    email: payerEmail,
+    subscriptionExpiresAt: provider.subscriptionExpiresAt,
   };
 }
 
