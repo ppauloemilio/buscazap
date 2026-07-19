@@ -766,6 +766,7 @@ export async function listAdminAdvertisements(filters?: {
   return advertisements.map((ad) => ({
     id: ad.id,
     title: ad.title,
+    type: ad.type,
     category: ad.category,
     city: ad.city,
     state: ad.state,

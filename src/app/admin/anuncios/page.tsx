@@ -7,6 +7,7 @@ import { AdminAdvertisementActions } from "@/features/admin/components/admin-adv
 import { getAdminAdStatusLabel } from "@/config/admin";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { formatWhatsAppDisplay } from "@/lib/whatsapp";
+import { getAdvertisementTypeLabel } from "@/shared/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,10 @@ export default async function AdminAdvertisementsPage({
                     <div className="mb-1 flex flex-wrap items-center gap-2">
                       <h3 className="font-semibold">{ad.title}</h3>
                       <Badge variant="outline">{getAdminAdStatusLabel(ad.status)}</Badge>
+                      <Badge variant="secondary">
+                        {getAdvertisementTypeLabel(ad.type)}
+                      </Badge>
+                      <Badge variant="secondary">{ad.category}</Badge>
                       {ad.premiumActive && (
                         <Badge variant="premium" className="gap-1">
                           <Crown className="h-3 w-3" />
@@ -123,7 +128,7 @@ export default async function AdminAdvertisementsPage({
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {ad.category} · {ad.city}/{ad.state}
+                      {ad.city}/{ad.state}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Anunciante: {ad.provider.name}
