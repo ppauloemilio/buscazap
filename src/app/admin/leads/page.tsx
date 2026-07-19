@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MessageCircle } from "lucide-react";
-import { adminUpdateProviderLeadAction } from "@/actions/provider-lead-actions";
+import {
+  adminPublishProviderLeadAction,
+  adminUpdateProviderLeadAction,
+} from "@/actions/provider-lead-actions";
 import {
   listProviderLeads,
   resolveLeadPhotoUrl,
@@ -26,6 +29,9 @@ interface AdminLeadsPageProps {
   readonly searchParams: Promise<{
     readonly error?: string;
     readonly saved?: string;
+    readonly published?: string;
+    readonly adId?: string;
+    readonly notify?: string;
     readonly status?: string;
   }>;
 }
@@ -36,6 +42,10 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
 
   const params = await searchParams;
   const leads = await listProviderLeads(params.status);
+  const notifyHref =
+    typeof params.notify === "string" && params.notify.startsWith("https://wa.me/")
+      ? params.notify
+      : null;
 
   function filterHref(status?: string) {
     return status ? `/admin/leads?status=${status}` : "/admin/leads";
@@ -51,7 +61,8 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
             <Link href="/parceiro" className="underline" target="_blank">
               /parceiro
             </Link>{" "}
-            (também /parceiros)
+            (também /parceiros). Use <strong>Publicar anúncio</strong> para
+            criar a conta, liberar o trial e deixar o anúncio visível na busca.
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -85,6 +96,35 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
           Lead atualizado.
         </p>
       )}
+      {params.published === "1" && (
+        <div className="mb-3 space-y-2 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
+          <p className="font-medium">Anúncio publicado e já aparece na busca.</p>
+          <div className="flex flex-wrap gap-2">
+            {params.adId && (
+              <>
+                <Button size="sm" variant="outline" asChild>
+                  <Link href={`/anuncio/${params.adId}`} target="_blank">
+                    Ver anúncio
+                  </Link>
+                </Button>
+                <Button size="sm" variant="outline" asChild>
+                  <Link href={`/admin/anuncios/${params.adId}/editar`}>
+                    Editar (categoria etc.)
+                  </Link>
+                </Button>
+              </>
+            )}
+            {notifyHref && (
+              <Button size="sm" variant="whatsapp" asChild>
+                <a href={notifyHref} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Avisar no WhatsApp
+                </a>
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {leads.length === 0 ? (
         <Card>
@@ -100,6 +140,9 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
               lead.whatsapp,
               `Olá ${lead.name}! Aqui é do BuscaZapp. Recebemos seu interesse em anunciar "${lead.adTitle}". Vamos finalizar seu cadastro?`
             );
+            const canPublish =
+              lead.status === ProviderLeadStatus.NEW ||
+              lead.status === ProviderLeadStatus.CONTACTED;
 
             return (
               <Card key={lead.id}>
@@ -160,9 +203,14 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                         WhatsApp
                       </a>
                     </Button>
-                    <Button size="sm" variant="outline" asChild>
-                      <Link href="/admin/usuarios">Criar anunciante</Link>
-                    </Button>
+                    {canPublish && (
+                      <form action={adminPublishProviderLeadAction}>
+                        <input type="hidden" name="leadId" value={lead.id} />
+                        <Button type="submit" size="sm" variant="whatsapp">
+                          Publicar anúncio
+                        </Button>
+                      </form>
+                    )}
                   </div>
 
                   <form
@@ -193,7 +241,7 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                         defaultValue={lead.notes ?? ""}
                         placeholder="Opcional"
                         className="h-9"
-                        maxLength={500}
+                        maxLength={1000}
                       />
                     </div>
                     <Button type="submit" size="sm" variant="outline">
@@ -212,17 +260,6 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                         />
                         <Button type="submit" size="sm" variant="outline">
                           Marcar contatado
-                        </Button>
-                      </form>
-                      <form action={adminUpdateProviderLeadAction}>
-                        <input type="hidden" name="leadId" value={lead.id} />
-                        <input
-                          type="hidden"
-                          name="status"
-                          value={ProviderLeadStatus.CONVERTED}
-                        />
-                        <Button type="submit" size="sm" variant="whatsapp">
-                          Convertido
                         </Button>
                       </form>
                       <form action={adminUpdateProviderLeadAction}>

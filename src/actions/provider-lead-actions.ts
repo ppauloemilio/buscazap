@@ -4,15 +4,20 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   createProviderLead,
+  publishProviderLeadAsAdmin,
   updateProviderLeadStatus,
 } from "@/application/services/provider-lead-service";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { uploadLeadImage, validateImageFile } from "@/lib/image-upload";
 import { prisma } from "@/lib/prisma";
+import { buildAbsoluteUrl } from "@/lib/site-url";
+import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import {
+  adminPublishProviderLeadSchema,
   adminUpdateProviderLeadSchema,
   createProviderLeadSchema,
 } from "@/schemas/provider-schemas";
+import { buildWhatsAppLink } from "@/shared/utils/format";
 
 export async function submitProviderLeadAction(formData: FormData) {
   const parsed = createProviderLeadSchema.safeParse({
@@ -102,4 +107,52 @@ export async function adminUpdateProviderLeadAction(formData: FormData) {
   revalidatePath("/admin/leads");
   revalidatePath("/admin");
   redirect("/admin/leads?saved=1");
+}
+
+export async function adminPublishProviderLeadAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const parsed = adminPublishProviderLeadSchema.safeParse({
+    leadId: formData.get("leadId"),
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `/admin/leads?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Lead inválido")}`
+    );
+  }
+
+  let result;
+  try {
+    result = await publishProviderLeadAsAdmin({
+      adminId: admin.id,
+      leadId: parsed.data.leadId,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível publicar o anúncio";
+    redirect(`/admin/leads?error=${encodeURIComponent(message)}`);
+  }
+
+  const adUrl = buildAbsoluteUrl(`/anuncio/${result.advertisementId}`);
+  const loginDigits = toLocalWhatsAppDigits(result.whatsapp);
+
+  const whatsappMessage = result.temporaryPassword
+    ? `Olá ${result.providerName}! Seu anúncio "${result.adTitle}" já está no BuscaZapp: ${adUrl}\n\nPara acessar o painel: ${buildAbsoluteUrl("/entrar")}\nLogin (WhatsApp): ${loginDigits}\nSenha temporária: ${result.temporaryPassword}\n\nTroque a senha no painel quando puder.`
+    : `Olá ${result.providerName}! Seu anúncio "${result.adTitle}" já está no BuscaZapp: ${adUrl}`;
+
+  const notifyHref = buildWhatsAppLink(result.whatsapp, whatsappMessage);
+
+  revalidatePath("/admin/leads");
+  revalidatePath("/admin/anuncios");
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+  revalidatePath(`/anuncio/${result.advertisementId}`);
+
+  redirect(
+    `/admin/leads?published=1&adId=${encodeURIComponent(result.advertisementId)}&notify=${encodeURIComponent(notifyHref)}`
+  );
 }

@@ -1,10 +1,50 @@
-import { ProviderLeadStatus } from "@/domain/enums";
+import { randomInt } from "crypto";
+import bcrypt from "bcryptjs";
+import { createAdvertisement } from "@/application/services/advertisement-service";
+import { logAdminAction } from "@/application/services/admin-service";
+import {
+  registerCategorySuggestion,
+  resolveAdvertisementCategoryFromCatalog,
+} from "@/application/services/category-matching-service";
+import { generateUniqueReferralCode } from "@/application/services/referral-service";
+import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
+import { CATEGORY_OTHER_VALUE } from "@/config/advertisement-form";
+import { PRICING } from "@/config/pricing";
+import {
+  AdvertisementType,
+  ProviderLeadStatus,
+  ProviderStatus,
+  ServiceArea,
+  UserRole,
+} from "@/domain/enums";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { markDataFetchDynamic } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
+import {
+  canProviderPublish,
+  hasActiveSubscription,
+} from "@/lib/provider-session";
+import { normalizeWhatsAppIdentity, toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import type { CreateProviderLeadInput } from "@/schemas/provider-schemas";
 
 const DUPLICATE_WINDOW_HOURS = 24;
+
+function generateTemporaryPassword(): string {
+  return `bz${randomInt(100000, 999999)}`;
+}
+
+function parseServiceArea(value: string): ServiceArea {
+  if (Object.values(ServiceArea).includes(value as ServiceArea)) {
+    return value as ServiceArea;
+  }
+  return ServiceArea.CITY_WIDE;
+}
+
+function buildTrialExpiresAt(from = new Date()): Date {
+  const expiresAt = new Date(from);
+  expiresAt.setDate(expiresAt.getDate() + PRICING.LAUNCH_TRIAL_DAYS);
+  return expiresAt;
+}
 
 export async function createProviderLead(
   input: CreateProviderLeadInput & { readonly photoUrl?: string }
@@ -88,4 +128,183 @@ export async function updateProviderLeadStatus(input: {
 export function resolveLeadPhotoUrl(photoUrl: string | null | undefined) {
   if (!photoUrl) return null;
   return resolveAdvertisementImageUrl(photoUrl);
+}
+
+export async function publishProviderLeadAsAdmin(input: {
+  readonly adminId: string;
+  readonly leadId: string;
+}) {
+  const lead = await prisma.providerLead.findUnique({
+    where: { id: input.leadId },
+  });
+
+  if (!lead) {
+    throw new Error("Lead não encontrado");
+  }
+
+  if (lead.status === ProviderLeadStatus.CONVERTED) {
+    throw new Error("Este lead já foi publicado");
+  }
+
+  if (lead.status === ProviderLeadStatus.DISMISSED) {
+    throw new Error("Lead arquivado — desarquive antes de publicar");
+  }
+
+  if (!lead.description?.trim() || lead.description.trim().length < 20) {
+    throw new Error("Lead sem descrição suficiente para publicar o anúncio");
+  }
+
+  const whatsapp =
+    normalizeWhatsAppIdentity(lead.whatsapp) ?? lead.whatsapp.replace(/\D/g, "");
+
+  if (!whatsapp) {
+    throw new Error("WhatsApp do lead inválido");
+  }
+
+  let temporaryPassword: string | null = null;
+  let providerCreated = false;
+
+  let provider = await prisma.provider.findUnique({
+    where: { whatsapp },
+    select: {
+      id: true,
+      name: true,
+      whatsapp: true,
+      role: true,
+      status: true,
+      subscriptionExpiresAt: true,
+    },
+  });
+
+  if (provider) {
+    if (provider.role === UserRole.ADMIN) {
+      throw new Error("Este WhatsApp pertence a um administrador");
+    }
+    if (provider.status === ProviderStatus.BLOCKED) {
+      throw new Error("Anunciante bloqueado — reative antes de publicar");
+    }
+
+    if (!canProviderPublish(provider)) {
+      provider = await prisma.provider.update({
+        where: { id: provider.id },
+        data: { subscriptionExpiresAt: buildTrialExpiresAt() },
+        select: {
+          id: true,
+          name: true,
+          whatsapp: true,
+          role: true,
+          status: true,
+          subscriptionExpiresAt: true,
+        },
+      });
+    }
+  } else {
+    temporaryPassword = generateTemporaryPassword();
+    const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+    const referralCode = await generateUniqueReferralCode();
+
+    provider = await prisma.provider.create({
+      data: {
+        name: lead.name,
+        whatsapp,
+        passwordHash,
+        role: UserRole.PROVIDER,
+        status: ProviderStatus.ACTIVE,
+        city: lead.city,
+        state: lead.state,
+        neighborhood: lead.neighborhood,
+        referralCode,
+        subscriptionExpiresAt: buildTrialExpiresAt(),
+      },
+      select: {
+        id: true,
+        name: true,
+        whatsapp: true,
+        role: true,
+        status: true,
+        subscriptionExpiresAt: true,
+      },
+    });
+    providerCreated = true;
+  }
+
+  if (!hasActiveSubscription(provider.subscriptionExpiresAt)) {
+    throw new Error("Não foi possível liberar o trial do anunciante");
+  }
+
+  const categoryResolution = await resolveAdvertisementCategoryFromCatalog({
+    category: CATEGORY_OTHER_VALUE,
+    customCategory: "Geral",
+  });
+
+  if (categoryResolution.isCustomCategory) {
+    await registerCategorySuggestion(categoryResolution.categoryName);
+  }
+
+  const { advertisement } = await createAdvertisement({
+    providerId: provider.id,
+    title: lead.adTitle,
+    description: lead.description.trim(),
+    type: AdvertisementType.SERVICE,
+    category: categoryResolution.categoryName,
+    isCustomCategory: categoryResolution.isCustomCategory,
+    city: lead.city,
+    state: lead.state,
+    neighborhood: lead.neighborhood,
+    serviceArea: parseServiceArea(lead.serviceArea),
+    whatsappNumber: whatsapp,
+  });
+
+  if (lead.photoUrl) {
+    await prisma.advertisementImage.create({
+      data: {
+        advertisementId: advertisement.id,
+        url: lead.photoUrl,
+        kind: ADVERTISEMENT_IMAGE_KIND.COVER,
+        sortOrder: 0,
+      },
+    });
+  }
+
+  const publishedNote = [
+    `Publicado em ${new Date().toLocaleString("pt-BR")}.`,
+    `Anúncio: /anuncio/${advertisement.id}.`,
+    providerCreated
+      ? `Conta criada. Senha temporária: ${temporaryPassword}.`
+      : "Conta já existia — anúncio vinculado.",
+  ].join(" ");
+
+  await prisma.providerLead.update({
+    where: { id: lead.id },
+    data: {
+      status: ProviderLeadStatus.CONVERTED,
+      notes: lead.notes
+        ? `${lead.notes}\n${publishedNote}`
+        : publishedNote,
+    },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "PUBLISH_PROVIDER_LEAD",
+    entityType: "ProviderLead",
+    entityId: lead.id,
+    metadata: {
+      providerId: provider.id,
+      advertisementId: advertisement.id,
+      providerCreated,
+      whatsapp: toLocalWhatsAppDigits(whatsapp),
+    },
+  });
+
+  return {
+    leadId: lead.id,
+    providerId: provider.id,
+    advertisementId: advertisement.id,
+    providerName: provider.name,
+    adTitle: lead.adTitle,
+    whatsapp,
+    temporaryPassword,
+    providerCreated,
+  };
 }

@@ -249,8 +249,12 @@ export const adminUpdateProviderLeadSchema = z.object({
       const trimmed = value.trim();
       return trimmed.length === 0 ? undefined : trimmed;
     },
-    z.string().max(500).optional()
+    z.string().max(1000).optional()
   ),
+});
+
+export const adminPublishProviderLeadSchema = z.object({
+  leadId: z.string().min(1, "Lead inválido"),
 });
 
 export const adminResetProviderPasswordSchema = z.object({
