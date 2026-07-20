@@ -14,7 +14,7 @@ import { ServiceAreaField } from "@/features/panel/components/service-area-field
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
-import { PILOT_CITIES, PRICING } from "@/config/pricing";
+import { PILOT_CITIES } from "@/config/pricing";
 import { ServiceArea } from "@/domain/enums";
 
 export const metadata: Metadata = {
@@ -46,7 +46,7 @@ const BENEFITS = [
   {
     icon: Sparkles,
     title: "Pré-cadastro grátis",
-    text: `Sem senha agora. O 1º mês é cortesia (depois R$ ${PRICING.SUBSCRIPTION_AMOUNT.toFixed(2).replace(".", ",")}/mês).`,
+    text: "Sem senha agora. O 1º mês é cortesia.",
   },
 ] as const;
 
