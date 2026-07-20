@@ -234,7 +234,7 @@ model ProviderLead {
   whatsapp     String
   city         String
   state        String   @default("PA")
-  neighborhood String
+  neighborhood String?
   serviceArea  String
   adTitle      String
   description  String?

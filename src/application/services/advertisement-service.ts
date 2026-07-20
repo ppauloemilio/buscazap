@@ -258,7 +258,7 @@ export async function createAdvertisement(input: {
       isCustomCategory: Boolean(input.isCustomCategory),
       city: input.city,
       state: input.state,
-      neighborhood: input.neighborhood,
+      neighborhood: input.neighborhood || null,
       serviceArea: input.serviceArea,
       whatsappNumber: input.whatsappNumber,
       status: "APPROVED",

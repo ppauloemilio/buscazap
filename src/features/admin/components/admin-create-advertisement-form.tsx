@@ -11,7 +11,7 @@ import { DescriptionEditor } from "@/components/advertisement/description-editor
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Category } from "@/domain/entities";
-import { AdvertisementType } from "@/domain/enums";
+import { AdvertisementType, ServiceArea } from "@/domain/enums";
 import { ImagePlus } from "lucide-react";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 
@@ -122,17 +122,20 @@ export function AdminCreateAdvertisementForm({
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium">Bairro</label>
+              <label className="mb-1 block text-xs font-medium">
+                Bairro{" "}
+                <span className="font-normal text-muted-foreground">(opcional)</span>
+              </label>
               <Input
                 name="neighborhood"
-                placeholder="Ex.: Centro, Nazaré..."
-                required
+                placeholder="Ex.: Nazaré — ou vazio se for delivery"
                 minLength={2}
               />
             </div>
             <div>
               <ServiceAreaField
                 id={`serviceArea-${providerId}`}
+                defaultValue={ServiceArea.CITY_WIDE}
                 labelClassName="mb-1 block text-xs font-medium"
                 selectClassName="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 showHint={false}

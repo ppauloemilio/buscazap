@@ -38,7 +38,7 @@ export function ServiceAreaField({
       </select>
       {showHint && (
         <p className="mt-1 text-xs text-muted-foreground">
-          Deixe claro se você atende só no bairro ou em toda a cidade.
+          Sem bairro? Escolha “Toda a cidade / Delivery”.
         </p>
       )}
     </div>

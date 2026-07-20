@@ -13,8 +13,8 @@ export const SERVICE_AREA_OPTIONS = [
   },
   {
     value: ServiceArea.CITY_WIDE,
-    label: "Toda a cidade",
-    description: "Atende em qualquer bairro da cidade",
+    label: "Toda a cidade / Delivery",
+    description: "Atende em qualquer bairro ou faz delivery na cidade",
   },
   {
     value: ServiceArea.ON_REQUEST,

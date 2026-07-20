@@ -555,7 +555,7 @@ export async function createAdvertisementAsAdmin(input: {
     isCustomCategory: categoryResolution.isCustomCategory,
     city: input.city,
     state: input.state,
-    neighborhood: input.neighborhood,
+    neighborhood: input.neighborhood || null,
     serviceArea: input.serviceArea,
     whatsappNumber,
   });

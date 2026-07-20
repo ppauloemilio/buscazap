@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES, PRICING } from "@/config/pricing";
+import { ServiceArea } from "@/domain/enums";
 
 export const metadata: Metadata = {
   title: "Pré-lançamento para anunciantes",
@@ -208,24 +209,29 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label
-                      htmlFor="neighborhood"
-                      className="mb-1 block text-sm font-medium"
-                    >
-                      Bairro
-                    </label>
-                    <Input
-                      id="neighborhood"
-                      name="neighborhood"
-                      required
-                      minLength={2}
-                      placeholder="Ex.: Nazaré, Marco..."
-                    />
-                  </div>
+                <div>
+                  <label
+                    htmlFor="neighborhood"
+                    className="mb-1 block text-sm font-medium"
+                  >
+                    Bairro{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opcional)
+                    </span>
+                  </label>
+                  <Input
+                    id="neighborhood"
+                    name="neighborhood"
+                    minLength={2}
+                    placeholder="Ex.: Nazaré — ou deixe vazio se for delivery"
+                  />
+                </div>
                 </div>
 
-                <ServiceAreaField showHint={false} />
+                <ServiceAreaField
+                  showHint={false}
+                  defaultValue={ServiceArea.CITY_WIDE}
+                />
 
                 <div>
                   <label htmlFor="adTitle" className="mb-1 block text-sm font-medium">

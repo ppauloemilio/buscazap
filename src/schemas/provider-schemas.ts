@@ -10,10 +10,12 @@ const optionalEmail = z.preprocess((value) => {
   return trimmed.length === 0 ? null : trimmed;
 }, z.string().email("E-mail inválido").nullable());
 
-const requiredNeighborhood = z.preprocess(
-  (value) => (typeof value === "string" ? value.trim() : value),
-  z.string().min(2, "Informe o bairro")
-);
+/** Bairro opcional: vazio = atende a cidade toda / delivery. */
+const optionalNeighborhood = z.preprocess((value) => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}, z.string().min(2, "Bairro deve ter ao menos 2 caracteres").optional());
 
 const whatsappIdentity = z
   .string()
@@ -170,7 +172,7 @@ export const createAdvertisementSchema = z
     ),
     city: z.string().min(2, "Informe a cidade"),
     state: z.string().length(2, "UF deve ter 2 letras"),
-    neighborhood: requiredNeighborhood,
+    neighborhood: optionalNeighborhood,
     serviceArea: z.nativeEnum(ServiceArea, {
       errorMap: () => ({ message: "Selecione a área de atendimento" }),
     }),
@@ -215,7 +217,7 @@ export const createProviderLeadSchema = z
     whatsapp: whatsappIdentity,
     city: z.string().min(2, "Informe a cidade"),
     state: z.string().length(2, "UF deve ter 2 letras").default("PA"),
-    neighborhood: requiredNeighborhood,
+    neighborhood: optionalNeighborhood,
     serviceArea: z.nativeEnum(ServiceArea, {
       errorMap: () => ({ message: "Selecione a área de atendimento" }),
     }),
@@ -282,7 +284,7 @@ export const adminCreateAdvertisementSchema = z
     ),
     city: z.string().min(2, "Informe a cidade"),
     state: z.string().length(2, "UF deve ter 2 letras"),
-    neighborhood: requiredNeighborhood,
+    neighborhood: optionalNeighborhood,
     serviceArea: z.nativeEnum(ServiceArea, {
       errorMap: () => ({ message: "Selecione a área de atendimento" }),
     }),
@@ -326,7 +328,7 @@ export const adminUpdateAdvertisementSchema = z
     ),
     city: z.string().min(2, "Informe a cidade"),
     state: z.string().length(2, "UF deve ter 2 letras"),
-    neighborhood: requiredNeighborhood,
+    neighborhood: optionalNeighborhood,
     serviceArea: z.nativeEnum(ServiceArea, {
       errorMap: () => ({ message: "Selecione a área de atendimento" }),
     }),

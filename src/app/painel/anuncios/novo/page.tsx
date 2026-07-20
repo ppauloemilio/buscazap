@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PILOT_CITIES } from "@/config/pricing";
+import { ServiceArea } from "@/domain/enums";
 
 interface NewAdvertisementPageProps {
   readonly searchParams: Promise<{ readonly error?: string }>;
@@ -136,20 +137,20 @@ export default async function NewAdvertisementPage({
         <div className="grid gap-2 sm:grid-cols-2">
           <div>
             <label htmlFor="neighborhood" className="mb-1 block text-sm font-medium">
-              Bairro
+              Bairro{" "}
+              <span className="font-normal text-muted-foreground">(opcional)</span>
             </label>
             <Input
               id="neighborhood"
               name="neighborhood"
-              placeholder="Ex.: Nazaré, Marco, Centro..."
-              required
+              placeholder="Ex.: Nazaré — ou vazio se for delivery"
               minLength={2}
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Onde você está ou atende principalmente.
+              Deixe em branco se atende a cidade toda ou só faz delivery.
             </p>
           </div>
-          <ServiceAreaField />
+          <ServiceAreaField defaultValue={ServiceArea.CITY_WIDE} />
         </div>
 
         <div>

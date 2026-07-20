@@ -180,7 +180,9 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                         WhatsApp: {formatWhatsAppDisplay(lead.whatsapp)}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {lead.neighborhood}, {lead.city}/{lead.state}
+                        {lead.neighborhood
+                          ? `${lead.neighborhood}, ${lead.city}/${lead.state}`
+                          : `${lead.city}/${lead.state}`}
                         {getServiceAreaLabel(lead.serviceArea)
                           ? ` · ${getServiceAreaLabel(lead.serviceArea)}`
                           : ""}

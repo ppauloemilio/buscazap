@@ -150,12 +150,14 @@ export default async function AdminEditAdvertisementPage({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium">Bairro</label>
+            <label className="mb-1 block text-sm font-medium">
+              Bairro{" "}
+              <span className="font-normal text-muted-foreground">(opcional)</span>
+            </label>
             <Input
               name="neighborhood"
               defaultValue={advertisement.neighborhood ?? ""}
-              placeholder="Ex.: Nazaré, Marco..."
-              required
+              placeholder="Ex.: Nazaré — ou vazio se for delivery"
               minLength={2}
             />
           </div>
