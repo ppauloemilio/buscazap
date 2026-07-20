@@ -114,12 +114,21 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <div className="flex flex-col items-center justify-center rounded-xl border bg-card px-6 py-12 text-center">
             <Search className="mb-4 h-12 w-12 text-muted-foreground" />
             <h2 className="text-lg font-semibold text-foreground">
-              Nenhum anúncio encontrado
+              Ainda estamos selecionando os melhores profissionais dessa área
             </h2>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              Tente outro termo, remova a cidade ou escolha uma busca rápida
+              Conhece alguém? Indique ou cadastre um anúncio e ajude a completar
+              a região. Você também pode tentar outro termo ou uma busca rápida
               abaixo.
             </p>
+            <div className="mt-5">
+              <Link
+                href="/parceiro"
+                className="inline-flex h-10 items-center justify-center rounded-md bg-whatsapp px-5 text-sm font-medium text-whatsapp-foreground transition-colors hover:bg-whatsapp/90"
+              >
+                Indicar / anunciar no BuscaZapp
+              </Link>
+            </div>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               {URGENT_SEARCHES.map((item) => (
                 <Link
