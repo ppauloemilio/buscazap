@@ -30,6 +30,7 @@ export enum ServiceArea {
   NEIGHBORHOOD_ONLY = "NEIGHBORHOOD_ONLY",
   NEARBY = "NEARBY",
   CITY_WIDE = "CITY_WIDE",
+  ON_SITE = "ON_SITE",
   ON_REQUEST = "ON_REQUEST",
 }
 

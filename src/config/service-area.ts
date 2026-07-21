@@ -17,6 +17,11 @@ export const SERVICE_AREA_OPTIONS = [
     description: "Atende em qualquer bairro ou faz delivery na cidade",
   },
   {
+    value: ServiceArea.ON_SITE,
+    label: "No local",
+    description: "O cliente vai até o estabelecimento",
+  },
+  {
     value: ServiceArea.ON_REQUEST,
     label: "Sob consulta",
     description: "Confirme no WhatsApp se atende na sua região",
