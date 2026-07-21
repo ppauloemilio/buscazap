@@ -255,9 +255,31 @@ export const adminUpdateProviderLeadSchema = z.object({
   ),
 });
 
-export const adminPublishProviderLeadSchema = z.object({
-  leadId: z.string().min(1, "Lead inválido"),
-});
+export const adminPublishProviderLeadSchema = z
+  .object({
+    leadId: z.string().min(1, "Lead inválido"),
+    type: z.nativeEnum(AdvertisementType, {
+      errorMap: () => ({ message: "Selecione o tipo do anúncio" }),
+    }),
+    category: z.string().min(1, "Selecione uma categoria"),
+    customCategory: z.preprocess(
+      (value) => {
+        if (typeof value !== "string") return undefined;
+        const trimmed = value.trim();
+        return trimmed.length === 0 ? undefined : trimmed;
+      },
+      z.string().min(2, "Categoria deve ter ao menos 2 caracteres").max(50).optional()
+    ),
+  })
+  .superRefine((data, ctx) => {
+    if (data.category === CATEGORY_OTHER_VALUE && !data.customCategory) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe a categoria desejada",
+        path: ["customCategory"],
+      });
+    }
+  });
 
 export const adminResetProviderPasswordSchema = z.object({
   providerId: z.string().min(1),

@@ -8,7 +8,6 @@ import {
 } from "@/application/services/category-matching-service";
 import { generateUniqueReferralCode } from "@/application/services/referral-service";
 import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
-import { CATEGORY_OTHER_VALUE } from "@/config/advertisement-form";
 import { PRICING } from "@/config/pricing";
 import {
   AdvertisementType,
@@ -133,6 +132,9 @@ export function resolveLeadPhotoUrl(photoUrl: string | null | undefined) {
 export async function publishProviderLeadAsAdmin(input: {
   readonly adminId: string;
   readonly leadId: string;
+  readonly type: AdvertisementType;
+  readonly category: string;
+  readonly customCategory?: string;
 }) {
   const lead = await prisma.providerLead.findUnique({
     where: { id: input.leadId },
@@ -233,8 +235,8 @@ export async function publishProviderLeadAsAdmin(input: {
   }
 
   const categoryResolution = await resolveAdvertisementCategoryFromCatalog({
-    category: CATEGORY_OTHER_VALUE,
-    customCategory: "Geral",
+    category: input.category,
+    customCategory: input.customCategory,
   });
 
   if (categoryResolution.isCustomCategory) {
@@ -245,7 +247,7 @@ export async function publishProviderLeadAsAdmin(input: {
     providerId: provider.id,
     title: lead.adTitle,
     description: lead.description.trim(),
-    type: AdvertisementType.SERVICE,
+    type: input.type,
     category: categoryResolution.categoryName,
     isCustomCategory: categoryResolution.isCustomCategory,
     city: lead.city,
@@ -294,6 +296,8 @@ export async function publishProviderLeadAsAdmin(input: {
       advertisementId: advertisement.id,
       providerCreated,
       whatsapp: toLocalWhatsAppDigits(whatsapp),
+      type: input.type,
+      category: categoryResolution.categoryName,
     },
   });
 

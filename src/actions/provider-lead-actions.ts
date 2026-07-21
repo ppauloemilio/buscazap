@@ -115,6 +115,9 @@ export async function adminPublishProviderLeadAction(formData: FormData) {
 
   const parsed = adminPublishProviderLeadSchema.safeParse({
     leadId: formData.get("leadId"),
+    type: formData.get("type"),
+    category: formData.get("category"),
+    customCategory: formData.get("customCategory"),
   });
 
   if (!parsed.success) {
@@ -128,6 +131,9 @@ export async function adminPublishProviderLeadAction(formData: FormData) {
     result = await publishProviderLeadAsAdmin({
       adminId: admin.id,
       leadId: parsed.data.leadId,
+      type: parsed.data.type,
+      category: parsed.data.category,
+      customCategory: parsed.data.customCategory,
     });
   } catch (error) {
     const message =

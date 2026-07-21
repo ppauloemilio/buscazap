@@ -2,13 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import {
-  adminPublishProviderLeadAction,
   adminUpdateProviderLeadAction,
 } from "@/actions/provider-lead-actions";
 import {
   listProviderLeads,
   resolveLeadPhotoUrl,
 } from "@/application/services/provider-lead-service";
+import { getCategoriesWithCounts } from "@/application/services/catalog-service";
 import { AdvertisementDescription } from "@/components/advertisement/advertisement-description";
 import {
   PROVIDER_LEAD_STATUS_LABELS,
@@ -16,6 +16,7 @@ import {
 } from "@/config/provider-leads";
 import { getServiceAreaLabel } from "@/config/service-area";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
+import { AdminPublishLeadForm } from "@/features/admin/components/admin-publish-lead-form";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { formatWhatsAppDisplay } from "@/lib/whatsapp";
 import { buildWhatsAppLink } from "@/shared/utils/format";
@@ -41,7 +42,10 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
   if (!admin) redirect("/admin/entrar");
 
   const params = await searchParams;
-  const leads = await listProviderLeads(params.status);
+  const [leads, categories] = await Promise.all([
+    listProviderLeads(params.status),
+    getCategoriesWithCounts(),
+  ]);
   const notifyHref =
     typeof params.notify === "string" && params.notify.startsWith("https://wa.me/")
       ? params.notify
@@ -61,8 +65,8 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
             <Link href="/parceiro" className="underline" target="_blank">
               /parceiro
             </Link>{" "}
-            (também /parceiros). Use <strong>Publicar anúncio</strong> para
-            criar a conta, liberar o trial e deixar o anúncio visível na busca.
+            (também /parceiros). Antes de publicar, escolha o{" "}
+            <strong>tipo</strong> e a <strong>categoria</strong> do anúncio.
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -205,15 +209,14 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                         WhatsApp
                       </a>
                     </Button>
-                    {canPublish && (
-                      <form action={adminPublishProviderLeadAction}>
-                        <input type="hidden" name="leadId" value={lead.id} />
-                        <Button type="submit" size="sm" variant="whatsapp">
-                          Publicar anúncio
-                        </Button>
-                      </form>
-                    )}
                   </div>
+
+                  {canPublish && (
+                    <AdminPublishLeadForm
+                      leadId={lead.id}
+                      categories={categories}
+                    />
+                  )}
 
                   <form
                     action={adminUpdateProviderLeadAction}
