@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Crown, ImageIcon } from "lucide-react";
-import { findProviderAdvertisements } from "@/application/services/advertisement-service";
+import { findProviderAdvertisements, providerHasAdSlotAvailable } from "@/application/services/advertisement-service";
 import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
 import { BoostAdvertisementForm } from "@/features/panel/components/boost-advertisement-form";
 import { DeleteAdvertisementForm } from "@/features/panel/components/delete-advertisement-form";
@@ -9,7 +9,7 @@ import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { PRICING } from "@/config/pricing";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 
 interface ProviderAdsPageProps {
   readonly searchParams: Promise<{
@@ -29,20 +29,26 @@ export default async function ProviderAdsPage({
   const subscriptionActive = canProviderPublish(provider);
   const isAdmin = isAdminProvider(provider);
   const advertisements = await findProviderAdvertisements(provider.id);
+  const hasAdSlot = isAdmin || (await providerHasAdSlotAvailable(provider.id));
   const boostLabel = isAdmin
     ? "Destacar grátis"
-    : `Destacar R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")} (30 dias)`;
-  const premiumAmountLabel = `R$ ${PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}`;
+    : `Destacar ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)} (30 dias)`;
+  const premiumAmountLabel = formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT);
   const freeCredits = isAdmin ? 0 : provider.freePremiumCredits;
 
   return (
     <PanelLayout>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">Meus anúncios</h2>
-        {subscriptionActive ? (
+        {subscriptionActive && hasAdSlot ? (
           <Button variant="whatsapp" size="sm" asChild>
             <Link href="/painel/anuncios/novo">Novo anúncio</Link>
           </Button>
+        ) : subscriptionActive && !hasAdSlot ? (
+          <p className="max-w-xs text-right text-xs text-muted-foreground">
+            Limite de {PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio na assinatura.
+            Filial: +{formatPriceBRL(PRICING.EXTRA_AD_AMOUNT)}/mês — fale conosco.
+          </p>
         ) : (
           <Button variant="outline" size="sm" asChild>
             <Link href="/painel/assinatura">Assinar para anunciar</Link>

@@ -11,6 +11,7 @@ import { submitProviderLeadAction } from "@/actions/provider-lead-actions";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
+import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
@@ -178,17 +179,12 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                   />
                 </div>
 
-                <div>
-                  <label htmlFor="whatsapp" className="mb-1 block text-sm font-medium">
-                    WhatsApp
-                  </label>
-                  <Input
-                    id="whatsapp"
-                    name="whatsapp"
-                    required
-                    placeholder="91999999999"
-                  />
-                </div>
+                <WhatsAppContactsFields
+                  primaryName="whatsapp"
+                  secondaryName="secondaryWhatsapp"
+                  primaryLabelName="whatsappLabel"
+                  secondaryLabelName="secondaryWhatsappLabel"
+                />
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>

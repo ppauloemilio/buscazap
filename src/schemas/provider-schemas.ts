@@ -32,6 +32,64 @@ const whatsappIdentity = z
     return normalized;
   });
 
+const optionalWhatsAppLabel = z.preprocess((value) => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}, z.string().min(2, "Título muito curto").max(40, "Título muito longo").optional());
+
+/** Segundo WhatsApp opcional; vazio = ausente. Normaliza quando informado. */
+const optionalSecondaryWhatsapp = z.preprocess((value) => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}, z.string().optional()).transform((value, ctx) => {
+  if (value === undefined) return undefined;
+  const normalized = normalizeWhatsAppIdentity(value);
+  if (!normalized) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "WhatsApp secundário inválido. Use DDD + número",
+    });
+    return z.NEVER;
+  }
+  return normalized;
+});
+
+function refineSecondaryWhatsappPair(
+  data: {
+    readonly primary: string;
+    readonly secondary?: string;
+    readonly secondaryLabel?: string;
+  },
+  ctx: z.RefinementCtx,
+  secondaryPath: string
+) {
+  if (data.secondary && !data.secondaryLabel) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Informe um título para o 2º WhatsApp (ex.: Pedidos, Unidade 2)",
+      path: ["secondaryWhatsappLabel"],
+    });
+  }
+
+  if (data.secondaryLabel && !data.secondary) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Informe o número do 2º WhatsApp",
+      path: [secondaryPath],
+    });
+  }
+
+  if (data.secondary && data.secondary === data.primary) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "O 2º WhatsApp deve ser diferente do principal",
+      path: [secondaryPath],
+    });
+  }
+}
+
 export const registerProviderSchema = z.object({
   name: z.string().trim().min(3, "Nome deve ter ao menos 3 caracteres"),
   email: optionalEmail,
@@ -176,7 +234,10 @@ export const createAdvertisementSchema = z
     serviceArea: z.nativeEnum(ServiceArea, {
       errorMap: () => ({ message: "Selecione a área de atendimento" }),
     }),
-    whatsappNumber: z.string().min(10, "WhatsApp inválido"),
+    whatsappNumber: whatsappIdentity,
+    whatsappLabel: optionalWhatsAppLabel,
+    secondaryWhatsappNumber: optionalSecondaryWhatsapp,
+    secondaryWhatsappLabel: optionalWhatsAppLabel,
     withPremium: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
@@ -195,6 +256,16 @@ export const createAdvertisementSchema = z
         path: ["city"],
       });
     }
+
+    refineSecondaryWhatsappPair(
+      {
+        primary: data.whatsappNumber,
+        secondary: data.secondaryWhatsappNumber,
+        secondaryLabel: data.secondaryWhatsappLabel,
+      },
+      ctx,
+      "secondaryWhatsappNumber"
+    );
   });
 
 export const adminCreateProviderSchema = z.object({
@@ -215,6 +286,9 @@ export const createProviderLeadSchema = z
   .object({
     name: z.string().trim().min(3, "Nome deve ter ao menos 3 caracteres"),
     whatsapp: whatsappIdentity,
+    whatsappLabel: optionalWhatsAppLabel,
+    secondaryWhatsapp: optionalSecondaryWhatsapp,
+    secondaryWhatsappLabel: optionalWhatsAppLabel,
     city: z.string().min(2, "Informe a cidade"),
     state: z.string().length(2, "UF deve ter 2 letras").default("PA"),
     neighborhood: optionalNeighborhood,
@@ -240,6 +314,16 @@ export const createProviderLeadSchema = z
         path: ["city"],
       });
     }
+
+    refineSecondaryWhatsappPair(
+      {
+        primary: data.whatsapp,
+        secondary: data.secondaryWhatsapp,
+        secondaryLabel: data.secondaryWhatsappLabel,
+      },
+      ctx,
+      "secondaryWhatsapp"
+    );
   });
 
 export const adminUpdateProviderLeadSchema = z.object({
@@ -310,7 +394,10 @@ export const adminCreateAdvertisementSchema = z
     serviceArea: z.nativeEnum(ServiceArea, {
       errorMap: () => ({ message: "Selecione a área de atendimento" }),
     }),
-    whatsappNumber: z.string().min(10, "WhatsApp inválido"),
+    whatsappNumber: whatsappIdentity,
+    whatsappLabel: optionalWhatsAppLabel,
+    secondaryWhatsappNumber: optionalSecondaryWhatsapp,
+    secondaryWhatsappLabel: optionalWhatsAppLabel,
   })
   .superRefine((data, ctx) => {
     if (data.category === CATEGORY_OTHER_VALUE && !data.customCategory) {
@@ -328,6 +415,16 @@ export const adminCreateAdvertisementSchema = z
         path: ["city"],
       });
     }
+
+    refineSecondaryWhatsappPair(
+      {
+        primary: data.whatsappNumber,
+        secondary: data.secondaryWhatsappNumber,
+        secondaryLabel: data.secondaryWhatsappLabel,
+      },
+      ctx,
+      "secondaryWhatsappNumber"
+    );
   });
 
 export const adminUpdateAdvertisementSchema = z
@@ -354,7 +451,10 @@ export const adminUpdateAdvertisementSchema = z
     serviceArea: z.nativeEnum(ServiceArea, {
       errorMap: () => ({ message: "Selecione a área de atendimento" }),
     }),
-    whatsappNumber: z.string().min(10, "WhatsApp inválido"),
+    whatsappNumber: whatsappIdentity,
+    whatsappLabel: optionalWhatsAppLabel,
+    secondaryWhatsappNumber: optionalSecondaryWhatsapp,
+    secondaryWhatsappLabel: optionalWhatsAppLabel,
   })
   .superRefine((data, ctx) => {
     if (data.category === CATEGORY_OTHER_VALUE && !data.customCategory) {
@@ -372,6 +472,16 @@ export const adminUpdateAdvertisementSchema = z
         path: ["city"],
       });
     }
+
+    refineSecondaryWhatsappPair(
+      {
+        primary: data.whatsappNumber,
+        secondary: data.secondaryWhatsappNumber,
+        secondaryLabel: data.secondaryWhatsappLabel,
+      },
+      ctx,
+      "secondaryWhatsappNumber"
+    );
   });
 
 export function resolveAdvertisementCategory(input: {

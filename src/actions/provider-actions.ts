@@ -326,6 +326,9 @@ export async function createAdvertisementAction(formData: FormData) {
     neighborhood: formData.get("neighborhood") || undefined,
     serviceArea: formData.get("serviceArea"),
     whatsappNumber: formData.get("whatsappNumber"),
+    whatsappLabel: formData.get("whatsappLabel") || undefined,
+    secondaryWhatsappNumber: formData.get("secondaryWhatsappNumber") || undefined,
+    secondaryWhatsappLabel: formData.get("secondaryWhatsappLabel") || undefined,
     withPremium: formData.get("withPremium") === "on",
   });
 
@@ -358,6 +361,9 @@ export async function createAdvertisementAction(formData: FormData) {
     neighborhood: parsed.data.neighborhood,
     serviceArea: parsed.data.serviceArea,
     whatsappNumber: parsed.data.whatsappNumber,
+    whatsappLabel: parsed.data.whatsappLabel,
+    secondaryWhatsappNumber: parsed.data.secondaryWhatsappNumber,
+    secondaryWhatsappLabel: parsed.data.secondaryWhatsappLabel,
     withPremium: parsed.data.withPremium,
   };
 
@@ -367,12 +373,20 @@ export async function createAdvertisementAction(formData: FormData) {
     await registerCategorySuggestion(categoryResolution.categoryName);
   }
 
-  const result = await createAdvertisement({
-    providerId: provider.id,
-    ...advertisementData,
-    category: categoryResolution.categoryName,
-    isCustomCategory: categoryResolution.isCustomCategory,
-  });
+  let result;
+  try {
+    result = await createAdvertisement({
+      providerId: provider.id,
+      ...advertisementData,
+      category: categoryResolution.categoryName,
+      isCustomCategory: categoryResolution.isCustomCategory,
+      bypassAdSlotLimit: isAdminProvider(provider),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível criar o anúncio";
+    redirect(`/painel/anuncios/novo?error=${encodeURIComponent(message)}`);
+  }
 
   try {
     await saveAdvertisementImages(result.advertisement.id, coverFile, []);

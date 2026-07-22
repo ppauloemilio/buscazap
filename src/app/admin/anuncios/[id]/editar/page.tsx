@@ -9,6 +9,7 @@ import { PILOT_CITIES } from "@/config/pricing";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
+import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
@@ -167,15 +168,17 @@ export default async function AdminEditAdvertisementPage({
           />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">WhatsApp do anúncio</label>
-          <Input
-            name="whatsappNumber"
-            defaultValue={toLocalWhatsAppDigits(advertisement.whatsappNumber)}
-            placeholder="91999999999"
-            required
-          />
-        </div>
+        <WhatsAppContactsFields
+          showPricingNotes={false}
+          defaultPrimaryNumber={toLocalWhatsAppDigits(advertisement.whatsappNumber)}
+          defaultPrimaryLabel={advertisement.whatsappLabel ?? ""}
+          defaultSecondaryNumber={
+            advertisement.secondaryWhatsappNumber
+              ? toLocalWhatsAppDigits(advertisement.secondaryWhatsappNumber)
+              : ""
+          }
+          defaultSecondaryLabel={advertisement.secondaryWhatsappLabel ?? ""}
+        />
 
         <div>
           <label className="mb-1 block text-sm font-medium">Foto de capa</label>

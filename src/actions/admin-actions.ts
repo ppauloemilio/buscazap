@@ -511,6 +511,9 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
     neighborhood: formData.get("neighborhood") || undefined,
     serviceArea: formData.get("serviceArea"),
     whatsappNumber: formData.get("whatsappNumber"),
+    whatsappLabel: formData.get("whatsappLabel") || undefined,
+    secondaryWhatsappNumber: formData.get("secondaryWhatsappNumber") || undefined,
+    secondaryWhatsappLabel: formData.get("secondaryWhatsappLabel") || undefined,
   });
 
   if (!parsed.success) {
@@ -547,6 +550,9 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
       neighborhood: parsed.data.neighborhood,
       serviceArea: parsed.data.serviceArea,
       whatsappNumber: parsed.data.whatsappNumber,
+      whatsappLabel: parsed.data.whatsappLabel,
+      secondaryWhatsappNumber: parsed.data.secondaryWhatsappNumber,
+      secondaryWhatsappLabel: parsed.data.secondaryWhatsappLabel,
     });
     advertisementId = advertisement.id;
     providerOwnerId = advertisement.providerId ?? parsed.data.providerId;
@@ -604,6 +610,9 @@ export async function adminUpdateAdvertisementAction(formData: FormData) {
     neighborhood: formData.get("neighborhood") || undefined,
     serviceArea: formData.get("serviceArea"),
     whatsappNumber: formData.get("whatsappNumber"),
+    whatsappLabel: formData.get("whatsappLabel") || undefined,
+    secondaryWhatsappNumber: formData.get("secondaryWhatsappNumber") || undefined,
+    secondaryWhatsappLabel: formData.get("secondaryWhatsappLabel") || undefined,
   });
 
   if (!parsed.success) {
@@ -636,6 +645,9 @@ export async function adminUpdateAdvertisementAction(formData: FormData) {
       neighborhood: parsed.data.neighborhood,
       serviceArea: parsed.data.serviceArea,
       whatsappNumber: parsed.data.whatsappNumber,
+      whatsappLabel: parsed.data.whatsappLabel,
+      secondaryWhatsappNumber: parsed.data.secondaryWhatsappNumber,
+      secondaryWhatsappLabel: parsed.data.secondaryWhatsappLabel,
     });
 
     if (hasCover) {

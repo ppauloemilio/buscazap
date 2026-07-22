@@ -3,11 +3,33 @@ import type { SearchFilters } from "@/domain/entities";
 import { AdvertisementStatus, ProviderStatus } from "@/domain/enums";
 import { getCategoryBySlug } from "@/application/services/catalog-service";
 import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { mapAdvertisementToEntity } from "@/infrastructure/mappers/advertisement-mapper";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { markDataFetchDynamic } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { isPremiumActive } from "@/lib/provider-session";
+
+export function getAdSlotLimitMessage(): string {
+  return (
+    `Sua assinatura inclui ${PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio. ` +
+    `Filial ou outro endereço = outro anúncio (+${formatPriceBRL(PRICING.EXTRA_AD_AMOUNT)}/mês). ` +
+    `Fale conosco para liberar.`
+  );
+}
+
+export async function countProviderAdvertisements(
+  providerId: string
+): Promise<number> {
+  return prisma.advertisement.count({ where: { providerId } });
+}
+
+export async function providerHasAdSlotAvailable(
+  providerId: string
+): Promise<boolean> {
+  const count = await countProviderAdvertisements(providerId);
+  return count < PRICING.ADS_INCLUDED_PER_SUBSCRIPTION;
+}
 
 function normalizeSearchText(value: string): string {
   return value
@@ -246,8 +268,20 @@ export async function createAdvertisement(input: {
   neighborhood?: string;
   serviceArea?: ServiceArea;
   whatsappNumber: string;
+  whatsappLabel?: string;
+  secondaryWhatsappNumber?: string;
+  secondaryWhatsappLabel?: string;
   withPremium?: boolean;
+  /** Admin / publicação de lead: permite anúncio além do slot incluso. */
+  bypassAdSlotLimit?: boolean;
 }) {
+  if (!input.bypassAdSlotLimit) {
+    const hasSlot = await providerHasAdSlotAvailable(input.providerId);
+    if (!hasSlot) {
+      throw new Error(getAdSlotLimitMessage());
+    }
+  }
+
   const advertisement = await prisma.advertisement.create({
     data: {
       providerId: input.providerId,
@@ -261,6 +295,9 @@ export async function createAdvertisement(input: {
       neighborhood: input.neighborhood || null,
       serviceArea: input.serviceArea,
       whatsappNumber: input.whatsappNumber,
+      whatsappLabel: input.whatsappLabel || null,
+      secondaryWhatsappNumber: input.secondaryWhatsappNumber || null,
+      secondaryWhatsappLabel: input.secondaryWhatsappLabel || null,
       status: "APPROVED",
     },
   });

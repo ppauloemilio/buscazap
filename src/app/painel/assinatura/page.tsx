@@ -7,7 +7,7 @@ import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PRICING } from "@/config/pricing";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 
 interface SubscriptionPageProps {
   readonly searchParams: Promise<{
@@ -79,8 +79,8 @@ export default async function SubscriptionPage({
               <div>
                 <p className="text-sm font-medium">Plano Anunciante</p>
                 <p className="text-xs text-muted-foreground">
-                  R$ {PRICING.SUBSCRIPTION_AMOUNT.toFixed(2).replace(".", ",")}/mês
-                  via PIX
+                  {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês via PIX ·{" "}
+                  {PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio incluso
                 </p>
               </div>
               <Badge variant={status.active ? "whatsapp" : "secondary"}>
@@ -98,12 +98,17 @@ export default async function SubscriptionPage({
             <ul className="space-y-1.5 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Megaphone className="h-3.5 w-3.5 text-whatsapp" />
-                Publique anúncios na plataforma
+                {PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio incluso; filial extra +
+                {formatPriceBRL(PRICING.EXTRA_AD_AMOUNT)}/mês
+              </li>
+              <li className="flex items-center gap-2">
+                <Megaphone className="h-3.5 w-3.5 text-whatsapp" />
+                2º WhatsApp no mesmo anúncio +
+                {formatPriceBRL(PRICING.EXTRA_WHATSAPP_AMOUNT)}/mês
               </li>
               <li className="flex items-center gap-2">
                 <Crown className="h-3.5 w-3.5 text-whatsapp" />
-                Destaque: R${" "}
-                {PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")}/
+                Destaque: {formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/
                 {PRICING.PREMIUM_BOOST_DAYS}d pago ou {PRICING.REFERRAL_PREMIUM_DAYS}d
                 indicação
               </li>

@@ -67,6 +67,9 @@ model Advertisement {
   neighborhood     String?
   serviceArea      String         @default("CITY_WIDE")
   whatsappNumber   String
+  whatsappLabel             String?
+  secondaryWhatsappNumber   String?
+  secondaryWhatsappLabel    String?
   rating           Float          @default(0)
   reviewCount      Int            @default(0)
   premiumExpiresAt DateTime?
@@ -229,20 +232,23 @@ model HomepageSetting {
 }
 
 model ProviderLead {
-  id           String   @id @default(cuid())
-  name         String
-  whatsapp     String
-  city         String
-  state        String   @default("PA")
-  neighborhood String?
-  serviceArea  String
-  adTitle      String
-  description  String?
-  photoUrl     String?
-  status       String   @default("NEW")
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                     String   @id @default(cuid())
+  name                   String
+  whatsapp               String
+  whatsappLabel          String?
+  secondaryWhatsapp      String?
+  secondaryWhatsappLabel String?
+  city                   String
+  state                  String   @default("PA")
+  neighborhood           String?
+  serviceArea            String
+  adTitle                String
+  description            String?
+  photoUrl               String?
+  status                 String   @default("NEW")
+  notes                  String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   @@index([status, createdAt])
   @@index([whatsapp, createdAt])

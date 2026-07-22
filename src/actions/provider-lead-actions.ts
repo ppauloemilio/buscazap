@@ -23,6 +23,9 @@ export async function submitProviderLeadAction(formData: FormData) {
   const parsed = createProviderLeadSchema.safeParse({
     name: formData.get("name"),
     whatsapp: formData.get("whatsapp"),
+    whatsappLabel: formData.get("whatsappLabel") || undefined,
+    secondaryWhatsapp: formData.get("secondaryWhatsapp") || undefined,
+    secondaryWhatsappLabel: formData.get("secondaryWhatsappLabel") || undefined,
     city: formData.get("city"),
     state: formData.get("state") || "PA",
     neighborhood: formData.get("neighborhood"),

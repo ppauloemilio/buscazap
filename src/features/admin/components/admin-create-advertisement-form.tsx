@@ -7,6 +7,7 @@ import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES } from "@/config/pricing";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
+import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,13 +142,11 @@ export function AdminCreateAdvertisementForm({
                 showHint={false}
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium">WhatsApp do anúncio</label>
-              <Input
-                name="whatsappNumber"
-                defaultValue={toLocalWhatsAppDigits(defaultWhatsapp)}
-                placeholder="91999999999"
-                required
+            <div className="sm:col-span-2">
+              <WhatsAppContactsFields
+                compact
+                showPricingNotes={false}
+                defaultPrimaryNumber={toLocalWhatsAppDigits(defaultWhatsapp)}
               />
             </div>
             <div className="sm:col-span-2">

@@ -72,6 +72,9 @@ export async function createProviderLead(
     data: {
       name: input.name,
       whatsapp: input.whatsapp,
+      whatsappLabel: input.whatsappLabel ?? null,
+      secondaryWhatsapp: input.secondaryWhatsapp ?? null,
+      secondaryWhatsappLabel: input.secondaryWhatsappLabel ?? null,
       city: input.city,
       state: input.state,
       neighborhood: input.neighborhood ?? null,
@@ -246,7 +249,7 @@ export async function publishProviderLeadAsAdmin(input: {
   const { advertisement } = await createAdvertisement({
     providerId: provider.id,
     title: lead.adTitle,
-    description: lead.description.trim(),
+    description: (lead.description ?? "").trim() || lead.adTitle,
     type: input.type,
     category: categoryResolution.categoryName,
     isCustomCategory: categoryResolution.isCustomCategory,
@@ -255,6 +258,10 @@ export async function publishProviderLeadAsAdmin(input: {
     neighborhood: lead.neighborhood ?? undefined,
     serviceArea: parseServiceArea(lead.serviceArea),
     whatsappNumber: whatsapp,
+    whatsappLabel: lead.whatsappLabel ?? undefined,
+    secondaryWhatsappNumber: lead.secondaryWhatsapp ?? undefined,
+    secondaryWhatsappLabel: lead.secondaryWhatsappLabel ?? undefined,
+    bypassAdSlotLimit: true,
   });
 
   if (lead.photoUrl) {

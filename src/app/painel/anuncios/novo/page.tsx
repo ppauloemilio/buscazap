@@ -6,16 +6,20 @@ import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { AdvertisementImageFields } from "@/features/panel/components/advertisement-image-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
+import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
-import { getCurrentProvider, canProviderPublish } from "@/lib/provider-session";
+import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import {
   getCategoriesWithCounts,
   listActiveStates,
 } from "@/application/services/catalog-service";
+import {
+  providerHasAdSlotAvailable,
+} from "@/application/services/advertisement-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PILOT_CITIES } from "@/config/pricing";
+import { formatPriceBRL, PILOT_CITIES, PRICING } from "@/config/pricing";
 import { ServiceArea } from "@/domain/enums";
 
 interface NewAdvertisementPageProps {
@@ -30,6 +34,16 @@ export default async function NewAdvertisementPage({
 
   if (!canProviderPublish(provider)) {
     redirect("/painel/assinatura");
+  }
+
+  const hasAdSlot =
+    isAdminProvider(provider) || (await providerHasAdSlotAvailable(provider.id));
+  if (!hasAdSlot) {
+    redirect(
+      `/painel/anuncios?error=${encodeURIComponent(
+        `Sua assinatura inclui ${PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio. Filial = outro anúncio (+${formatPriceBRL(PRICING.EXTRA_AD_AMOUNT)}/mês). Fale conosco para liberar.`
+      )}`
+    );
   }
 
   const params = await searchParams;
@@ -154,15 +168,8 @@ export default async function NewAdvertisementPage({
         </div>
 
         <div>
-          <label htmlFor="whatsappNumber" className="mb-1 block text-sm font-medium">
-            WhatsApp
-          </label>
-          <Input
-            id="whatsappNumber"
-            name="whatsappNumber"
-            defaultValue={toLocalWhatsAppDigits(provider.whatsapp)}
-            placeholder="91999999999"
-            required
+          <WhatsAppContactsFields
+            defaultPrimaryNumber={toLocalWhatsAppDigits(provider.whatsapp)}
           />
         </div>
 

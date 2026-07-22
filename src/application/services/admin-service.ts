@@ -500,6 +500,9 @@ export async function createAdvertisementAsAdmin(input: {
   readonly neighborhood?: string;
   readonly serviceArea?: ServiceArea;
   readonly whatsappNumber?: string;
+  readonly whatsappLabel?: string;
+  readonly secondaryWhatsappNumber?: string;
+  readonly secondaryWhatsappLabel?: string;
 }) {
   const provider = await prisma.provider.findUnique({
     where: { id: input.providerId },
@@ -558,6 +561,10 @@ export async function createAdvertisementAsAdmin(input: {
     neighborhood: input.neighborhood || undefined,
     serviceArea: input.serviceArea,
     whatsappNumber,
+    whatsappLabel: input.whatsappLabel,
+    secondaryWhatsappNumber: input.secondaryWhatsappNumber,
+    secondaryWhatsappLabel: input.secondaryWhatsappLabel,
+    bypassAdSlotLimit: true,
   });
 
   await logAdminAction({
@@ -611,6 +618,9 @@ export async function findAdvertisementForAdminEdit(advertisementId: string) {
     neighborhood: advertisement.neighborhood,
     serviceArea: advertisement.serviceArea,
     whatsappNumber: advertisement.whatsappNumber,
+    whatsappLabel: advertisement.whatsappLabel,
+    secondaryWhatsappNumber: advertisement.secondaryWhatsappNumber,
+    secondaryWhatsappLabel: advertisement.secondaryWhatsappLabel,
     status: advertisement.status,
     provider: advertisement.provider,
     coverImageUrl: cover ? resolveAdvertisementImageUrl(cover.url) : null,
@@ -630,6 +640,9 @@ export async function updateAdvertisementAsAdmin(input: {
   readonly neighborhood?: string;
   readonly serviceArea?: ServiceArea;
   readonly whatsappNumber: string;
+  readonly whatsappLabel?: string;
+  readonly secondaryWhatsappNumber?: string;
+  readonly secondaryWhatsappLabel?: string;
 }) {
   const existing = await prisma.advertisement.findUnique({
     where: { id: input.advertisementId },
@@ -665,6 +678,9 @@ export async function updateAdvertisementAsAdmin(input: {
       neighborhood: input.neighborhood || null,
       serviceArea: input.serviceArea,
       whatsappNumber,
+      whatsappLabel: input.whatsappLabel || null,
+      secondaryWhatsappNumber: input.secondaryWhatsappNumber || null,
+      secondaryWhatsappLabel: input.secondaryWhatsappLabel || null,
     },
   });
 

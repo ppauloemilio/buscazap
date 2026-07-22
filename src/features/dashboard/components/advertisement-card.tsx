@@ -21,10 +21,19 @@ interface AdvertisementCardProps {
 }
 
 export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
+  const primaryLabel = advertisement.whatsappLabel?.trim() || "WhatsApp";
   const whatsappLink = buildWhatsAppLink(
     advertisement.whatsappNumber,
     `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZapp e gostaria de mais informações.`
   );
+  const secondaryLink = advertisement.secondaryWhatsappNumber
+    ? buildWhatsAppLink(
+        advertisement.secondaryWhatsappNumber,
+        `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZapp e gostaria de mais informações.`
+      )
+    : null;
+  const secondaryLabel =
+    advertisement.secondaryWhatsappLabel?.trim() || "WhatsApp 2";
 
   const locationLabel = formatAdvertisementLocation({
     city: advertisement.location.city,
@@ -108,19 +117,39 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
           <Button
             variant="whatsapp"
             size="sm"
-            className="h-8 flex-1 px-2 text-xs font-semibold"
+            className="h-8 min-w-0 flex-1 px-2 text-xs font-semibold"
             asChild
           >
             <a
               href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`Contatar ${advertisement.title} via WhatsApp`}
+              aria-label={`Contatar ${advertisement.title} via WhatsApp (${primaryLabel})`}
             >
-              <MessageCircle className="h-3.5 w-3.5" />
-              WhatsApp
+              <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                {secondaryLink ? primaryLabel : "WhatsApp"}
+              </span>
             </a>
           </Button>
+          {secondaryLink && (
+            <Button
+              variant="whatsapp"
+              size="sm"
+              className="h-8 min-w-0 flex-1 px-2 text-xs font-semibold"
+              asChild
+            >
+              <a
+                href={secondaryLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Contatar ${advertisement.title} via WhatsApp (${secondaryLabel})`}
+              >
+                <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{secondaryLabel}</span>
+              </a>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

@@ -182,7 +182,16 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                       )}
                       <p className="text-sm text-muted-foreground">
                         WhatsApp: {formatWhatsAppDisplay(lead.whatsapp)}
+                        {lead.whatsappLabel ? ` (${lead.whatsappLabel})` : ""}
                       </p>
+                      {lead.secondaryWhatsapp && (
+                        <p className="text-sm text-muted-foreground">
+                          2º WhatsApp: {formatWhatsAppDisplay(lead.secondaryWhatsapp)}
+                          {lead.secondaryWhatsappLabel
+                            ? ` (${lead.secondaryWhatsappLabel})`
+                            : ""}
+                        </p>
+                      )}
                       <p className="text-sm text-muted-foreground">
                         {lead.neighborhood
                           ? `${lead.neighborhood}, ${lead.city}/${lead.state}`

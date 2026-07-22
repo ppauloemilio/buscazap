@@ -53,10 +53,24 @@ export default async function AdvertisementPage({ params }: AdvertisementPagePro
 
   const reviews = await listAdvertisementReviews(advertisement.id);
 
-  const whatsappLink = buildWhatsAppLink(
-    advertisement.whatsappNumber,
-    `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZapp e gostaria de mais informações.`
-  );
+  const message = `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZapp e gostaria de mais informações.`;
+  const primaryLabel = advertisement.whatsappLabel?.trim() || "WhatsApp";
+  const whatsappLink = buildWhatsAppLink(advertisement.whatsappNumber, message);
+  const secondaryLink = advertisement.secondaryWhatsappNumber
+    ? buildWhatsAppLink(advertisement.secondaryWhatsappNumber, message)
+    : null;
+  const secondaryLabel =
+    advertisement.secondaryWhatsappLabel?.trim() || "WhatsApp 2";
+
+  const stickyContacts = [
+    {
+      href: whatsappLink,
+      label: secondaryLink ? primaryLabel : "Chamar no WhatsApp",
+    },
+    ...(secondaryLink
+      ? [{ href: secondaryLink, label: secondaryLabel }]
+      : []),
+  ];
 
   const locationLabel = formatAdvertisementLocation({
     city: advertisement.location.city,
@@ -169,16 +183,32 @@ export default async function AdvertisementPage({ params }: AdvertisementPagePro
             </div>
           )}
 
-          <Button variant="whatsapp" size="lg" className="hidden w-full sm:w-auto md:inline-flex" asChild>
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <MessageCircle className="h-5 w-5" />
-              Entrar em contato via WhatsApp
-            </a>
-          </Button>
+          <div className="hidden flex-wrap gap-2 md:flex">
+            <Button variant="whatsapp" size="lg" className="w-full sm:w-auto" asChild>
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MessageCircle className="h-5 w-5" />
+                {secondaryLink
+                  ? primaryLabel
+                  : "Entrar em contato via WhatsApp"}
+              </a>
+            </Button>
+            {secondaryLink && (
+              <Button variant="whatsapp" size="lg" className="w-full sm:w-auto" asChild>
+                <a
+                  href={secondaryLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  {secondaryLabel}
+                </a>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -223,10 +253,7 @@ export default async function AdvertisementPage({ params }: AdvertisementPagePro
         </Card>
       </div>
 
-      <StickyWhatsAppCta
-        href={whatsappLink}
-        label="Chamar no WhatsApp"
-      />
+      <StickyWhatsAppCta contacts={stickyContacts} />
     </section>
   );
 }
