@@ -2,6 +2,7 @@ import {
   AdvertisementStatus,
   AdvertisementType,
   PaymentStatus,
+  ProviderLeadStatus,
   ProviderStatus,
   ServiceArea,
   UserRole,
@@ -24,6 +25,19 @@ import {
 import { normalizeWhatsAppIdentity } from "@/lib/whatsapp";
 
 const PUBLIC_AD_STATUSES = [AdvertisementStatus.APPROVED] as const;
+const LEAD_AUTO_BLOCK_NOTE = "[auto:conta-bloqueada]";
+
+function leadWhatsappFilter(whatsapp: string) {
+  const normalized = normalizeWhatsAppIdentity(whatsapp) ?? whatsapp;
+  return {
+    OR: [
+      { whatsapp: normalized },
+      { whatsapp },
+      { secondaryWhatsapp: normalized },
+      { secondaryWhatsapp: whatsapp },
+    ],
+  };
+}
 
 export async function logAdminAction(input: {
   readonly adminId: string;
@@ -260,9 +274,84 @@ export async function updateProviderStatusAsAdmin(input: {
     throw new Error("Você não pode alterar sua própria conta");
   }
 
-  const updated = await prisma.provider.update({
-    where: { id: input.providerId },
-    data: { status: input.status },
+  const updated = await prisma.$transaction(async (tx) => {
+    const providerUpdated = await tx.provider.update({
+      where: { id: input.providerId },
+      data: { status: input.status },
+    });
+
+    if (input.status === ProviderStatus.BLOCKED) {
+      await tx.advertisement.updateMany({
+        where: {
+          providerId: input.providerId,
+          status: { not: AdvertisementStatus.BLOCKED },
+        },
+        data: { status: AdvertisementStatus.BLOCKED },
+      });
+
+      const openLeads = await tx.providerLead.findMany({
+        where: {
+          ...leadWhatsappFilter(provider.whatsapp),
+          status: {
+            in: [ProviderLeadStatus.NEW, ProviderLeadStatus.CONTACTED],
+          },
+        },
+        select: { id: true, notes: true },
+      });
+
+      for (const lead of openLeads) {
+        const notes = lead.notes?.includes(LEAD_AUTO_BLOCK_NOTE)
+          ? lead.notes
+          : lead.notes
+            ? `${lead.notes}\n${LEAD_AUTO_BLOCK_NOTE}`
+            : LEAD_AUTO_BLOCK_NOTE;
+
+        await tx.providerLead.update({
+          where: { id: lead.id },
+          data: {
+            status: ProviderLeadStatus.DISMISSED,
+            notes,
+          },
+        });
+      }
+    }
+
+    if (input.status === ProviderStatus.ACTIVE) {
+      await tx.advertisement.updateMany({
+        where: {
+          providerId: input.providerId,
+          status: AdvertisementStatus.BLOCKED,
+        },
+        data: { status: AdvertisementStatus.APPROVED },
+      });
+
+      const autoBlockedLeads = await tx.providerLead.findMany({
+        where: {
+          ...leadWhatsappFilter(provider.whatsapp),
+          status: ProviderLeadStatus.DISMISSED,
+          notes: { contains: LEAD_AUTO_BLOCK_NOTE },
+        },
+        select: { id: true, notes: true },
+      });
+
+      for (const lead of autoBlockedLeads) {
+        const notes = (lead.notes ?? "")
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line && line !== LEAD_AUTO_BLOCK_NOTE)
+          .join("\n");
+
+        await tx.providerLead.update({
+          where: { id: lead.id },
+          data: {
+            status: ProviderLeadStatus.CONTACTED,
+            notes: notes || null,
+          },
+        });
+      }
+    }
+
+    return providerUpdated;
   });
 
   await logAdminAction({
@@ -274,6 +363,7 @@ export async function updateProviderStatusAsAdmin(input: {
       status: input.status,
       email: updated.email,
       name: updated.name,
+      whatsapp: updated.whatsapp,
     },
   });
 
@@ -726,8 +816,17 @@ export async function deleteProviderAsAdmin(input: {
     throw new Error("Você não pode excluir sua própria conta");
   }
 
-  await prisma.provider.delete({
-    where: { id: input.providerId },
+  const deletedLeads = await prisma.$transaction(async (tx) => {
+    const leadsResult = await tx.providerLead.deleteMany({
+      where: leadWhatsappFilter(provider.whatsapp),
+    });
+
+    // Anúncios, pagamentos etc. caem por Cascade no Provider.
+    await tx.provider.delete({
+      where: { id: input.providerId },
+    });
+
+    return leadsResult.count;
   });
 
   await logAdminAction({
@@ -738,8 +837,10 @@ export async function deleteProviderAsAdmin(input: {
     metadata: {
       email: provider.email,
       name: provider.name,
+      whatsapp: provider.whatsapp,
       advertisementsCount: provider._count.advertisements,
       paymentsCount: provider._count.payments,
+      leadsDeleted: deletedLeads,
     },
   });
 }

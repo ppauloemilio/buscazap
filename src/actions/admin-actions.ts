@@ -202,6 +202,8 @@ export async function moderateProviderAction(formData: FormData) {
   }
 
   revalidatePath("/admin/usuarios");
+  revalidatePath("/admin/anuncios");
+  revalidatePath("/admin/leads");
   revalidatePath("/admin");
   revalidatePath("/buscar");
   revalidatePath("/");
@@ -232,6 +234,7 @@ export async function adminDeleteProviderAction(formData: FormData) {
 
   revalidatePath("/admin/usuarios");
   revalidatePath("/admin/anuncios");
+  revalidatePath("/admin/leads");
   revalidatePath("/admin");
   revalidatePath("/buscar");
   revalidatePath("/");
