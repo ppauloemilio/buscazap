@@ -339,6 +339,13 @@ export const adminUpdateProviderLeadSchema = z.object({
   ),
 });
 
+/** Edição dos dados do lead antes de publicar (reusa regras do pré-cadastro). */
+export const adminEditProviderLeadSchema = createProviderLeadSchema.and(
+  z.object({
+    leadId: z.string().min(1, "Lead inválido"),
+  })
+);
+
 export const adminPublishProviderLeadSchema = z
   .object({
     leadId: z.string().min(1, "Lead inválido"),

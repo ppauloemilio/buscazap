@@ -127,6 +127,45 @@ export async function updateProviderLeadStatus(input: {
   });
 }
 
+export async function updateProviderLeadContent(
+  input: CreateProviderLeadInput & { readonly leadId: string }
+) {
+  const existing = await prisma.providerLead.findUnique({
+    where: { id: input.leadId },
+    select: { id: true, status: true },
+  });
+
+  if (!existing) {
+    throw new Error("Lead não encontrado");
+  }
+
+  if (
+    existing.status !== ProviderLeadStatus.NEW &&
+    existing.status !== ProviderLeadStatus.CONTACTED
+  ) {
+    throw new Error(
+      "Só é possível editar leads novos ou contatados (antes de publicar)"
+    );
+  }
+
+  return prisma.providerLead.update({
+    where: { id: input.leadId },
+    data: {
+      name: input.name,
+      whatsapp: input.whatsapp,
+      whatsappLabel: input.whatsappLabel ?? null,
+      secondaryWhatsapp: input.secondaryWhatsapp ?? null,
+      secondaryWhatsappLabel: input.secondaryWhatsappLabel ?? null,
+      city: input.city,
+      state: input.state,
+      neighborhood: input.neighborhood ?? null,
+      serviceArea: input.serviceArea,
+      adTitle: input.adTitle,
+      description: input.description,
+    },
+  });
+}
+
 export function resolveLeadPhotoUrl(photoUrl: string | null | undefined) {
   if (!photoUrl) return null;
   return resolveAdvertisementImageUrl(photoUrl);

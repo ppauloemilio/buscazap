@@ -16,6 +16,7 @@ import {
 } from "@/config/provider-leads";
 import { getServiceAreaLabel } from "@/config/service-area";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
+import { AdminEditLeadForm } from "@/features/admin/components/admin-edit-lead-form";
 import { AdminPublishLeadForm } from "@/features/admin/components/admin-publish-lead-form";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { formatWhatsAppDisplay } from "@/lib/whatsapp";
@@ -65,8 +66,9 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
             <Link href="/parceiro" className="underline" target="_blank">
               /parceiro
             </Link>{" "}
-            (também /parceiros). Antes de publicar, escolha o{" "}
-            <strong>tipo</strong> e a <strong>categoria</strong> do anúncio.
+            (também /parceiros). Você pode <strong>editar</strong> os dados do lead
+            e, antes de publicar, escolher o <strong>tipo</strong> e a{" "}
+            <strong>categoria</strong> do anúncio.
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -218,6 +220,7 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                         WhatsApp
                       </a>
                     </Button>
+                    {canPublish && <AdminEditLeadForm lead={lead} />}
                   </div>
 
                   {canPublish && (

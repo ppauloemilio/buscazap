@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import {
   createProviderLead,
   publishProviderLeadAsAdmin,
+  updateProviderLeadContent,
   updateProviderLeadStatus,
 } from "@/application/services/provider-lead-service";
 import { getCurrentAdmin } from "@/lib/admin-session";
@@ -13,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { buildAbsoluteUrl } from "@/lib/site-url";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import {
+  adminEditProviderLeadSchema,
   adminPublishProviderLeadSchema,
   adminUpdateProviderLeadSchema,
   createProviderLeadSchema,
@@ -104,6 +106,45 @@ export async function adminUpdateProviderLeadAction(formData: FormData) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Não foi possível atualizar o lead";
+    redirect(`/admin/leads?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/leads");
+  revalidatePath("/admin");
+  redirect("/admin/leads?saved=1");
+}
+
+export async function adminEditProviderLeadAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const parsed = adminEditProviderLeadSchema.safeParse({
+    leadId: formData.get("leadId"),
+    name: formData.get("name"),
+    whatsapp: formData.get("whatsapp"),
+    whatsappLabel: formData.get("whatsappLabel") || undefined,
+    secondaryWhatsapp: formData.get("secondaryWhatsapp") || undefined,
+    secondaryWhatsappLabel: formData.get("secondaryWhatsappLabel") || undefined,
+    city: formData.get("city"),
+    state: formData.get("state") || "PA",
+    neighborhood: formData.get("neighborhood"),
+    serviceArea: formData.get("serviceArea"),
+    adTitle: formData.get("adTitle"),
+    description: formData.get("description"),
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `/admin/leads?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
+    );
+  }
+
+  try {
+    const { leadId, ...content } = parsed.data;
+    await updateProviderLeadContent({ leadId, ...content });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível editar o lead";
     redirect(`/admin/leads?error=${encodeURIComponent(message)}`);
   }
 
