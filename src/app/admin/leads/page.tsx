@@ -16,6 +16,7 @@ import {
 } from "@/config/provider-leads";
 import { getServiceAreaLabel } from "@/config/service-area";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
+import { AdminDeleteLeadForm } from "@/features/admin/components/admin-delete-lead-form";
 import { AdminEditLeadForm } from "@/features/admin/components/admin-edit-lead-form";
 import { AdminPublishLeadForm } from "@/features/admin/components/admin-publish-lead-form";
 import { getCurrentAdmin } from "@/lib/admin-session";
@@ -31,6 +32,7 @@ interface AdminLeadsPageProps {
   readonly searchParams: Promise<{
     readonly error?: string;
     readonly saved?: string;
+    readonly deleted?: string;
     readonly published?: string;
     readonly adId?: string;
     readonly notify?: string;
@@ -100,6 +102,11 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
       {params.saved === "1" && (
         <p className="mb-2 rounded-lg bg-whatsapp/10 p-2.5 text-sm text-whatsapp">
           Lead atualizado.
+        </p>
+      )}
+      {params.deleted === "1" && (
+        <p className="mb-2 rounded-lg bg-whatsapp/10 p-2.5 text-sm text-whatsapp">
+          Lead excluído.
         </p>
       )}
       {params.published === "1" && (
@@ -221,6 +228,10 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                       </a>
                     </Button>
                     {canPublish && <AdminEditLeadForm lead={lead} />}
+                    <AdminDeleteLeadForm
+                      leadId={lead.id}
+                      leadTitle={lead.adTitle}
+                    />
                   </div>
 
                   {canPublish && (

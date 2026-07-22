@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   createProviderLead,
+  deleteProviderLeadAsAdmin,
   publishProviderLeadAsAdmin,
   updateProviderLeadContent,
   updateProviderLeadStatus,
@@ -14,6 +15,7 @@ import { prisma } from "@/lib/prisma";
 import { buildAbsoluteUrl } from "@/lib/site-url";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import {
+  adminDeleteProviderLeadSchema,
   adminEditProviderLeadSchema,
   adminPublishProviderLeadSchema,
   adminUpdateProviderLeadSchema,
@@ -112,6 +114,36 @@ export async function adminUpdateProviderLeadAction(formData: FormData) {
   revalidatePath("/admin/leads");
   revalidatePath("/admin");
   redirect("/admin/leads?saved=1");
+}
+
+export async function adminDeleteProviderLeadAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const parsed = adminDeleteProviderLeadSchema.safeParse({
+    leadId: formData.get("leadId"),
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `/admin/leads?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Lead inválido")}`
+    );
+  }
+
+  try {
+    await deleteProviderLeadAsAdmin({
+      adminId: admin.id,
+      leadId: parsed.data.leadId,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível excluir o lead";
+    redirect(`/admin/leads?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/leads");
+  revalidatePath("/admin");
+  redirect("/admin/leads?deleted=1");
 }
 
 export async function adminEditProviderLeadAction(formData: FormData) {

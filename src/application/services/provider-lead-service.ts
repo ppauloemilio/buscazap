@@ -127,6 +127,43 @@ export async function updateProviderLeadStatus(input: {
   });
 }
 
+export async function deleteProviderLeadAsAdmin(input: {
+  readonly adminId: string;
+  readonly leadId: string;
+}) {
+  const lead = await prisma.providerLead.findUnique({
+    where: { id: input.leadId },
+    select: {
+      id: true,
+      name: true,
+      whatsapp: true,
+      adTitle: true,
+      status: true,
+    },
+  });
+
+  if (!lead) {
+    throw new Error("Lead não encontrado");
+  }
+
+  await prisma.providerLead.delete({
+    where: { id: input.leadId },
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "DELETE_PROVIDER_LEAD",
+    entityType: "ProviderLead",
+    entityId: lead.id,
+    metadata: {
+      name: lead.name,
+      whatsapp: toLocalWhatsAppDigits(lead.whatsapp),
+      adTitle: lead.adTitle,
+      status: lead.status,
+    },
+  });
+}
+
 export async function updateProviderLeadContent(
   input: CreateProviderLeadInput & { readonly leadId: string }
 ) {
