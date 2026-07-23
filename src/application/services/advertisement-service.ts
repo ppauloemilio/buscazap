@@ -38,14 +38,6 @@ function normalizeSearchText(value: string): string {
     .replace(/\p{M}/gu, "");
 }
 
-async function matchesCategoryName(category: string, filter: string): Promise<boolean> {
-  const bySlug = await getCategoryBySlug(filter);
-  if (bySlug) {
-    return category === bySlug.name;
-  }
-  return normalizeSearchText(category) === normalizeSearchText(filter);
-}
-
 export async function findPublicAdvertisements(
   filters: SearchFilters & {
     readonly premium?: boolean;
@@ -100,14 +92,18 @@ export async function findPublicAdvertisements(
   }
 
   if (filters.category) {
-    const categoryFilter = filters.category;
-    const matching = await Promise.all(
-      results.map(async (ad) => ({
-        ad,
-        match: await matchesCategoryName(ad.category, categoryFilter),
-      }))
-    );
-    results = matching.filter((item) => item.match).map((item) => item.ad);
+    const categoryFilter = filters.category.trim();
+    const catalogCategory = await getCategoryBySlug(categoryFilter);
+    const expectedName = catalogCategory?.name;
+
+    results = results.filter((ad) => {
+      if (expectedName) {
+        return ad.category === expectedName;
+      }
+      return (
+        normalizeSearchText(ad.category) === normalizeSearchText(categoryFilter)
+      );
+    });
   }
 
   if (filters.premium) {
