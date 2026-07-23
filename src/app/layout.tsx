@@ -29,11 +29,11 @@ export const metadata: Metadata = {
       "Busque profissionais, empresas, produtos e serviços na sua cidade.",
     type: "website",
     locale: "pt_BR",
-    images: [{ url: "/buscazapp-logo.png", alt: "BuscaZapp" }],
+    images: [{ url: "/buscazapp-mark.png", alt: "BuscaZapp" }],
   },
   icons: {
-    icon: "/buscazapp-logo.png",
-    apple: "/buscazapp-logo.png",
+    icon: [{ url: "/buscazapp-mark.png", type: "image/png" }],
+    apple: "/buscazapp-mark.png",
   },
 };
 

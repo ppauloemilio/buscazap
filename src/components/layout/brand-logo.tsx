@@ -2,6 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+/** Marca atual — nome versionado para evitar cache do arquivo antigo. */
+export const BRAND_MARK_SRC = "/buscazapp-mark.png";
+
 interface BrandLogoProps {
   readonly showText?: boolean;
   readonly className?: string;
@@ -21,11 +24,11 @@ export function BrandLogo({
   const content = (
     <>
       <Image
-        src="/buscazapp-logo.png"
+        src={BRAND_MARK_SRC}
         alt="BuscaZapp"
         width={iconSize}
         height={iconSize}
-        className="shrink-0 object-contain"
+        className="shrink-0 rounded-md object-contain"
         priority
       />
       {showText && (
