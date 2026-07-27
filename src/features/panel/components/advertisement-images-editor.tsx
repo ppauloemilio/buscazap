@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { ImagePlus, Trash2 } from "lucide-react";
 import {
@@ -184,7 +185,7 @@ export function AdvertisementImagesEditor({
         <div className="flex gap-2">
           <SaveButton />
           <Button type="button" variant="outline" size="sm" asChild>
-            <a href="/painel/anuncios">Voltar</a>
+            <Link href="/painel/anuncios">Voltar</Link>
           </Button>
         </div>
       </form>

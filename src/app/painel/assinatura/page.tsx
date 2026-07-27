@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CreditCard, Crown, Megaphone, Shield } from "lucide-react";
 import { createSubscriptionPaymentAction } from "@/actions/provider-actions";
@@ -56,7 +57,7 @@ export default async function SubscriptionPage({
               </li>
             </ul>
             <Button variant="outline" size="sm" asChild>
-              <a href="/admin">Ir para o painel admin</a>
+              <Link href="/admin">Ir para o painel admin</Link>
             </Button>
           </CardContent>
         </Card>
