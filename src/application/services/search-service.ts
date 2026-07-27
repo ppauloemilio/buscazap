@@ -2,6 +2,7 @@ import type { AdvertisementType } from "@/domain/enums";
 import type { Advertisement, SearchFilters } from "@/domain/entities";
 import {
   findAdvertisementById,
+  findAdvertisementByCategoryAndSlug,
   findPublicAdvertisements,
   getCategoryNameBySlug,
 } from "@/application/services/advertisement-service";
@@ -19,6 +20,13 @@ export async function getAdvertisementById(
   id: string
 ): Promise<Advertisement | undefined> {
   return findAdvertisementById(id);
+}
+
+export async function getAdvertisementByCategoryAndSlug(
+  categorySlug: string,
+  adSlug: string
+): Promise<Advertisement | undefined> {
+  return findAdvertisementByCategoryAndSlug(categorySlug, adSlug);
 }
 
 export { getCategoryNameBySlug };

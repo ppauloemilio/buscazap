@@ -353,7 +353,7 @@ export async function publishProviderLeadAsAdmin(input: {
 
   const publishedNote = [
     `Publicado em ${new Date().toLocaleString("pt-BR")}.`,
-    `Anúncio: /anuncio/${advertisement.id}.`,
+    `Anúncio: ${advertisement.publicHref ?? `/anuncio/${advertisement.id}`}.`,
     providerCreated
       ? `Conta criada. Senha temporária: ${temporaryPassword}.`
       : "Conta já existia — anúncio vinculado.",
@@ -377,6 +377,7 @@ export async function publishProviderLeadAsAdmin(input: {
     metadata: {
       providerId: provider.id,
       advertisementId: advertisement.id,
+      publicHref: advertisement.publicHref,
       providerCreated,
       whatsapp: toLocalWhatsAppDigits(whatsapp),
       type: input.type,
@@ -388,6 +389,7 @@ export async function publishProviderLeadAsAdmin(input: {
     leadId: lead.id,
     providerId: provider.id,
     advertisementId: advertisement.id,
+    publicHref: advertisement.publicHref,
     providerName: provider.name,
     adTitle: lead.adTitle,
     whatsapp,

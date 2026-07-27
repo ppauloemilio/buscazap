@@ -69,6 +69,7 @@ export function mapAdvertisementToEntity(
     whatsappLabel: ad.whatsappLabel ?? undefined,
     secondaryWhatsappNumber: ad.secondaryWhatsappNumber ?? undefined,
     secondaryWhatsappLabel: ad.secondaryWhatsappLabel ?? undefined,
+    slug: ad.slug ?? undefined,
     isPremium: premiumActive,
     premiumExpiresAt: ad.premiumExpiresAt?.toISOString(),
     providerId: ad.providerId,

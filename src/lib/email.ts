@@ -1,8 +1,5 @@
 import { Resend } from "resend";
-
-function getAppUrl(): string {
-  return process.env.APP_URL ?? "http://localhost:3000";
-}
+import { getSiteUrl } from "@/lib/site-url";
 
 function getFromAddress(): string {
   return process.env.RESEND_FROM_EMAIL ?? "BuscaZapp <onboarding@resend.dev>";
@@ -51,6 +48,5 @@ export async function sendPasswordResetEmail(input: {
 }
 
 export function buildPasswordResetUrl(token: string): string {
-  const appUrl = getAppUrl().replace(/\/$/, "");
-  return `${appUrl}/redefinir-senha?token=${encodeURIComponent(token)}`;
+  return `${getSiteUrl()}/redefinir-senha?token=${encodeURIComponent(token)}`;
 }

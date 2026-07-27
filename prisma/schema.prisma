@@ -70,6 +70,7 @@ model Advertisement {
   whatsappLabel             String?
   secondaryWhatsappNumber   String?
   secondaryWhatsappLabel    String?
+  slug             String?        @unique
   rating           Float          @default(0)
   reviewCount      Int            @default(0)
   premiumExpiresAt DateTime?

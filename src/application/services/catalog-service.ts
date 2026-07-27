@@ -178,13 +178,15 @@ export async function getCategoriesWithCounts(): Promise<Category[]> {
     grouped.map((item) => [item.category, item._count.category])
   );
 
-  return categories.map((category) => ({
-    id: category.id,
-    name: category.name,
-    slug: category.slug,
-    icon: category.icon,
-    count: counts.get(category.name) ?? 0,
-  }));
+  return categories
+    .map((category) => ({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      icon: category.icon,
+      count: counts.get(category.name) ?? 0,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 }
 
 export async function getCatalogStats() {

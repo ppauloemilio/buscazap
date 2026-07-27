@@ -23,6 +23,7 @@ import {
   isPremiumActive,
 } from "@/lib/provider-session";
 import { normalizeWhatsAppIdentity } from "@/lib/whatsapp";
+import { ensureUniqueAdvertisementSlug } from "@/application/services/slug-service";
 
 const PUBLIC_AD_STATUSES = [AdvertisementStatus.APPROVED] as const;
 const LEAD_AUTO_BLOCK_NOTE = "[auto:conta-bloqueada]";
@@ -736,7 +737,7 @@ export async function updateAdvertisementAsAdmin(input: {
 }) {
   const existing = await prisma.advertisement.findUnique({
     where: { id: input.advertisementId },
-    select: { id: true, providerId: true, title: true },
+    select: { id: true, providerId: true, title: true, slug: true },
   });
 
   if (!existing) {
@@ -755,6 +756,11 @@ export async function updateAdvertisementAsAdmin(input: {
     await registerCategorySuggestion(categoryResolution.categoryName);
   }
 
+  const slug =
+    existing.title === input.title && existing.slug
+      ? existing.slug
+      : await ensureUniqueAdvertisementSlug(input.title, input.advertisementId);
+
   const updated = await prisma.advertisement.update({
     where: { id: input.advertisementId },
     data: {
@@ -771,6 +777,7 @@ export async function updateAdvertisementAsAdmin(input: {
       whatsappLabel: input.whatsappLabel || null,
       secondaryWhatsappNumber: input.secondaryWhatsappNumber || null,
       secondaryWhatsappLabel: input.secondaryWhatsappLabel || null,
+      slug,
     },
   });
 

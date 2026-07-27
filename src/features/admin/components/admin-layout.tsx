@@ -12,12 +12,14 @@ import {
   Receipt,
   Home,
   Handshake,
+  Search,
 } from "lucide-react";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Visão geral", icon: LayoutDashboard },
+  { href: "/admin/busca", label: "Busca", icon: Search },
   { href: "/admin/home", label: "Home", icon: Home },
   { href: "/admin/leads", label: "Leads", icon: Handshake },
   { href: "/admin/usuarios", label: "Usuários", icon: Users },
@@ -39,11 +41,28 @@ export async function AdminLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="container mx-auto px-4 py-5 md:py-6">
-      <div className="mb-4">
-        <h1 className="text-xl font-bold md:text-2xl">Administração BuscaZapp</h1>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold md:text-2xl">Administração BuscaZapp</h1>
           <p className="text-sm text-muted-foreground">
             Logado como {admin.name} ({admin.email})
           </p>
+        </div>
+        <form action="/admin/busca" className="flex w-full max-w-md gap-2">
+          <input
+            name="q"
+            placeholder="Buscar usuário, anúncio ou lead..."
+            minLength={2}
+            required
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          />
+          <button
+            type="submit"
+            className="inline-flex h-9 shrink-0 items-center rounded-md bg-whatsapp px-3 text-sm font-medium text-whatsapp-foreground"
+          >
+            Buscar
+          </button>
+        </form>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[200px_1fr]">

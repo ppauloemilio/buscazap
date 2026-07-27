@@ -1,3 +1,5 @@
+import { CANONICAL_SITE_URL } from "@/lib/site-url";
+
 export type PixProviderName = "static" | "mercadopago";
 
 function normalizeEnv(value: string | undefined): string {
@@ -18,13 +20,19 @@ export function getMercadoPagoTestPayerEmail(): string {
 }
 
 export function getPixAppUrl(): string {
-  return (
+  const fromEnv =
     normalizeEnv(process.env.APP_URL) ||
-    normalizeEnv(process.env.NEXT_PUBLIC_APP_URL) ||
-    (process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000")
-  );
+    normalizeEnv(process.env.NEXT_PUBLIC_APP_URL);
+
+  if (fromEnv && !/vercel\.app/i.test(fromEnv)) {
+    return fromEnv.replace(/\/$/, "");
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return "http://localhost:3000";
+  }
+
+  return CANONICAL_SITE_URL;
 }
 
 export function getPixWebhookSecret(): string {

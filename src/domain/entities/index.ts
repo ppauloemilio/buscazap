@@ -35,6 +35,8 @@ export interface Advertisement {
   readonly whatsappLabel?: string;
   readonly secondaryWhatsappNumber?: string;
   readonly secondaryWhatsappLabel?: string;
+  readonly slug?: string;
+  readonly publicHref?: string;
   readonly isPremium: boolean;
   readonly premiumExpiresAt?: string;
   readonly providerId?: string;

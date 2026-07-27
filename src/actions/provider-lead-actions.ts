@@ -217,7 +217,9 @@ export async function adminPublishProviderLeadAction(formData: FormData) {
     redirect(`/admin/leads?error=${encodeURIComponent(message)}`);
   }
 
-  const adUrl = buildAbsoluteUrl(`/anuncio/${result.advertisementId}`);
+  const adUrl = buildAbsoluteUrl(
+    result.publicHref ?? `/anuncio/${result.advertisementId}`
+  );
   const loginDigits = toLocalWhatsAppDigits(result.whatsapp);
 
   const whatsappMessage = result.temporaryPassword

@@ -9,6 +9,11 @@ import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { markDataFetchDynamic } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { isPremiumActive } from "@/lib/provider-session";
+import { slugify } from "@/lib/slug";
+import {
+  ensureUniqueAdvertisementSlug,
+  resolveCategorySlugByName,
+} from "@/application/services/slug-service";
 
 export function getAdSlotLimitMessage(): string {
   return (
@@ -38,6 +43,38 @@ function normalizeSearchText(value: string): string {
     .replace(/\p{M}/gu, "");
 }
 
+async function enrichWithPublicHref<
+  T extends { id: string; title: string; category: string; slug?: string },
+>(ads: readonly T[]): Promise<Array<T & { slug: string; publicHref: string }>> {
+  const categorySlugs = new Map<string, string>();
+  await Promise.all(
+    [...new Set(ads.map((ad) => ad.category))].map(async (name) => {
+      categorySlugs.set(name, await resolveCategorySlugByName(name));
+    })
+  );
+
+  return Promise.all(
+    ads.map(async (ad) => {
+      let slug = ad.slug?.trim() || "";
+      if (!slug) {
+        slug = await ensureUniqueAdvertisementSlug(ad.title, ad.id);
+        await prisma.advertisement
+          .update({ where: { id: ad.id }, data: { slug } })
+          .catch(() => null);
+      }
+
+      const categorySlug =
+        categorySlugs.get(ad.category) ?? slugify(ad.category);
+
+      return {
+        ...ad,
+        slug,
+        publicHref: `/${categorySlug}/${slug}`,
+      };
+    })
+  );
+}
+
 export async function findPublicAdvertisements(
   filters: SearchFilters & {
     readonly premium?: boolean;
@@ -61,9 +98,11 @@ export async function findPublicAdvertisements(
     orderBy: { createdAt: "desc" },
   });
 
-  let results = advertisements
-    .map(mapAdvertisementToEntity)
-    .filter((ad) => ad.status !== AdvertisementStatus.BLOCKED);
+  let results = await enrichWithPublicHref(
+    advertisements
+      .map(mapAdvertisementToEntity)
+      .filter((ad) => ad.status !== AdvertisementStatus.BLOCKED)
+  );
 
   if (filters.city?.trim()) {
     const cityQuery = normalizeSearchText(filters.city.trim());
@@ -158,8 +197,76 @@ export async function findAdvertisementById(id: string) {
     return undefined;
   }
 
+  let slug = advertisement.slug;
+  if (!slug) {
+    slug = await ensureUniqueAdvertisementSlug(
+      advertisement.title,
+      advertisement.id
+    );
+    await prisma.advertisement
+      .update({ where: { id: advertisement.id }, data: { slug } })
+      .catch(() => null);
+  }
+
+  const categorySlug = await resolveCategorySlugByName(advertisement.category);
+
   return {
     ...mapAdvertisementToEntity(advertisement),
+    slug,
+    publicHref: `/${categorySlug}/${slug}`,
+    providerName: advertisement.provider.name,
+    providerBio: advertisement.provider.bio ?? undefined,
+    providerBusinessHours: advertisement.provider.businessHours ?? undefined,
+    providerResponseHint: advertisement.provider.responseHint ?? undefined,
+  };
+}
+
+export async function findAdvertisementByCategoryAndSlug(
+  categorySlug: string,
+  adSlug: string
+) {
+  markDataFetchDynamic();
+
+  const category = await prisma.catalogCategory.findFirst({
+    where: { slug: categorySlug, isActive: true },
+    select: { name: true, slug: true },
+  });
+
+  if (!category) {
+    return undefined;
+  }
+
+  const advertisement = await prisma.advertisement.findFirst({
+    where: {
+      slug: adSlug,
+      category: category.name,
+      status: { not: AdvertisementStatus.BLOCKED },
+      provider: { status: { not: ProviderStatus.BLOCKED } },
+    },
+    include: {
+      images: {
+        orderBy: { sortOrder: "asc" },
+      },
+      provider: {
+        select: {
+          status: true,
+          name: true,
+          bio: true,
+          businessHours: true,
+          responseHint: true,
+        },
+      },
+    },
+  });
+
+  if (!advertisement) {
+    return undefined;
+  }
+
+  return {
+    ...mapAdvertisementToEntity(advertisement),
+    slug: advertisement.slug ?? adSlug,
+    publicHref: `/${category.slug}/${adSlug}`,
     providerName: advertisement.provider.name,
     providerBio: advertisement.provider.bio ?? undefined,
     providerBusinessHours: advertisement.provider.businessHours ?? undefined,
@@ -188,9 +295,13 @@ export async function findAdvertisementsByIds(ids: readonly string[]) {
 
   const order = new Map(ids.map((id, index) => [id, index]));
 
-  return advertisements
-    .map(mapAdvertisementToEntity)
-    .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+  const mapped = await enrichWithPublicHref(
+    advertisements.map(mapAdvertisementToEntity)
+  );
+
+  return mapped.sort(
+    (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0)
+  );
 }
 
 export async function findProviderAdvertisements(providerId: string) {
@@ -278,6 +389,8 @@ export async function createAdvertisement(input: {
     }
   }
 
+  const slug = await ensureUniqueAdvertisementSlug(input.title);
+
   const advertisement = await prisma.advertisement.create({
     data: {
       providerId: input.providerId,
@@ -294,12 +407,19 @@ export async function createAdvertisement(input: {
       whatsappLabel: input.whatsappLabel || null,
       secondaryWhatsappNumber: input.secondaryWhatsappNumber || null,
       secondaryWhatsappLabel: input.secondaryWhatsappLabel || null,
+      slug,
       status: "APPROVED",
     },
   });
 
+  const entity = mapAdvertisementToEntity(advertisement);
+  const categorySlug = await resolveCategorySlugByName(input.category);
+
   return {
-    advertisement: mapAdvertisementToEntity(advertisement),
+    advertisement: {
+      ...entity,
+      publicHref: `/${categorySlug}/${slug}`,
+    },
     requiresPremiumPayment: Boolean(input.withPremium),
   };
 }

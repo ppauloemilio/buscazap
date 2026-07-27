@@ -89,7 +89,7 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
           )}
         </div>
 
-        <Link href={`/anuncio/${advertisement.id}`}>
+        <Link href={advertisement.publicHref ?? `/anuncio/${advertisement.id}`}>
           <h3 className="line-clamp-1 text-sm font-semibold text-foreground transition-colors hover:text-whatsapp">
             {advertisement.title}
           </h3>
@@ -156,7 +156,7 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
             className="h-8 px-2 text-[11px]"
             asChild
           >
-            <Link href={`/anuncio/${advertisement.id}`}>Ver</Link>
+            <Link href={advertisement.publicHref ?? `/anuncio/${advertisement.id}`}>Ver</Link>
           </Button>
         </div>
       </CardContent>
