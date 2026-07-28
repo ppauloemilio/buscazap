@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { AdvertisementImage } from "@/components/advertisement/advertisement-image";
 import { cn } from "@/lib/utils";
 
 interface AdvertisementGalleryProps {
@@ -22,7 +22,7 @@ export function AdvertisementGallery({
   return (
     <div className="space-y-3">
       <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted sm:aspect-[4/3]">
-        <Image
+        <AdvertisementImage
           src={selectedImage}
           alt={`${title} — foto ${selectedIndex + 1}`}
           fill
@@ -47,7 +47,7 @@ export function AdvertisementGallery({
               )}
               aria-label={`Ver foto ${index + 1}`}
             >
-              <Image
+              <AdvertisementImage
                 src={url}
                 alt=""
                 fill

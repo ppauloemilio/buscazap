@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { ImagePlus, Trash2 } from "lucide-react";
@@ -8,6 +7,7 @@ import {
   removeAdvertisementGalleryImageAction,
   updateAdvertisementImagesAction,
 } from "@/actions/provider-actions";
+import { AdvertisementImage } from "@/components/advertisement/advertisement-image";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { Button } from "@/components/ui/button";
 
@@ -79,7 +79,7 @@ export function AdvertisementImagesEditor({
             {galleryImages.map((image) => (
               <div key={image.id} className="space-y-1.5">
                 <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
-                  <Image
+                  <AdvertisementImage
                     src={image.url}
                     alt={`Foto da galeria de ${title}`}
                     fill
@@ -111,7 +111,7 @@ export function AdvertisementImagesEditor({
           </label>
           {coverImage && (
             <div className="relative mb-2 aspect-square max-w-sm overflow-hidden rounded-lg border bg-muted sm:aspect-[4/3]">
-              <Image
+              <AdvertisementImage
                 src={coverImage.url}
                 alt={`Capa do anúncio ${title}`}
                 fill

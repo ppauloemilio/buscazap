@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { AdvertisementImage } from "@/components/advertisement/advertisement-image";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -34,7 +34,7 @@ export function AdvertisementCover({
 }: AdvertisementCoverProps) {
   if (imageUrl) {
     return (
-      <Image
+      <AdvertisementImage
         src={imageUrl}
         alt={`Capa do anúncio ${title}`}
         fill
