@@ -10,10 +10,10 @@ import {
   updateProviderLeadStatus,
 } from "@/application/services/provider-lead-service";
 import { getCurrentAdmin } from "@/lib/admin-session";
+import { buildAdvertisementNotifyWhatsAppHref } from "@/lib/advertisement-notify-message";
 import { uploadLeadImage, validateImageFile } from "@/lib/image-upload";
 import { prisma } from "@/lib/prisma";
 import { buildAbsoluteUrl } from "@/lib/site-url";
-import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import {
   adminDeleteProviderLeadSchema,
   adminEditProviderLeadSchema,
@@ -21,7 +21,6 @@ import {
   adminUpdateProviderLeadSchema,
   createProviderLeadSchema,
 } from "@/schemas/provider-schemas";
-import { buildWhatsAppLink } from "@/shared/utils/format";
 
 export async function submitProviderLeadAction(formData: FormData) {
   const parsed = createProviderLeadSchema.safeParse({
@@ -217,16 +216,15 @@ export async function adminPublishProviderLeadAction(formData: FormData) {
     redirect(`/admin/leads?error=${encodeURIComponent(message)}`);
   }
 
-  const adUrl = buildAbsoluteUrl(
-    result.publicHref ?? `/anuncio/${result.advertisementId}`
-  );
-  const loginDigits = toLocalWhatsAppDigits(result.whatsapp);
-
-  const whatsappMessage = result.temporaryPassword
-    ? `Olá ${result.providerName}! Seu anúncio "${result.adTitle}" já está no BuscaZapp: ${adUrl}\n\nPara acessar o painel: ${buildAbsoluteUrl("/entrar")}\nLogin (WhatsApp): ${loginDigits}\nSenha temporária: ${result.temporaryPassword}\n\nTroque a senha no painel quando puder.`
-    : `Olá ${result.providerName}! Seu anúncio "${result.adTitle}" já está no BuscaZapp: ${adUrl}`;
-
-  const notifyHref = buildWhatsAppLink(result.whatsapp, whatsappMessage);
+  const notifyHref = buildAdvertisementNotifyWhatsAppHref({
+    providerName: result.providerName,
+    adTitle: result.adTitle,
+    whatsapp: result.whatsapp,
+    adUrl: buildAbsoluteUrl(
+      result.publicHref ?? `/anuncio/${result.advertisementId}`
+    ),
+    temporaryPassword: result.temporaryPassword,
+  });
 
   revalidatePath("/admin/leads");
   revalidatePath("/admin/anuncios");

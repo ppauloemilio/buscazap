@@ -1,4 +1,3 @@
-import { randomInt } from "crypto";
 import bcrypt from "bcryptjs";
 import { createAdvertisement } from "@/application/services/advertisement-service";
 import { logAdminAction } from "@/application/services/admin-service";
@@ -19,6 +18,7 @@ import {
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { markDataFetchDynamic } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
+import { generateTemporaryPassword } from "@/lib/temporary-password";
 import {
   canProviderPublish,
   hasActiveSubscription,
@@ -27,10 +27,6 @@ import { normalizeWhatsAppIdentity, toLocalWhatsAppDigits } from "@/lib/whatsapp
 import type { CreateProviderLeadInput } from "@/schemas/provider-schemas";
 
 const DUPLICATE_WINDOW_HOURS = 24;
-
-function generateTemporaryPassword(): string {
-  return `bz${randomInt(100000, 999999)}`;
-}
 
 function parseServiceArea(value: string): ServiceArea {
   if (Object.values(ServiceArea).includes(value as ServiceArea)) {

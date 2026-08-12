@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Search } from "lucide-react";
 import { searchAdminDirectory } from "@/application/services/admin-search-service";
+import { resolveAdvertisementNotifyContexts } from "@/application/services/advertisement-notify-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
+import { AdminAdvertisementNotifyActions } from "@/features/admin/components/admin-advertisement-notify-actions";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { formatWhatsAppDisplay } from "@/lib/whatsapp";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +25,9 @@ export default async function AdminSearchPage({
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
   const results = await searchAdminDirectory(q);
+  const notifyContexts = await resolveAdvertisementNotifyContexts(
+    results.advertisements.map((ad) => ad.id)
+  );
 
   return (
     <AdminLayout>
@@ -103,7 +108,10 @@ export default async function AdminSearchPage({
               {results.advertisements.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nenhum anúncio.</p>
               ) : (
-                results.advertisements.map((ad) => (
+                results.advertisements.map((ad) => {
+                  const notify = notifyContexts.get(ad.id);
+
+                  return (
                   <div
                     key={ad.id}
                     className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-2.5 py-2"
@@ -114,16 +122,26 @@ export default async function AdminSearchPage({
                         {ad.category} · {ad.city} · {ad.provider.name}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">{ad.status}</Badge>
                       <Button size="sm" variant="outline" asChild>
                         <Link href={`/admin/anuncios/${ad.id}/editar`}>
                           Editar
                         </Link>
                       </Button>
+                      {notify && (
+                        <AdminAdvertisementNotifyActions
+                          advertisementId={ad.id}
+                          notifyHref={notify.notifyHref}
+                          hasStoredPassword={notify.hasStoredPassword}
+                          returnTo={`/admin/busca?q=${encodeURIComponent(q)}`}
+                          compact
+                        />
+                      )}
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </CardContent>
           </Card>

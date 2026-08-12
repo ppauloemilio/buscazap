@@ -17,6 +17,7 @@ import {
   updateProviderStatusAsAdmin,
   updateReportStatusAsAdmin,
 } from "@/application/services/admin-service";
+import { resetAdvertisementProviderPasswordForNotify } from "@/application/services/advertisement-notify-service";
 import { updateHomepageSettings } from "@/application/services/homepage-settings-service";
 import {
   parseManualPaymentMethod,
@@ -682,5 +683,47 @@ export async function adminUpdateAdvertisementAction(formData: FormData) {
   revalidatePath(redirectBase);
 
   redirect(`${redirectBase}?saved=1`);
+}
+
+export async function adminNotifyAdvertisementWithNewPasswordAction(
+  formData: FormData
+) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const advertisementId = formData.get("advertisementId");
+  const returnToRaw = formData.get("returnTo");
+
+  if (typeof advertisementId !== "string" || !advertisementId.trim()) {
+    redirect("/admin/anuncios?error=Anúncio inválido");
+  }
+
+  const returnTo =
+    typeof returnToRaw === "string" && returnToRaw.startsWith("/admin")
+      ? returnToRaw
+      : "/admin/anuncios";
+
+  try {
+    const result = await resetAdvertisementProviderPasswordForNotify({
+      adminId: admin.id,
+      advertisementId: advertisementId.trim(),
+    });
+
+    revalidatePath("/admin/anuncios");
+    revalidatePath("/admin/leads");
+    revalidatePath("/admin/usuarios");
+    revalidatePath("/admin/busca");
+    revalidatePath(`/admin/anuncios/${advertisementId.trim()}/editar`);
+
+    redirect(
+      `${returnTo}?notify=${encodeURIComponent(result.notifyHref)}&password=1`
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível gerar a senha";
+    redirect(`${returnTo}?error=${encodeURIComponent(message)}`);
+  }
 }
 

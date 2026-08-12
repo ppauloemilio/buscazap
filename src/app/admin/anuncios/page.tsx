@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Crown } from "lucide-react";
+import { Crown, MessageCircle } from "lucide-react";
+import { resolveAdvertisementNotifyContexts } from "@/application/services/advertisement-notify-service";
 import { listAdminAdvertisements } from "@/application/services/admin-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminAdvertisementActions } from "@/features/admin/components/admin-advertisement-actions";
+import { AdminAdvertisementNotifyActions } from "@/features/admin/components/admin-advertisement-notify-actions";
 import { getAdminAdStatusLabel } from "@/config/admin";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { formatWhatsAppDisplay } from "@/lib/whatsapp";
@@ -21,6 +24,8 @@ interface AdminAdsPageProps {
     readonly premium?: string;
     readonly providerId?: string;
     readonly manual?: string;
+    readonly notify?: string;
+    readonly password?: string;
   }>;
 }
 
@@ -36,6 +41,12 @@ export default async function AdminAdvertisementsPage({
     premium: params.premium === "1",
     providerId: params.providerId,
   });
+
+  const notifyContexts = await resolveAdvertisementNotifyContexts(
+    advertisements.map((ad) => ad.id)
+  );
+
+  const notifyHref = params.notify?.trim();
 
   function buildFilterUrl(overrides: Record<string, string | undefined>) {
     const query = new URLSearchParams();
@@ -99,6 +110,21 @@ export default async function AdminAdvertisementsPage({
           Anúncio excluído.
         </p>
       )}
+      {notifyHref && (
+        <div className="mb-4 space-y-2 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
+          <p className="font-medium">
+            {params.password === "1"
+              ? "Senha provisória gerada. Abra o WhatsApp para enviar ao anunciante."
+              : "Mensagem pronta para o anunciante."}
+          </p>
+          <Button size="sm" variant="whatsapp" asChild>
+            <a href={notifyHref} target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="h-3.5 w-3.5" />
+              Abrir WhatsApp
+            </a>
+          </Button>
+        </div>
+      )}
 
       {advertisements.length === 0 ? (
         <Card>
@@ -108,7 +134,10 @@ export default async function AdminAdvertisementsPage({
         </Card>
       ) : (
         <div className="space-y-4">
-          {advertisements.map((ad) => (
+          {advertisements.map((ad) => {
+            const notify = notifyContexts.get(ad.id);
+
+            return (
             <Card key={ad.id}>
               <CardContent className="space-y-4 p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -136,6 +165,11 @@ export default async function AdminAdvertisementsPage({
                       {" · "}
                       {formatWhatsAppDisplay(ad.provider.whatsapp)}
                     </p>
+                    {notify?.hasStoredPassword && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Senha do lead disponível nas observações do lead convertido.
+                      </p>
+                    )}
                     {ad.premiumActive && ad.premiumExpiresAt && (
                       <p className="mt-1 text-xs text-muted-foreground">
                         Destaque até {ad.premiumExpiresAt.toLocaleDateString("pt-BR")}
@@ -145,13 +179,24 @@ export default async function AdminAdvertisementsPage({
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/admin/anuncios/${ad.id}/editar`}>Editar</Link>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/anuncio/${ad.id}`}>Ver público</Link>
-                    </Button>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/admin/anuncios/${ad.id}/editar`}>Editar</Link>
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/anuncio/${ad.id}`}>Ver público</Link>
+                      </Button>
+                    </div>
+                    {notify && (
+                      <AdminAdvertisementNotifyActions
+                        advertisementId={ad.id}
+                        notifyHref={notify.notifyHref}
+                        hasStoredPassword={notify.hasStoredPassword}
+                        returnTo="/admin/anuncios"
+                        compact
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -163,7 +208,8 @@ export default async function AdminAdvertisementsPage({
                 />
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </AdminLayout>

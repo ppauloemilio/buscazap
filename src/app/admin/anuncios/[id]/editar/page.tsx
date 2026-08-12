@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { MessageCircle } from "lucide-react";
 import { adminUpdateAdvertisementAction } from "@/actions/admin-actions";
 import { findAdvertisementForAdminEdit } from "@/application/services/admin-service";
+import { resolveAdvertisementNotifyContext } from "@/application/services/advertisement-notify-service";
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
 import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES } from "@/config/pricing";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
+import { AdminAdvertisementNotifyActions } from "@/features/admin/components/admin-advertisement-notify-actions";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
@@ -23,6 +26,8 @@ interface AdminEditAdvertisementPageProps {
   readonly searchParams: Promise<{
     readonly error?: string;
     readonly saved?: string;
+    readonly notify?: string;
+    readonly password?: string;
   }>;
 }
 
@@ -37,9 +42,10 @@ export default async function AdminEditAdvertisementPage({
 
   const { id } = await params;
   const query = await searchParams;
-  const [advertisement, categories] = await Promise.all([
+  const [advertisement, categories, notify] = await Promise.all([
     findAdvertisementForAdminEdit(id),
     getCategoriesWithCounts(),
+    resolveAdvertisementNotifyContext(id).catch(() => null),
   ]);
 
   if (!advertisement) {
@@ -65,7 +71,33 @@ export default async function AdminEditAdvertisementPage({
           <h2 className="text-xl font-semibold">Editar anúncio</h2>
           <Badge variant="outline">{advertisement.provider.name}</Badge>
         </div>
+        {notify && (
+          <div className="mt-3">
+            <AdminAdvertisementNotifyActions
+              advertisementId={advertisement.id}
+              notifyHref={notify.notifyHref}
+              hasStoredPassword={notify.hasStoredPassword}
+              returnTo={`/admin/anuncios/${advertisement.id}/editar`}
+            />
+          </div>
+        )}
       </div>
+
+      {query.notify?.trim() && (
+        <div className="mb-3 space-y-2 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
+          <p className="font-medium">
+            {query.password === "1"
+              ? "Senha provisória gerada. Abra o WhatsApp para enviar ao anunciante."
+              : "Mensagem pronta para o anunciante."}
+          </p>
+          <Button size="sm" variant="whatsapp" asChild>
+            <a href={query.notify} target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="h-3.5 w-3.5" />
+              Abrir WhatsApp
+            </a>
+          </Button>
+        </div>
+      )}
 
       {query.saved === "1" && (
         <p className="mb-3 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
