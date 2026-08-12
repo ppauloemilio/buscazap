@@ -12,7 +12,9 @@ import {
 } from "@/application/services/catalog-service";
 import { PageHeader } from "@/components/layout/page-header";
 import { AdvertisementCard } from "@/features/dashboard/components/advertisement-card";
+import { SearchFilterSummary } from "@/features/search/components/search-filter-summary";
 import { SearchForm } from "@/features/search/components/search-form";
+import { buildEmptySearchTitle } from "@/features/search/utils/search-filter-summary";
 import { URGENT_SEARCHES } from "@/config/quick-searches";
 import { buildSearchHref } from "@/shared/utils/search-preferences";
 
@@ -31,28 +33,6 @@ interface SearchPageProps {
 export const metadata: Metadata = {
   title: "Buscar",
 };
-
-function buildDescription(
-  count: number,
-  query?: string,
-  city?: string,
-  neighborhood?: string,
-  category?: string
-): string {
-  const parts: string[] = [];
-
-  if (query) parts.push(`"${query}"`);
-  if (category) parts.push(`em ${category}`);
-  if (neighborhood && city) parts.push(`em ${neighborhood}, ${city}`);
-  else if (city) parts.push(`na cidade de ${city}`);
-  else if (neighborhood) parts.push(`no bairro ${neighborhood}`);
-
-  if (parts.length === 0) {
-    return `${count} anúncio(s) encontrado(s)`;
-  }
-
-  return `${count} resultado(s) para ${parts.join(" ")}`;
-}
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
@@ -76,18 +56,22 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     sort: params.sort,
   });
 
-  const description = buildDescription(
-    results.length,
-    params.q,
-    params.city,
-    params.neighborhood,
-    categoryName
-  );
+  const filterParams = {
+    query: params.q,
+    city: params.city,
+    neighborhood: params.neighborhood,
+    categorySlug: params.category,
+    categoryName,
+    premium: params.premium === "true",
+    sort: params.sort,
+  };
+
+  const emptyTitle = buildEmptySearchTitle(filterParams);
 
   return (
     <>
-      <PageHeader title="Resultados da busca" description={description} />
-      <section className="container mx-auto space-y-8 px-4 py-8">
+      <PageHeader compact title="Buscar" />
+      <section className="container mx-auto space-y-4 px-4 py-5 md:space-y-6 md:py-8">
         <SearchForm
           initialQuery={params.q ?? ""}
           initialCity={params.city ?? ""}
@@ -104,6 +88,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           }))}
         />
 
+        <SearchFilterSummary filters={filterParams} count={results.length} />
+
         {results.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
             {results.map((ad) => (
@@ -113,15 +99,19 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         ) : (
           <div className="flex flex-col items-center justify-center rounded-xl border bg-card px-6 py-12 text-center">
             <Search className="mb-4 h-12 w-12 text-muted-foreground" />
-            <h2 className="text-lg font-semibold text-foreground">
-              Ainda estamos selecionando os melhores profissionais dessa área
-            </h2>
+            <h2 className="text-lg font-semibold text-foreground">{emptyTitle}</h2>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
               Conhece alguém? Indique ou cadastre um anúncio e ajude a completar
-              a região. Você também pode tentar outro termo ou uma busca rápida
-              abaixo.
+              a região. Você também pode limpar os filtros ou tentar uma busca
+              rápida abaixo.
             </p>
-            <div className="mt-5">
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              <Link
+                href="/buscar"
+                className="inline-flex h-10 items-center justify-center rounded-md border px-5 text-sm font-medium transition-colors hover:bg-muted"
+              >
+                Limpar filtros
+              </Link>
               <Link
                 href="/parceiro"
                 className="inline-flex h-10 items-center justify-center rounded-md bg-whatsapp px-5 text-sm font-medium text-whatsapp-foreground transition-colors hover:bg-whatsapp/90"
