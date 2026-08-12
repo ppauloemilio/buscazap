@@ -856,15 +856,75 @@ export async function listAdminAdvertisements(filters?: {
   readonly status?: string;
   readonly premium?: boolean;
   readonly providerId?: string;
+  readonly category?: string;
+  readonly city?: string;
+  readonly type?: string;
+  readonly query?: string;
+  readonly published?: "yes" | "no";
 }) {
+  const andConditions: object[] = [];
+
+  if (filters?.status) {
+    andConditions.push({ status: filters.status });
+  }
+
+  if (filters?.providerId) {
+    andConditions.push({ providerId: filters.providerId });
+  }
+
+  if (filters?.category?.trim()) {
+    andConditions.push({
+      category: { equals: filters.category.trim(), mode: "insensitive" },
+    });
+  }
+
+  if (filters?.city?.trim()) {
+    andConditions.push({
+      city: { equals: filters.city.trim(), mode: "insensitive" },
+    });
+  }
+
+  if (filters?.type?.trim()) {
+    andConditions.push({ type: filters.type.trim() });
+  }
+
+  if (filters?.premium) {
+    andConditions.push({ premiumExpiresAt: { gt: new Date() } });
+  }
+
+  if (filters?.published === "yes") {
+    andConditions.push({
+      status: AdvertisementStatus.APPROVED,
+      provider: { status: ProviderStatus.ACTIVE },
+    });
+  } else if (filters?.published === "no") {
+    andConditions.push({
+      OR: [
+        { status: { not: AdvertisementStatus.APPROVED } },
+        { provider: { status: { not: ProviderStatus.ACTIVE } } },
+      ],
+    });
+  }
+
+  const query = filters?.query?.trim();
+  if (query) {
+    const digits = query.replace(/\D/g, "");
+    andConditions.push({
+      OR: [
+        { title: { contains: query, mode: "insensitive" } },
+        { provider: { name: { contains: query, mode: "insensitive" } } },
+        ...(digits.length >= 4
+          ? [
+              { whatsappNumber: { contains: digits } },
+              { provider: { whatsapp: { contains: digits } } },
+            ]
+          : []),
+      ],
+    });
+  }
+
   const advertisements = await prisma.advertisement.findMany({
-    where: {
-      ...(filters?.status ? { status: filters.status } : {}),
-      ...(filters?.providerId ? { providerId: filters.providerId } : {}),
-      ...(filters?.premium
-        ? { premiumExpiresAt: { gt: new Date() } }
-        : {}),
-    },
+    where: andConditions.length > 0 ? { AND: andConditions } : {},
     orderBy: { createdAt: "desc" },
     include: {
       provider: {

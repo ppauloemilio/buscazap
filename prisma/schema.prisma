@@ -79,6 +79,21 @@ model Advertisement {
   premiumBoosts    PremiumBoost[]
   images           AdvertisementImage[]
   reviews          Review[]
+  analyticsEvents  AnalyticsEvent[]
+}
+
+model AnalyticsEvent {
+  id              String         @id @default(cuid())
+  type            String
+  path            String?
+  advertisementId String?
+  advertisement   Advertisement? @relation(fields: [advertisementId], references: [id], onDelete: SetNull)
+  metadata        String?
+  createdAt       DateTime       @default(now())
+
+  @@index([type, createdAt])
+  @@index([advertisementId, type, createdAt])
+  @@index([createdAt])
 }
 
 model Review {

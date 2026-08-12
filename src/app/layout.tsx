@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { TrackPageView } from "@/components/analytics/analytics-trackers";
 import { SiteChrome } from "@/components/layout/site-chrome";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
@@ -47,6 +48,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${geistSans.variable} min-h-screen font-sans antialiased`}>
+        <TrackPageView />
         <SiteChrome>{children}</SiteChrome>
       </body>
     </html>

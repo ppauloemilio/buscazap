@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdvertisementCover } from "@/components/advertisement/advertisement-cover";
+import { TrackedWhatsAppLink } from "@/components/analytics/analytics-trackers";
 import { FavoriteButton } from "@/features/favorites/favorite-button";
 import {
   formatAdvertisementLocation,
@@ -114,42 +115,42 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
         </div>
 
         <div className="flex gap-1.5 pt-0.5">
-          <Button
-            variant="whatsapp"
-            size="sm"
-            className="h-8 min-w-0 flex-1 px-2 text-xs font-semibold"
-            asChild
-          >
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Contatar ${advertisement.title} via WhatsApp (${primaryLabel})`}
-            >
-              <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">
-                {secondaryLink ? primaryLabel : "WhatsApp"}
-              </span>
-            </a>
-          </Button>
-          {secondaryLink && (
             <Button
               variant="whatsapp"
               size="sm"
               className="h-8 min-w-0 flex-1 px-2 text-xs font-semibold"
               asChild
             >
-              <a
-                href={secondaryLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Contatar ${advertisement.title} via WhatsApp (${secondaryLabel})`}
+              <TrackedWhatsAppLink
+                href={whatsappLink}
+                advertisementId={advertisement.id}
+                aria-label={`Contatar ${advertisement.title} via WhatsApp (${primaryLabel})`}
+                className="inline-flex h-8 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md bg-whatsapp px-2 text-xs font-semibold text-whatsapp-foreground"
               >
                 <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{secondaryLabel}</span>
-              </a>
+                <span className="truncate">
+                  {secondaryLink ? primaryLabel : "WhatsApp"}
+                </span>
+              </TrackedWhatsAppLink>
             </Button>
-          )}
+            {secondaryLink && (
+              <Button
+                variant="whatsapp"
+                size="sm"
+                className="h-8 min-w-0 flex-1 px-2 text-xs font-semibold"
+                asChild
+              >
+                <TrackedWhatsAppLink
+                  href={secondaryLink}
+                  advertisementId={advertisement.id}
+                  aria-label={`Contatar ${advertisement.title} via WhatsApp (${secondaryLabel})`}
+                  className="inline-flex h-8 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md bg-whatsapp px-2 text-xs font-semibold text-whatsapp-foreground"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{secondaryLabel}</span>
+                </TrackedWhatsAppLink>
+              </Button>
+            )}
           <Button
             variant="outline"
             size="sm"

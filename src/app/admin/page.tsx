@@ -177,6 +177,9 @@ export default async function AdminDashboardPage() {
           <Link href="/admin/usuarios?subscription=expired">Assinaturas vencidas</Link>
         </Button>
         <Button size="sm" variant="outline" asChild>
+          <Link href="/admin/relatorios">Relatórios</Link>
+        </Button>
+        <Button size="sm" variant="outline" asChild>
           <Link href="/admin/home">Home</Link>
         </Button>
       </div>

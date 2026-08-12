@@ -4,8 +4,13 @@ import { redirect } from "next/navigation";
 import { Crown, MessageCircle } from "lucide-react";
 import { resolveAdvertisementNotifyContexts } from "@/application/services/advertisement-notify-service";
 import { listAdminAdvertisements } from "@/application/services/admin-service";
+import {
+  getCategoriesWithCounts,
+  listCityNamesForSearch,
+} from "@/application/services/catalog-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminAdvertisementActions } from "@/features/admin/components/admin-advertisement-actions";
+import { AdminAdvertisementFilters } from "@/features/admin/components/admin-advertisement-filters";
 import { AdminAdvertisementNotifyActions } from "@/features/admin/components/admin-advertisement-notify-actions";
 import { getAdminAdStatusLabel } from "@/config/admin";
 import { getCurrentAdmin } from "@/lib/admin-session";
@@ -23,6 +28,11 @@ interface AdminAdsPageProps {
     readonly status?: string;
     readonly premium?: string;
     readonly providerId?: string;
+    readonly q?: string;
+    readonly category?: string;
+    readonly city?: string;
+    readonly type?: string;
+    readonly published?: string;
     readonly manual?: string;
     readonly notify?: string;
     readonly password?: string;
@@ -36,11 +46,34 @@ export default async function AdminAdvertisementsPage({
   if (!admin) redirect("/admin/entrar");
 
   const params = await searchParams;
-  const advertisements = await listAdminAdvertisements({
+  const filterState = {
+    q: params.q,
     status: params.status,
-    premium: params.premium === "1",
+    category: params.category,
+    city: params.city,
+    type: params.type,
+    published: params.published,
+    premium: params.premium,
     providerId: params.providerId,
-  });
+  };
+
+  const [advertisements, categories, cities] = await Promise.all([
+    listAdminAdvertisements({
+      status: params.status,
+      premium: params.premium === "1",
+      providerId: params.providerId,
+      category: params.category,
+      city: params.city,
+      type: params.type,
+      query: params.q,
+      published:
+        params.published === "yes" || params.published === "no"
+          ? params.published
+          : undefined,
+    }),
+    getCategoriesWithCounts(),
+    listCityNamesForSearch(),
+  ]);
 
   const notifyContexts = await resolveAdvertisementNotifyContexts(
     advertisements.map((ad) => ad.id)
@@ -48,50 +81,21 @@ export default async function AdminAdvertisementsPage({
 
   const notifyHref = params.notify?.trim();
 
-  function buildFilterUrl(overrides: Record<string, string | undefined>) {
-    const query = new URLSearchParams();
-    const merged = {
-      status: params.status,
-      premium: params.premium,
-      providerId: params.providerId,
-      ...overrides,
-    };
-
-    Object.entries(merged).forEach(([key, value]) => {
-      if (value) query.set(key, value);
-    });
-
-    const qs = query.toString();
-    return qs ? `/admin/anuncios?${qs}` : "/admin/anuncios";
-  }
-
   return (
     <AdminLayout>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-4">
         <h2 className="text-xl font-semibold">Anúncios</h2>
-        <div className="flex flex-wrap gap-2">
-          <Button variant={!params.premium && !params.status ? "default" : "outline"} size="sm" asChild>
-            <Link href={buildFilterUrl({ status: undefined, premium: undefined })}>
-              Todos
-            </Link>
-          </Button>
-          <Button variant={params.premium === "1" ? "default" : "outline"} size="sm" asChild>
-            <Link href={buildFilterUrl({ premium: "1", status: undefined })}>
-              Premium ativos
-            </Link>
-          </Button>
-          <Button variant={params.status === "BLOCKED" ? "default" : "outline"} size="sm" asChild>
-            <Link href={buildFilterUrl({ status: "BLOCKED", premium: undefined })}>
-              Bloqueados
-            </Link>
-          </Button>
-          <Button variant={params.status === "PENDING" ? "default" : "outline"} size="sm" asChild>
-            <Link href={buildFilterUrl({ status: "PENDING", premium: undefined })}>
-              Pendentes
-            </Link>
-          </Button>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Filtre por categoria, publicação, cidade e status.
+        </p>
       </div>
+
+      <AdminAdvertisementFilters
+        filters={filterState}
+        categories={categories}
+        cities={cities}
+        resultCount={advertisements.length}
+      />
 
       {params.error && (
         <p className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">

@@ -2,6 +2,10 @@ import Link from "next/link";
 import { Star, MapPin, MessageCircle, Crown, ArrowLeft, Clock, Zap } from "lucide-react";
 import { listAdvertisementReviews } from "@/application/services/review-service";
 import { AdvertisementCover } from "@/components/advertisement/advertisement-cover";
+import {
+  TrackAdView,
+  TrackedWhatsAppLink,
+} from "@/components/analytics/analytics-trackers";
 import { AdvertisementDescription } from "@/components/advertisement/advertisement-description";
 import { AdvertisementGallery } from "@/components/advertisement/advertisement-gallery";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +63,7 @@ export async function AdvertisementDetailView({
 
   return (
     <section className="container mx-auto px-4 py-6 pb-24 md:pb-8">
+      <TrackAdView advertisementId={advertisement.id} />
       <div className="mb-4 flex items-center justify-between gap-2">
         <Link
           href="/buscar"
@@ -161,19 +166,27 @@ export async function AdvertisementDetailView({
 
           <div className="hidden flex-wrap gap-2 md:flex">
             <Button variant="whatsapp" size="lg" className="w-full sm:w-auto" asChild>
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+              <TrackedWhatsAppLink
+                href={whatsappLink}
+                advertisementId={advertisement.id}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-whatsapp px-8 text-sm font-medium text-whatsapp-foreground"
+              >
                 <MessageCircle className="h-5 w-5" />
                 {secondaryLink
                   ? primaryLabel
                   : "Entrar em contato via WhatsApp"}
-              </a>
+              </TrackedWhatsAppLink>
             </Button>
             {secondaryLink && (
               <Button variant="whatsapp" size="lg" className="w-full sm:w-auto" asChild>
-                <a href={secondaryLink} target="_blank" rel="noopener noreferrer">
+                <TrackedWhatsAppLink
+                  href={secondaryLink}
+                  advertisementId={advertisement.id}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-whatsapp px-8 text-sm font-medium text-whatsapp-foreground"
+                >
                   <MessageCircle className="h-5 w-5" />
                   {secondaryLabel}
-                </a>
+                </TrackedWhatsAppLink>
               </Button>
             )}
           </div>
@@ -221,7 +234,10 @@ export async function AdvertisementDetailView({
         </Card>
       </div>
 
-      <StickyWhatsAppCta contacts={stickyContacts} />
+      <StickyWhatsAppCta
+        advertisementId={advertisement.id}
+        contacts={stickyContacts}
+      />
     </section>
   );
 }

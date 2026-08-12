@@ -11,6 +11,7 @@ import {
   ScrollText,
   Receipt,
   Home,
+  BarChart3,
   Handshake,
   Search,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { href: "/admin/leads", label: "Leads", icon: Handshake },
   { href: "/admin/usuarios", label: "Usuários", icon: Users },
   { href: "/admin/anuncios", label: "Anúncios", icon: Megaphone },
+  { href: "/admin/relatorios", label: "Relatórios", icon: BarChart3 },
   { href: "/admin/categorias", label: "Categorias", icon: Tags },
   { href: "/admin/estados", label: "Estados", icon: Map },
   { href: "/admin/cidades", label: "Cidades", icon: MapPin },
