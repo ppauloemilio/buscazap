@@ -36,25 +36,25 @@ export const metadata: Metadata = {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
-  const [categoryName, cityNames, neighborhoods, categories] = await Promise.all([
-    params.category
-      ? getCategoryNameBySlug(params.category).then(
-          (name) => name ?? params.category
-        )
-      : Promise.resolve(undefined),
-    listCityNamesForSearch(),
-    listNeighborhoodNamesForSearch(params.city),
-    getCategoriesWithCounts(),
-  ]);
-
-  const results = await searchAdvertisements({
-    query: params.q ?? "",
-    city: params.city,
-    neighborhood: params.neighborhood,
-    category: params.category,
-    premium: params.premium === "true",
-    sort: params.sort,
-  });
+  const [categoryName, cityNames, neighborhoods, categories, results] =
+    await Promise.all([
+      params.category
+        ? getCategoryNameBySlug(params.category).then(
+            (name) => name ?? params.category
+          )
+        : Promise.resolve(undefined),
+      listCityNamesForSearch(),
+      listNeighborhoodNamesForSearch(params.city),
+      getCategoriesWithCounts(),
+      searchAdvertisements({
+        query: params.q ?? "",
+        city: params.city,
+        neighborhood: params.neighborhood,
+        category: params.category,
+        premium: params.premium === "true",
+        sort: params.sort,
+      }),
+    ]);
 
   const filterParams = {
     query: params.q,

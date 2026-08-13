@@ -80,6 +80,11 @@ model Advertisement {
   images           AdvertisementImage[]
   reviews          Review[]
   analyticsEvents  AnalyticsEvent[]
+
+  @@index([status, category])
+  @@index([status, city])
+  @@index([status, createdAt])
+  @@index([providerId])
 }
 
 model AnalyticsEvent {

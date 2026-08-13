@@ -45,10 +45,30 @@ function normalizeSearchText(value: string): string {
 
 async function enrichWithPublicHref<
   T extends { id: string; title: string; category: string; slug?: string },
->(ads: readonly T[]): Promise<Array<T & { slug: string; publicHref: string }>> {
-  const categorySlugs = new Map<string, string>();
+>(
+  ads: readonly T[],
+  options?: {
+    readonly persistMissingSlug?: boolean;
+    readonly knownCategorySlugs?: ReadonlyMap<string, string>;
+  }
+): Promise<Array<T & { slug: string; publicHref: string }>> {
+  if (ads.length === 0) {
+    return [];
+  }
+
+  const persistMissingSlug = options?.persistMissingSlug ?? false;
+  const categorySlugs = new Map<string, string>(
+    options?.knownCategorySlugs
+      ? [...options.knownCategorySlugs.entries()]
+      : []
+  );
+
+  const missingCategoryNames = [
+    ...new Set(ads.map((ad) => ad.category)),
+  ].filter((name) => !categorySlugs.has(name));
+
   await Promise.all(
-    [...new Set(ads.map((ad) => ad.category))].map(async (name) => {
+    missingCategoryNames.map(async (name) => {
       categorySlugs.set(name, await resolveCategorySlugByName(name));
     })
   );
@@ -56,7 +76,8 @@ async function enrichWithPublicHref<
   return Promise.all(
     ads.map(async (ad) => {
       let slug = ad.slug?.trim() || "";
-      if (!slug) {
+
+      if (!slug && persistMissingSlug) {
         slug = await ensureUniqueAdvertisementSlug(ad.title, ad.id);
         await prisma.advertisement
           .update({ where: { id: ad.id }, data: { slug } })
@@ -66,10 +87,15 @@ async function enrichWithPublicHref<
       const categorySlug =
         categorySlugs.get(ad.category) ?? slugify(ad.category);
 
+      // Sem slug persistido: usa rota por ID (redireciona para SEO quando existir).
+      const publicHref = slug
+        ? `/${categorySlug}/${slug}`
+        : `/anuncio/${ad.id}`;
+
       return {
         ...ad,
-        slug,
-        publicHref: `/${categorySlug}/${slug}`,
+        slug: slug || ad.id,
+        publicHref,
       };
     })
   );
@@ -83,11 +109,53 @@ export async function findPublicAdvertisements(
 ) {
   markDataFetchDynamic();
 
+  const categoryFilter = filters.category?.trim();
+  let categoryName: string | undefined;
+  let categorySlugFallback: string | undefined;
+
+  if (categoryFilter) {
+    const catalogCategory = await getCategoryBySlug(categoryFilter);
+    if (catalogCategory?.name) {
+      categoryName = catalogCategory.name;
+    } else {
+      categorySlugFallback = categoryFilter;
+    }
+  }
+
+  const cityFilter = filters.city?.trim();
+  const neighborhoodFilter = filters.neighborhood?.trim();
+  const queryFilter = filters.query?.trim();
+  const now = new Date();
+
   const advertisements = await prisma.advertisement.findMany({
     where: {
       status: AdvertisementStatus.APPROVED,
       provider: { status: ProviderStatus.ACTIVE },
       ...(filters.type ? { type: filters.type } : {}),
+      ...(categoryName
+        ? { category: { equals: categoryName, mode: "insensitive" } }
+        : {}),
+      ...(cityFilter
+        ? { city: { contains: cityFilter, mode: "insensitive" } }
+        : {}),
+      ...(neighborhoodFilter
+        ? {
+            neighborhood: {
+              contains: neighborhoodFilter,
+              mode: "insensitive",
+            },
+          }
+        : {}),
+      ...(filters.premium ? { premiumExpiresAt: { gt: now } } : {}),
+      ...(queryFilter
+        ? {
+            OR: [
+              { title: { contains: queryFilter, mode: "insensitive" } },
+              { description: { contains: queryFilter, mode: "insensitive" } },
+              { category: { contains: queryFilter, mode: "insensitive" } },
+            ],
+          }
+        : {}),
     },
     include: {
       images: {
@@ -101,27 +169,28 @@ export async function findPublicAdvertisements(
   let results = await enrichWithPublicHref(
     advertisements
       .map(mapAdvertisementToEntity)
-      .filter((ad) => ad.status !== AdvertisementStatus.BLOCKED)
+      .filter((ad) => ad.status !== AdvertisementStatus.BLOCKED),
+    {
+      persistMissingSlug: false,
+      knownCategorySlugs:
+        categoryName && categoryFilter
+          ? new Map([[categoryName, categoryFilter]])
+          : undefined,
+    }
   );
 
-  if (filters.city?.trim()) {
-    const cityQuery = normalizeSearchText(filters.city.trim());
-    results = results.filter((ad) =>
-      normalizeSearchText(ad.location.city).includes(cityQuery)
+  if (categorySlugFallback) {
+    const expected = normalizeSearchText(categorySlugFallback);
+    results = results.filter(
+      (ad) =>
+        normalizeSearchText(ad.category) === expected ||
+        normalizeSearchText(slugify(ad.category)) === expected
     );
   }
 
-  if (filters.neighborhood?.trim()) {
-    const neighborhoodQuery = normalizeSearchText(filters.neighborhood.trim());
-    results = results.filter((ad) =>
-      normalizeSearchText(ad.location.neighborhood ?? "").includes(
-        neighborhoodQuery
-      )
-    );
-  }
-
-  if (filters.query) {
-    const query = normalizeSearchText(filters.query);
+  // Refino com normalização de acentos (ex.: "acai" encontra "Açaí").
+  if (queryFilter) {
+    const query = normalizeSearchText(queryFilter);
     results = results.filter(
       (ad) =>
         normalizeSearchText(ad.title).includes(query) ||
@@ -130,23 +199,20 @@ export async function findPublicAdvertisements(
     );
   }
 
-  if (filters.category) {
-    const categoryFilter = filters.category.trim();
-    const catalogCategory = await getCategoryBySlug(categoryFilter);
-    const expectedName = catalogCategory?.name;
-
-    results = results.filter((ad) => {
-      if (expectedName) {
-        return ad.category === expectedName;
-      }
-      return (
-        normalizeSearchText(ad.category) === normalizeSearchText(categoryFilter)
-      );
-    });
+  if (cityFilter) {
+    const cityQuery = normalizeSearchText(cityFilter);
+    results = results.filter((ad) =>
+      normalizeSearchText(ad.location.city).includes(cityQuery)
+    );
   }
 
-  if (filters.premium) {
-    results = results.filter((ad) => ad.isPremium);
+  if (neighborhoodFilter) {
+    const neighborhoodQuery = normalizeSearchText(neighborhoodFilter);
+    results = results.filter((ad) =>
+      normalizeSearchText(ad.location.neighborhood ?? "").includes(
+        neighborhoodQuery
+      )
+    );
   }
 
   if (filters.sort === "recent") {
