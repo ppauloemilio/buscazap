@@ -26,7 +26,7 @@ export function validateImageFile(file: File, label: string): string | null {
   }
 
   if (!isAllowedImageMimeType(file.type)) {
-    return `${label} deve ser JPG, PNG ou WebP`;
+    return `${label} deve ser JPG, PNG ou WebP (HEIC do iPhone não é aceito)`;
   }
 
   if (file.size > ADVERTISEMENT_IMAGE_LIMITS.maxFileSizeBytes) {

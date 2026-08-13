@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { adminCreateAdvertisementAction } from "@/actions/admin-actions";
 import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
-import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES } from "@/config/pricing";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
@@ -13,8 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Category } from "@/domain/entities";
 import { AdvertisementType, ServiceArea } from "@/domain/enums";
+import { ImageFileInput } from "@/components/advertisement/image-file-input";
 import { ImagePlus } from "lucide-react";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
+import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
 
 interface AdminCreateAdvertisementFormProps {
   readonly providerId: string;
@@ -24,8 +25,6 @@ interface AdminCreateAdvertisementFormProps {
   readonly canPublish: boolean;
   readonly categories: readonly Category[];
 }
-
-const ACCEPT = ADVERTISEMENT_IMAGE_LIMITS.allowedMimeTypes.join(",");
 
 export function AdminCreateAdvertisementForm({
   providerId,
@@ -153,17 +152,11 @@ export function AdminCreateAdvertisementForm({
               <label className="mb-1 block text-xs font-medium">Foto de capa (opcional)</label>
               <div className="flex items-center gap-2 rounded-lg border border-dashed p-2">
                 <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <input
-                    name="coverImage"
-                    type="file"
-                    accept={ACCEPT}
-                    className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
-                  />
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    JPG, PNG ou WebP · máx. 5 MB. Você também pode adicionar/trocar depois na edição.
-                  </p>
-                </div>
+                <ImageFileInput
+                  name="coverImage"
+                  label="Foto de capa"
+                  hint={`JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}. Você também pode adicionar/trocar depois na edição.`}
+                />
               </div>
             </div>
           </div>

@@ -2,9 +2,9 @@
 
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PRICING } from "@/config/pricing";
+import { ImageFileInput } from "@/components/advertisement/image-file-input";
+import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
 import { ImagePlus } from "lucide-react";
-
-const ACCEPT = ADVERTISEMENT_IMAGE_LIMITS.allowedMimeTypes.join(",");
 
 export function AdvertisementImageFields() {
   return (
@@ -15,19 +15,13 @@ export function AdvertisementImageFields() {
         </label>
         <div className="flex items-center gap-2 rounded-lg border border-dashed p-2.5">
           <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <div className="min-w-0 flex-1">
-            <input
-              id="coverImage"
-              name="coverImage"
-              type="file"
-              accept={ACCEPT}
-              required
-              className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
-            />
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              JPG, PNG ou WebP. Máximo 5 MB. Aparece na listagem e na página do anúncio.
-            </p>
-          </div>
+          <ImageFileInput
+            id="coverImage"
+            name="coverImage"
+            label="Foto de capa"
+            required
+            hint={`JPG, PNG ou WebP. Máximo ${formatMaxImageSizeLabel()}. Aparece na listagem e na página do anúncio.`}
+          />
         </div>
       </div>
 

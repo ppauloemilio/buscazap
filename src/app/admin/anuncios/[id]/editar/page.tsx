@@ -6,7 +6,6 @@ import { findAdvertisementForAdminEdit } from "@/application/services/admin-serv
 import { resolveAdvertisementNotifyContext } from "@/application/services/advertisement-notify-service";
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
 import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
-import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES } from "@/config/pricing";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminAdvertisementNotifyActions } from "@/features/admin/components/admin-advertisement-notify-actions";
@@ -14,12 +13,14 @@ import { AdvertisementCategoryFields } from "@/features/panel/components/adverti
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
+import { ImageFileInput } from "@/components/advertisement/image-file-input";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdvertisementType } from "@/domain/enums";
+import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
 
 interface AdminEditAdvertisementPageProps {
   readonly params: Promise<{ readonly id: string }>;
@@ -30,8 +31,6 @@ interface AdminEditAdvertisementPageProps {
     readonly password?: string;
   }>;
 }
-
-const ACCEPT = ADVERTISEMENT_IMAGE_LIMITS.allowedMimeTypes.join(",");
 
 export default async function AdminEditAdvertisementPage({
   params,
@@ -213,7 +212,9 @@ export default async function AdminEditAdvertisementPage({
         />
 
         <div>
-          <label className="mb-1 block text-sm font-medium">Foto de capa</label>
+          <label htmlFor="coverImage" className="mb-1 block text-sm font-medium">
+            Foto de capa
+          </label>
           {advertisement.coverImageUrl && (
             <img
               src={advertisement.coverImageUrl}
@@ -221,17 +222,16 @@ export default async function AdminEditAdvertisementPage({
               className="mb-2 h-40 w-full max-w-sm rounded-md border bg-muted object-contain"
             />
           )}
-          <input
+          <ImageFileInput
+            id="coverImage"
             name="coverImage"
-            type="file"
-            accept={ACCEPT}
-            className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
+            label="Foto de capa"
+            hint={
+              advertisement.coverImageUrl
+                ? `Envie um arquivo novo para substituir a capa. JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}.`
+                : `Opcional. JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}.`
+            }
           />
-          <p className="mt-1 text-xs text-muted-foreground">
-            {advertisement.coverImageUrl
-              ? "Envie um arquivo novo para substituir a capa."
-              : "Opcional. JPG, PNG ou WebP · máx. 5 MB."}
-          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">

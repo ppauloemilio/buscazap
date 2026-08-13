@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { ImagePlus, Trash2 } from "lucide-react";
@@ -8,10 +9,13 @@ import {
   updateAdvertisementImagesAction,
 } from "@/actions/provider-actions";
 import { AdvertisementImage } from "@/components/advertisement/advertisement-image";
+import {
+  ImageFileInput,
+  validateFormImageInputs,
+} from "@/components/advertisement/image-file-input";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { Button } from "@/components/ui/button";
-
-const ACCEPT = ADVERTISEMENT_IMAGE_LIMITS.allowedMimeTypes.join(",");
+import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
 
 interface GalleryImage {
   readonly id: string;
@@ -60,6 +64,7 @@ export function AdvertisementImagesEditor({
   galleryImages,
   premiumActive,
 }: AdvertisementImagesEditorProps) {
+  const [formError, setFormError] = useState<string | null>(null);
   const remainingGallerySlots = Math.max(
     0,
     ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages - galleryImages.length
@@ -102,6 +107,15 @@ export function AdvertisementImagesEditor({
         action={updateAdvertisementImagesAction}
         encType="multipart/form-data"
         className="space-y-3"
+        onSubmit={(event) => {
+          const error = validateFormImageInputs(event.currentTarget);
+          if (error) {
+            event.preventDefault();
+            setFormError(error);
+            return;
+          }
+          setFormError(null);
+        }}
       >
         <input type="hidden" name="advertisementId" value={advertisementId} />
 
@@ -122,21 +136,16 @@ export function AdvertisementImagesEditor({
           )}
           <div className="flex items-center gap-2 rounded-lg border border-dashed p-2.5">
             <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0 flex-1">
-              <input
-                id="coverImage"
-                name="coverImage"
-                type="file"
-                accept={ACCEPT}
-                className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
-              />
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {coverImage
-                  ? "Envie uma nova imagem para substituir a capa atual."
-                  : "Adicione a foto de capa do anúncio."}{" "}
-                JPG, PNG ou WebP. Máximo 5 MB.
-              </p>
-            </div>
+            <ImageFileInput
+              id="coverImage"
+              name="coverImage"
+              label="Foto de capa"
+              hint={
+                coverImage
+                  ? `Envie uma nova imagem para substituir a capa atual. JPG, PNG ou WebP. Máximo ${formatMaxImageSizeLabel()}.`
+                  : `Adicione a foto de capa do anúncio. JPG, PNG ou WebP. Máximo ${formatMaxImageSizeLabel()}.`
+              }
+            />
           </div>
         </div>
 
@@ -156,22 +165,13 @@ export function AdvertisementImagesEditor({
             {remainingGallerySlots > 0 ? (
               <div className="flex items-center gap-2 rounded-lg border border-dashed p-2.5">
                 <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <input
-                    id="galleryImages"
-                    name="galleryImages"
-                    type="file"
-                    accept={ACCEPT}
-                    multiple
-                    className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
-                  />
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    Adicione até {remainingGallerySlots} foto
-                    {remainingGallerySlots === 1 ? "" : "s"} extra
-                    {remainingGallerySlots === 1 ? "" : "s"} para demonstrar seu produto ou
-                    serviço.
-                  </p>
-                </div>
+                <ImageFileInput
+                  id="galleryImages"
+                  name="galleryImages"
+                  label="Foto da galeria"
+                  multiple
+                  hint={`Adicione até ${remainingGallerySlots} foto${remainingGallerySlots === 1 ? "" : "s"} extra${remainingGallerySlots === 1 ? "" : "s"} (máx. ${formatMaxImageSizeLabel()} cada).`}
+                />
               </div>
             ) : (
               <p className="rounded-lg border bg-muted/40 p-2.5 text-sm text-muted-foreground">
@@ -180,6 +180,12 @@ export function AdvertisementImagesEditor({
               </p>
             )}
           </div>
+        )}
+
+        {formError && (
+          <p className="rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive" role="alert">
+            {formError}
+          </p>
         )}
 
         <div className="flex gap-2">

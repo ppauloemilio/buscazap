@@ -9,14 +9,15 @@ import {
 } from "lucide-react";
 import { submitProviderLeadAction } from "@/actions/provider-lead-actions";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
+import { ImageFileInput } from "@/components/advertisement/image-file-input";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PILOT_CITIES } from "@/config/pricing";
 import { ServiceArea } from "@/domain/enums";
+import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
 
 export const metadata: Metadata = {
   title: "Pré-lançamento para anunciantes",
@@ -30,8 +31,6 @@ interface PartnerPageProps {
     readonly sent?: string;
   }>;
 }
-
-const ACCEPT = ADVERTISEMENT_IMAGE_LIMITS.allowedMimeTypes.join(",");
 
 const BENEFITS = [
   {
@@ -265,17 +264,13 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                   <label htmlFor="photo" className="mb-1 block text-sm font-medium">
                     Foto do anúncio
                   </label>
-                  <input
+                  <ImageFileInput
                     id="photo"
                     name="photo"
-                    type="file"
-                    accept={ACCEPT}
+                    label="Foto"
                     required
-                    className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
+                    hint={`JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}`}
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    JPG, PNG ou WebP · máx. 5 MB
-                  </p>
                 </div>
 
                 <Button type="submit" variant="whatsapp" className="w-full">
