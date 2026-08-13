@@ -67,6 +67,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   };
 
   const emptyTitle = buildEmptySearchTitle(filterParams);
+  const searchReturnPath = buildSearchHref({
+    query: params.q,
+    city: params.city,
+    neighborhood: params.neighborhood,
+    category: params.category,
+    type: params.type,
+    premium: params.premium === "true",
+    sort: params.sort,
+  });
 
   return (
     <>
@@ -93,7 +102,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         {results.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
             {results.map((ad) => (
-              <AdvertisementCard key={ad.id} advertisement={ad} />
+              <AdvertisementCard
+                key={ad.id}
+                advertisement={ad}
+                returnTo={searchReturnPath}
+              />
             ))}
           </div>
         ) : (

@@ -16,12 +16,17 @@ import {
   formatRating,
   getAdvertisementTypeLabel,
 } from "@/shared/utils/format";
+import { buildAdvertisementHref } from "@/shared/utils/search-preferences";
 
 interface AdvertisementCardProps {
   readonly advertisement: Advertisement;
+  readonly returnTo?: string;
 }
 
-export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
+export function AdvertisementCard({
+  advertisement,
+  returnTo,
+}: AdvertisementCardProps) {
   const primaryLabel = advertisement.whatsappLabel?.trim() || "WhatsApp";
   const whatsappLink = buildWhatsAppLink(
     advertisement.whatsappNumber,
@@ -43,6 +48,11 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
   const serviceAreaLabel = getServiceAreaLabel(advertisement.serviceArea);
 
   const hasReviews = advertisement.reviewCount > 0;
+  const detailHref = buildAdvertisementHref({
+    publicHref: advertisement.publicHref,
+    id: advertisement.id,
+    returnTo,
+  });
 
   return (
     <Card className="group overflow-hidden transition-shadow hover:shadow-md">
@@ -90,7 +100,7 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
           )}
         </div>
 
-        <Link href={advertisement.publicHref ?? `/anuncio/${advertisement.id}`}>
+        <Link href={detailHref}>
           <h3 className="line-clamp-1 text-sm font-semibold text-foreground transition-colors hover:text-whatsapp">
             {advertisement.title}
           </h3>
@@ -157,7 +167,7 @@ export function AdvertisementCard({ advertisement }: AdvertisementCardProps) {
             className="h-8 px-2 text-[11px]"
             asChild
           >
-            <Link href={advertisement.publicHref ?? `/anuncio/${advertisement.id}`}>Ver</Link>
+            <Link href={detailHref}>Ver</Link>
           </Button>
         </div>
       </CardContent>

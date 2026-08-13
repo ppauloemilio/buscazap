@@ -9,6 +9,9 @@ interface SeoAdvertisementPageProps {
     readonly categorySlug: string;
     readonly adSlug: string;
   }>;
+  readonly searchParams: Promise<{
+    readonly from?: string;
+  }>;
 }
 
 export async function generateMetadata({
@@ -46,8 +49,10 @@ export async function generateMetadata({
 
 export default async function SeoAdvertisementPage({
   params,
+  searchParams,
 }: SeoAdvertisementPageProps) {
   const { categorySlug, adSlug } = await params;
+  const { from } = await searchParams;
 
   if (isReservedTopLevelSegment(categorySlug)) {
     notFound();
@@ -62,5 +67,7 @@ export default async function SeoAdvertisementPage({
     notFound();
   }
 
-  return <AdvertisementDetailView advertisement={advertisement} />;
+  return (
+    <AdvertisementDetailView advertisement={advertisement} returnTo={from} />
+  );
 }

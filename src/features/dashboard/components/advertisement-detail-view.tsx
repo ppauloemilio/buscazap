@@ -25,12 +25,16 @@ import {
   getAdvertisementTypeLabel,
 } from "@/shared/utils/format";
 
+import { resolveReturnPath } from "@/shared/utils/search-preferences";
+
 interface AdvertisementDetailViewProps {
   readonly advertisement: Advertisement;
+  readonly returnTo?: string;
 }
 
 export async function AdvertisementDetailView({
   advertisement,
+  returnTo,
 }: AdvertisementDetailViewProps) {
   const reviews = await listAdvertisementReviews(advertisement.id);
 
@@ -60,17 +64,18 @@ export async function AdvertisementDetailView({
   });
   const serviceAreaLabel = getServiceAreaLabel(advertisement.serviceArea);
   const hasReviews = advertisement.reviewCount > 0;
+  const backHref = resolveReturnPath(returnTo);
 
   return (
     <section className="container mx-auto px-4 py-6 pb-24 md:pb-8">
       <TrackAdView advertisementId={advertisement.id} />
       <div className="mb-4 flex items-center justify-between gap-2">
         <Link
-          href="/buscar"
+          href={backHref}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar para busca
+          Voltar
         </Link>
         <FavoriteButton advertisementId={advertisement.id} size="sm" />
       </div>

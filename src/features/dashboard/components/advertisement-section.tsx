@@ -8,6 +8,7 @@ interface AdvertisementSectionProps {
   readonly description?: string;
   readonly advertisements: readonly Advertisement[];
   readonly viewAllHref?: string;
+  readonly returnTo?: string;
 }
 
 export function AdvertisementSection({
@@ -15,6 +16,7 @@ export function AdvertisementSection({
   description,
   advertisements,
   viewAllHref,
+  returnTo = "/",
 }: AdvertisementSectionProps) {
   if (advertisements.length === 0) {
     return null;
@@ -45,7 +47,11 @@ export function AdvertisementSection({
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {advertisements.map((ad) => (
-            <AdvertisementCard key={ad.id} advertisement={ad} />
+            <AdvertisementCard
+              key={ad.id}
+              advertisement={ad}
+              returnTo={returnTo}
+            />
           ))}
         </div>
       </div>

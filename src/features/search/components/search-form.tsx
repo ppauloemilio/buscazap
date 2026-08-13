@@ -62,9 +62,15 @@ export function SearchForm({
       return;
     }
 
+    if (initialCategory) {
+      setCity("");
+      setNeighborhood("");
+      return;
+    }
+
     const preferredCity = getPreferredCity();
     if (preferredCity) setCity(preferredCity);
-  }, [initialCity]);
+  }, [initialCity, initialCategory]);
 
   function navigate(next?: {
     readonly query?: string;
@@ -84,16 +90,11 @@ export function SearchForm({
       city: resolvedCity,
       neighborhood: resolvedCity ? resolvedNeighborhood : undefined,
       category: resolvedCategory === "all" ? undefined : resolvedCategory,
+      premium: initialPremium,
+      sort: initialSort,
     });
 
-    const params = new URLSearchParams(
-      href.includes("?") ? href.split("?")[1] : ""
-    );
-    if (initialPremium) params.set("premium", "true");
-    if (initialSort) params.set("sort", initialSort);
-
-    const qs = params.toString();
-    router.push(qs ? `/buscar?${qs}` : "/buscar");
+    router.push(href);
   }
 
   function handleSearch(e: React.FormEvent) {
@@ -165,7 +166,9 @@ export function SearchForm({
               type="button"
               onClick={() => {
                 setCategory("all");
-                navigate({ category: "all" });
+                setCity("");
+                setNeighborhood("");
+                navigate({ category: "all", city: "", neighborhood: "" });
               }}
               className={`rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
                 category === "all"
@@ -181,7 +184,9 @@ export function SearchForm({
                 type="button"
                 onClick={() => {
                   setCategory(item.slug);
-                  navigate({ category: item.slug });
+                  setCity("");
+                  setNeighborhood("");
+                  navigate({ category: item.slug, city: "", neighborhood: "" });
                 }}
                 className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
                   category === item.slug

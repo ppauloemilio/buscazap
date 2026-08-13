@@ -151,7 +151,9 @@ export function HeroSearch({
                 type="button"
                 onClick={() => {
                   setCategory("all");
-                  goToSearch({ category: "all" });
+                  setCity("");
+                  setNeighborhood("");
+                  goToSearch({ category: "all", city: "", neighborhood: "" });
                 }}
                 className={`rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
                   category === "all"
@@ -167,7 +169,13 @@ export function HeroSearch({
                   type="button"
                   onClick={() => {
                     setCategory(item.slug);
-                    goToSearch({ category: item.slug });
+                    setCity("");
+                    setNeighborhood("");
+                    goToSearch({
+                      category: item.slug,
+                      city: "",
+                      neighborhood: "",
+                    });
                   }}
                   className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
                     category === item.slug

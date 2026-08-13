@@ -32,6 +32,8 @@ export function buildSearchHref(input: {
   readonly neighborhood?: string;
   readonly category?: string;
   readonly type?: string;
+  readonly premium?: boolean;
+  readonly sort?: string;
 }): string {
   const params = new URLSearchParams();
 
@@ -42,7 +44,42 @@ export function buildSearchHref(input: {
   }
   if (input.category?.trim()) params.set("category", input.category.trim());
   if (input.type && input.type !== "all") params.set("type", input.type);
+  if (input.premium) params.set("premium", "true");
+  if (input.sort?.trim()) params.set("sort", input.sort.trim());
 
   const queryString = params.toString();
   return queryString ? `/buscar?${queryString}` : "/buscar";
+}
+
+export function isSafeInternalReturnPath(path: string): boolean {
+  if (!path.startsWith("/")) return false;
+  if (path.startsWith("//")) return false;
+  if (path.includes("://")) return false;
+  return true;
+}
+
+export function resolveReturnPath(
+  path: string | undefined,
+  fallback = "/buscar"
+): string {
+  if (path && isSafeInternalReturnPath(path)) {
+    return path;
+  }
+
+  return fallback;
+}
+
+export function buildAdvertisementHref(input: {
+  readonly publicHref?: string | null;
+  readonly id: string;
+  readonly returnTo?: string;
+}): string {
+  const base = input.publicHref ?? `/anuncio/${input.id}`;
+
+  if (!input.returnTo || !isSafeInternalReturnPath(input.returnTo)) {
+    return base;
+  }
+
+  const separator = base.includes("?") ? "&" : "?";
+  return `${base}${separator}from=${encodeURIComponent(input.returnTo)}`;
 }
