@@ -14,7 +14,6 @@ import {
   getCategoriesWithCounts,
 } from "@/application/services/catalog-service";
 import {
-  getDefaultCatalogLocation,
   listActiveCatalogLocationOptions,
 } from "@/application/services/catalog-location";
 import {
@@ -55,10 +54,6 @@ export default async function NewAdvertisementPage({
     getCategoriesWithCounts(),
     listActiveCatalogLocationOptions(),
   ]);
-  const defaultLocation = getDefaultCatalogLocation(
-    locationOptions.cities,
-    locationOptions.states
-  );
 
   return (
     <PanelLayout>
@@ -115,8 +110,6 @@ export default async function NewAdvertisementPage({
         <LocationFields
           states={locationOptions.states}
           cities={locationOptions.cities}
-          defaultCity={defaultLocation.city}
-          defaultState={defaultLocation.state}
         />
 
         <div className="grid gap-2 sm:grid-cols-2">

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { adminCreateAdvertisementAction } from "@/actions/admin-actions";
 import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import type { CatalogLocationOption } from "@/shared/utils/catalog-location";
-import { getDefaultCatalogLocation } from "@/shared/utils/catalog-location";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { LocationFields } from "@/features/panel/components/location-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
@@ -41,7 +40,6 @@ export function AdminCreateAdvertisementForm({
   cities,
 }: AdminCreateAdvertisementFormProps) {
   const [open, setOpen] = useState(defaultOpen);
-  const defaultLocation = getDefaultCatalogLocation(cities, states);
 
   if (!canPublish) {
     return (
@@ -109,8 +107,6 @@ export function AdminCreateAdvertisementForm({
                 compact
                 states={states}
                 cities={cities}
-                defaultCity={defaultLocation.city}
-                defaultState={defaultLocation.state}
                 cityId={`city-${providerId}`}
                 stateId={`state-${providerId}`}
               />

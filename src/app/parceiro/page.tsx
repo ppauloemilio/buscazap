@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { submitProviderLeadAction } from "@/actions/provider-lead-actions";
 import {
-  getDefaultCatalogLocation,
   listActiveCatalogLocationOptions,
 } from "@/application/services/catalog-location";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
@@ -57,10 +56,6 @@ const BENEFITS = [
 export default async function PartnerLeadPage({ searchParams }: PartnerPageProps) {
   const params = await searchParams;
   const locationOptions = await listActiveCatalogLocationOptions();
-  const defaultLocation = getDefaultCatalogLocation(
-    locationOptions.cities,
-    locationOptions.states
-  );
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[hsl(150_25%_97%)]">
@@ -195,8 +190,6 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                 <LocationFields
                   states={locationOptions.states}
                   cities={locationOptions.cities}
-                  defaultCity={defaultLocation.city}
-                  defaultState={defaultLocation.state}
                 />
 
                 <div>

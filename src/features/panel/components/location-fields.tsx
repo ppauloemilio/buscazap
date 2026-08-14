@@ -1,8 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Input } from "@/components/ui/input";
 import type { CatalogLocationOption } from "@/shared/utils/catalog-location";
+
+const CITY_VALUE_SEP = "|||";
+
+function encodeCityValue(city: CatalogLocationOption): string {
+  return `${city.name}${CITY_VALUE_SEP}${city.state}`;
+}
+
+function decodeCityValue(value: string): CatalogLocationOption | null {
+  const separatorIndex = value.indexOf(CITY_VALUE_SEP);
+  if (separatorIndex <= 0) return null;
+  const name = value.slice(0, separatorIndex);
+  const state = value.slice(separatorIndex + CITY_VALUE_SEP.length);
+  if (!name || !state) return null;
+  return { name, state };
+}
 
 interface LocationFieldsProps {
   readonly states: readonly { readonly uf: string; readonly name: string }[];
@@ -29,19 +43,30 @@ export function LocationFields({
   compact = false,
   required = true,
 }: LocationFieldsProps) {
-  const initialState =
-    defaultState.trim().toUpperCase() ||
-    (cities.find((city) => city.name === defaultCity)?.state ??
-      states[0]?.uf ??
-      "");
+  const initialEncoded =
+    defaultCity.trim() && defaultState.trim()
+      ? encodeCityValue({
+          name: defaultCity.trim(),
+          state: defaultState.trim().toUpperCase(),
+        })
+      : "";
 
-  const [selectedState, setSelectedState] = useState(initialState);
-  const [city, setCity] = useState(defaultCity);
+  const [selectedValue, setSelectedValue] = useState(initialEncoded);
 
-  const citiesForState = useMemo(() => {
-    if (!selectedState) return cities;
-    return cities.filter((item) => item.state === selectedState);
-  }, [cities, selectedState]);
+  const selected = useMemo(
+    () => (selectedValue ? decodeCityValue(selectedValue) : null),
+    [selectedValue]
+  );
+
+  const sortedCities = useMemo(
+    () =>
+      [...cities].sort((a, b) => {
+        const byName = a.name.localeCompare(b.name, "pt-BR");
+        if (byName !== 0) return byName;
+        return a.state.localeCompare(b.state, "pt-BR");
+      }),
+    [cities]
+  );
 
   const labelClass = compact
     ? "mb-1 block text-xs font-medium"
@@ -55,20 +80,25 @@ export function LocationFields({
         <label htmlFor={cityId} className={labelClass}>
           Cidade
         </label>
-        <Input
+        <select
           id={cityId}
-          name={cityName}
-          list={`${cityId}-options`}
+          className={selectClass}
           required={required}
-          value={city}
-          onChange={(event) => setCity(event.target.value)}
-          placeholder="Digite ou escolha a cidade"
-        />
-        <datalist id={`${cityId}-options`}>
-          {citiesForState.map((item) => (
-            <option key={`${item.state}-${item.name}`} value={item.name} />
+          value={selectedValue}
+          onChange={(event) => setSelectedValue(event.target.value)}
+        >
+          <option value="">Selecione a cidade</option>
+          {sortedCities.map((item) => (
+            <option
+              key={`${item.state}-${item.name}`}
+              value={encodeCityValue(item)}
+            >
+              {item.name} ({item.state})
+            </option>
           ))}
-        </datalist>
+        </select>
+        <input type="hidden" name={cityName} value={selected?.name ?? ""} />
+        <input type="hidden" name={stateName} value={selected?.state ?? ""} />
       </div>
       <div>
         <label htmlFor={stateId} className={labelClass}>
@@ -76,30 +106,21 @@ export function LocationFields({
         </label>
         <select
           id={stateId}
-          name={stateName}
           className={selectClass}
-          required={required}
-          value={selectedState}
-          onChange={(event) => {
-            const nextState = event.target.value;
-            setSelectedState(nextState);
-            const stillValid = cities.some(
-              (item) =>
-                item.state === nextState &&
-                item.name.toLowerCase() === city.trim().toLowerCase()
-            );
-            if (!stillValid) setCity("");
-          }}
+          disabled
+          value={selected?.state ?? ""}
+          aria-label="UF preenchida pela cidade"
         >
-          {states.length === 0 ? (
-            <option value="">Nenhum estado ativo</option>
-          ) : (
-            states.map((state) => (
-              <option key={state.uf} value={state.uf}>
-                {state.uf}
-              </option>
-            ))
-          )}
+          <option value="">—</option>
+          {states.map((state) => (
+            <option key={state.uf} value={state.uf}>
+              {state.uf}
+            </option>
+          ))}
+          {selected?.state &&
+            !states.some((state) => state.uf === selected.state) && (
+              <option value={selected.state}>{selected.state}</option>
+            )}
         </select>
       </div>
     </div>
