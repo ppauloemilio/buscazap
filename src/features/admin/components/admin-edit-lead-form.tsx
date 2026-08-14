@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { adminEditProviderLeadAction } from "@/actions/provider-lead-actions";
+import type { CatalogLocationOption } from "@/shared/utils/catalog-location";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PILOT_CITIES } from "@/config/pricing";
+import { LocationFields } from "@/features/panel/components/location-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
@@ -26,9 +27,15 @@ interface AdminEditLeadFormProps {
     readonly adTitle: string;
     readonly description: string | null;
   };
+  readonly states: readonly { readonly uf: string; readonly name: string }[];
+  readonly cities: readonly CatalogLocationOption[];
 }
 
-export function AdminEditLeadForm({ lead }: AdminEditLeadFormProps) {
+export function AdminEditLeadForm({
+  lead,
+  states,
+  cities,
+}: AdminEditLeadFormProps) {
   const [open, setOpen] = useState(false);
   const fieldId = (name: string) => `${name}-${lead.id}`;
 
@@ -50,7 +57,6 @@ export function AdminEditLeadForm({ lead }: AdminEditLeadFormProps) {
           className="w-full basis-full space-y-2.5 rounded-lg border border-dashed p-2.5"
         >
           <input type="hidden" name="leadId" value={lead.id} />
-          <input type="hidden" name="state" value={lead.state || "PA"} />
 
           <p className="text-xs font-medium text-foreground">
             Editar lead (antes de publicar)
@@ -87,45 +93,32 @@ export function AdminEditLeadForm({ lead }: AdminEditLeadFormProps) {
             compact
           />
 
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor={fieldId("city")}
-                className="mb-1 block text-xs font-medium"
-              >
-                Cidade
-              </label>
-              <select
-                id={fieldId("city")}
-                name="city"
-                required
-                defaultValue={lead.city}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-              >
-                {PILOT_CITIES.map((city) => (
-                  <option key={city.name} value={city.name}>
-                    {city.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor={fieldId("neighborhood")}
-                className="mb-1 block text-xs font-medium"
-              >
-                Bairro{" "}
-                <span className="font-normal text-muted-foreground">(opcional)</span>
-              </label>
-              <Input
-                id={fieldId("neighborhood")}
-                name="neighborhood"
-                defaultValue={lead.neighborhood ?? ""}
-                placeholder="Ex.: Nazaré"
-                minLength={2}
-                className="h-9"
-              />
-            </div>
+          <LocationFields
+            compact
+            states={states}
+            cities={cities}
+            defaultCity={lead.city}
+            defaultState={lead.state || "PA"}
+            cityId={fieldId("city")}
+            stateId={fieldId("state")}
+          />
+
+          <div>
+            <label
+              htmlFor={fieldId("neighborhood")}
+              className="mb-1 block text-xs font-medium"
+            >
+              Bairro{" "}
+              <span className="font-normal text-muted-foreground">(opcional)</span>
+            </label>
+            <Input
+              id={fieldId("neighborhood")}
+              name="neighborhood"
+              defaultValue={lead.neighborhood ?? ""}
+              placeholder="Ex.: Nazaré"
+              minLength={2}
+              className="h-9"
+            />
           </div>
 
           <ServiceAreaField

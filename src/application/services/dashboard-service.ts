@@ -8,7 +8,6 @@ import {
   listNeighborhoodsByCityForSearch,
 } from "@/application/services/catalog-service";
 import { getHomepageSettings } from "@/application/services/homepage-settings-service";
-import { PILOT_CITIES } from "@/config/pricing";
 import { prisma } from "@/lib/prisma";
 
 export interface DashboardData {
@@ -48,7 +47,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     stats: {
       totalAdvertisements,
       totalProviders,
-      totalCities: Math.max(catalogStats.citiesCount, PILOT_CITIES.length),
+      totalCities: catalogStats.citiesCount,
       totalCategories: catalogStats.categoriesCount,
     },
     categories,

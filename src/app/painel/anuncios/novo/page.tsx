@@ -12,15 +12,19 @@ import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/p
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import {
   getCategoriesWithCounts,
-  listActiveStates,
 } from "@/application/services/catalog-service";
+import {
+  getDefaultCatalogLocation,
+  listActiveCatalogLocationOptions,
+} from "@/application/services/catalog-location";
 import {
   providerHasAdSlotAvailable,
 } from "@/application/services/advertisement-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatPriceBRL, PILOT_CITIES, PRICING } from "@/config/pricing";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { ServiceArea } from "@/domain/enums";
+import { LocationFields } from "@/features/panel/components/location-fields";
 
 interface NewAdvertisementPageProps {
   readonly searchParams: Promise<{ readonly error?: string }>;
@@ -47,13 +51,13 @@ export default async function NewAdvertisementPage({
   }
 
   const params = await searchParams;
-  const [categories, states] = await Promise.all([
+  const [categories, locationOptions] = await Promise.all([
     getCategoriesWithCounts(),
-    listActiveStates(),
+    listActiveCatalogLocationOptions(),
   ]);
-  const cities = PILOT_CITIES;
-  const pilotStates = states.filter((state) =>
-    PILOT_CITIES.some((city) => city.state === state.uf)
+  const defaultLocation = getDefaultCatalogLocation(
+    locationOptions.cities,
+    locationOptions.states
   );
 
   return (
@@ -108,45 +112,12 @@ export default async function NewAdvertisementPage({
           <AdvertisementCategoryFields categories={categories} />
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          <div className="sm:col-span-2">
-            <label htmlFor="city" className="mb-1 block text-sm font-medium">
-              Cidade
-            </label>
-            <Input
-              id="city"
-              name="city"
-              list="ad-cities"
-              required
-              defaultValue={PILOT_CITIES[0].name}
-            />
-            <datalist id="ad-cities">
-              {cities.map((city) => (
-                <option key={city.name} value={city.name} />
-              ))}
-            </datalist>
-          </div>
-          <div>
-            <label htmlFor="state" className="mb-1 block text-sm font-medium">
-              UF
-            </label>
-            <select
-              id="state"
-              name="state"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              required
-              defaultValue="PA"
-            >
-              {(pilotStates.length > 0 ? pilotStates : [{ id: "PA", uf: "PA" }]).map(
-                (state) => (
-                  <option key={state.id} value={state.uf}>
-                    {state.uf}
-                  </option>
-                )
-              )}
-            </select>
-          </div>
-        </div>
+        <LocationFields
+          states={locationOptions.states}
+          cities={locationOptions.cities}
+          defaultCity={defaultLocation.city}
+          defaultState={defaultLocation.state}
+        />
 
         <div className="grid gap-2 sm:grid-cols-2">
           <div>

@@ -38,6 +38,7 @@ import {
   createAdvertisement,
   deleteProviderAdvertisement,
 } from "@/application/services/advertisement-service";
+import { getCatalogLocationError } from "@/application/services/catalog-location";
 import {
   addAdvertisementGalleryImages,
   removeAdvertisementGalleryImage,
@@ -336,6 +337,14 @@ export async function createAdvertisementAction(formData: FormData) {
     redirect(
       `/painel/anuncios/novo?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
     );
+  }
+
+  const locationError = await getCatalogLocationError(
+    parsed.data.city,
+    parsed.data.state
+  );
+  if (locationError) {
+    redirect(`/painel/anuncios/novo?error=${encodeURIComponent(locationError)}`);
   }
 
   const coverFile = formData.get("coverImage");

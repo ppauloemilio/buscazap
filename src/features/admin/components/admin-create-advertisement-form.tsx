@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { adminCreateAdvertisementAction } from "@/actions/admin-actions";
 import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
-import { PILOT_CITIES } from "@/config/pricing";
+import type { CatalogLocationOption } from "@/shared/utils/catalog-location";
+import { getDefaultCatalogLocation } from "@/shared/utils/catalog-location";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
+import { LocationFields } from "@/features/panel/components/location-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
@@ -24,6 +26,8 @@ interface AdminCreateAdvertisementFormProps {
   readonly defaultOpen?: boolean;
   readonly canPublish: boolean;
   readonly categories: readonly Category[];
+  readonly states: readonly { readonly uf: string; readonly name: string }[];
+  readonly cities: readonly CatalogLocationOption[];
 }
 
 export function AdminCreateAdvertisementForm({
@@ -33,9 +37,11 @@ export function AdminCreateAdvertisementForm({
   defaultOpen = false,
   canPublish,
   categories,
+  states,
+  cities,
 }: AdminCreateAdvertisementFormProps) {
   const [open, setOpen] = useState(defaultOpen);
-  const defaultCity = PILOT_CITIES[0];
+  const defaultLocation = getDefaultCatalogLocation(cities, states);
 
   if (!canPublish) {
     return (
@@ -98,27 +104,15 @@ export function AdminCreateAdvertisementForm({
             <div className="sm:col-span-2">
               <AdvertisementCategoryFields categories={categories} />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium">Cidade</label>
-              <Input
-                name="city"
-                list={`admin-ad-cities-${providerId}`}
-                defaultValue={defaultCity?.name ?? "Belém"}
-                required
-              />
-              <datalist id={`admin-ad-cities-${providerId}`}>
-                {PILOT_CITIES.map((city) => (
-                  <option key={city.name} value={city.name} />
-                ))}
-              </datalist>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium">UF</label>
-              <Input
-                name="state"
-                defaultValue={defaultCity?.state ?? "PA"}
-                maxLength={2}
-                required
+            <div className="sm:col-span-2">
+              <LocationFields
+                compact
+                states={states}
+                cities={cities}
+                defaultCity={defaultLocation.city}
+                defaultState={defaultLocation.state}
+                cityId={`city-${providerId}`}
+                stateId={`state-${providerId}`}
               />
             </div>
             <div>

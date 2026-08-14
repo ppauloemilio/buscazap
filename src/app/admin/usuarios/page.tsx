@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { adminCreateProviderAction } from "@/actions/admin-actions";
 import { listAdminProviders } from "@/application/services/admin-service";
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
+import { listActiveCatalogLocationOptions } from "@/application/services/catalog-location";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminCreateAdvertisementForm } from "@/features/admin/components/admin-create-advertisement-form";
 import { AdminProviderActions } from "@/features/admin/components/admin-provider-actions";
@@ -35,12 +36,13 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   if (!admin) redirect("/admin/entrar");
 
   const params = await searchParams;
-  const [providers, categories] = await Promise.all([
+  const [providers, categories, locationOptions] = await Promise.all([
     listAdminProviders({
       status: params.status,
       subscription: params.subscription,
     }),
     getCategoriesWithCounts(),
+    listActiveCatalogLocationOptions(),
   ]);
 
   function buildFilterUrl(overrides: {
@@ -323,6 +325,8 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                   defaultOpen={provider.advertisementsCount === 0}
                   canPublish={provider.subscriptionActive}
                   categories={categories}
+                  states={locationOptions.states}
+                  cities={locationOptions.cities}
                 />
               </CardContent>
             </Card>

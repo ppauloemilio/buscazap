@@ -32,6 +32,7 @@ import {
   saveAdvertisementImages,
 } from "@/application/services/advertisement-image-service";
 import { deleteProviderAdvertisement } from "@/application/services/advertisement-service";
+import { getCatalogLocationError } from "@/application/services/catalog-location";
 import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { validateImageFile } from "@/lib/image-upload";
@@ -526,6 +527,14 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
     );
   }
 
+  const locationError = await getCatalogLocationError(
+    parsed.data.city,
+    parsed.data.state
+  );
+  if (locationError) {
+    redirect(`${redirectBase}?error=${encodeURIComponent(locationError)}`);
+  }
+
   const coverFile = formData.get("coverImage");
   const hasCover =
     coverFile instanceof File && coverFile.size > 0;
@@ -623,6 +632,14 @@ export async function adminUpdateAdvertisementAction(formData: FormData) {
     redirect(
       `${redirectBase}?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
     );
+  }
+
+  const locationError = await getCatalogLocationError(
+    parsed.data.city,
+    parsed.data.state
+  );
+  if (locationError) {
+    redirect(`${redirectBase}?error=${encodeURIComponent(locationError)}`);
   }
 
   const coverFile = formData.get("coverImage");

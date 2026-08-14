@@ -5,11 +5,14 @@ import { adminUpdateAdvertisementAction } from "@/actions/admin-actions";
 import { findAdvertisementForAdminEdit } from "@/application/services/admin-service";
 import { resolveAdvertisementNotifyContext } from "@/application/services/advertisement-notify-service";
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
+import {
+  listActiveCatalogLocationOptions,
+} from "@/application/services/catalog-location";
 import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
-import { PILOT_CITIES } from "@/config/pricing";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminAdvertisementNotifyActions } from "@/features/admin/components/admin-advertisement-notify-actions";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
+import { LocationFields } from "@/features/panel/components/location-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
@@ -41,10 +44,11 @@ export default async function AdminEditAdvertisementPage({
 
   const { id } = await params;
   const query = await searchParams;
-  const [advertisement, categories, notify] = await Promise.all([
+  const [advertisement, categories, notify, locationOptions] = await Promise.all([
     findAdvertisementForAdminEdit(id),
     getCategoriesWithCounts(),
     resolveAdvertisementNotifyContext(id).catch(() => null),
+    listActiveCatalogLocationOptions(),
   ]);
 
   if (!advertisement) {
@@ -159,26 +163,12 @@ export default async function AdminEditAdvertisementPage({
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Cidade</label>
-            <Input
-              name="city"
-              list="admin-edit-ad-cities"
-              defaultValue={advertisement.city}
-              required
-            />
-            <datalist id="admin-edit-ad-cities">
-              {PILOT_CITIES.map((city) => (
-                <option key={city.name} value={city.name} />
-              ))}
-            </datalist>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">UF</label>
-            <Input name="state" defaultValue={advertisement.state} maxLength={2} required />
-          </div>
-        </div>
+        <LocationFields
+          states={locationOptions.states}
+          cities={locationOptions.cities}
+          defaultCity={advertisement.city}
+          defaultState={advertisement.state}
+        />
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>

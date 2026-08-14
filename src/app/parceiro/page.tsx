@@ -8,21 +8,25 @@ import {
   Sparkles,
 } from "lucide-react";
 import { submitProviderLeadAction } from "@/actions/provider-lead-actions";
+import {
+  getDefaultCatalogLocation,
+  listActiveCatalogLocationOptions,
+} from "@/application/services/catalog-location";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { ImageFileInput } from "@/components/advertisement/image-file-input";
 import { BrandLogo } from "@/components/layout/brand-logo";
+import { LocationFields } from "@/features/panel/components/location-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PILOT_CITIES } from "@/config/pricing";
 import { ServiceArea } from "@/domain/enums";
 import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
 
 export const metadata: Metadata = {
   title: "Pré-lançamento para anunciantes",
   description:
-    "O BuscaZapp está chegando a Belém e Ananindeua. Cadastre seu WhatsApp de graça e garanta sua vaga entre os primeiros antes do lançamento para os clientes.",
+    "Cadastre seu WhatsApp no BuscaZapp e anuncie na sua cidade. Garanta sua vaga entre os primeiros.",
 };
 
 interface PartnerPageProps {
@@ -52,6 +56,11 @@ const BENEFITS = [
 
 export default async function PartnerLeadPage({ searchParams }: PartnerPageProps) {
   const params = await searchParams;
+  const locationOptions = await listActiveCatalogLocationOptions();
+  const defaultLocation = getDefaultCatalogLocation(
+    locationOptions.cities,
+    locationOptions.states
+  );
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[hsl(150_25%_97%)]">
@@ -76,7 +85,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
           </div>
 
           <p className="mt-4 animate-in fade-in slide-in-from-bottom-2 text-xs font-semibold uppercase tracking-[0.18em] text-whatsapp duration-700 [animation-delay:80ms] [animation-fill-mode:both]">
-            Pré-lançamento · Belém e Ananindeua
+            Pré-lançamento · cidades ativas no catálogo
           </p>
 
           <h1 className="mt-3 max-w-xl animate-in fade-in slide-in-from-bottom-3 text-3xl font-bold tracking-tight text-foreground duration-700 [animation-delay:140ms] [animation-fill-mode:both] md:text-4xl">
@@ -163,8 +172,6 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                 encType="multipart/form-data"
                 className="space-y-3"
               >
-                <input type="hidden" name="state" value="PA" />
-
                 <div>
                   <label htmlFor="name" className="mb-1 block text-sm font-medium">
                     Seu nome
@@ -185,25 +192,13 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                   secondaryLabelName="secondaryWhatsappLabel"
                 />
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="city" className="mb-1 block text-sm font-medium">
-                      Cidade
-                    </label>
-                    <select
-                      id="city"
-                      name="city"
-                      required
-                      defaultValue={PILOT_CITIES[0].name}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                      {PILOT_CITIES.map((city) => (
-                        <option key={city.name} value={city.name}>
-                          {city.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <LocationFields
+                  states={locationOptions.states}
+                  cities={locationOptions.cities}
+                  defaultCity={defaultLocation.city}
+                  defaultState={defaultLocation.state}
+                />
+
                 <div>
                   <label
                     htmlFor="neighborhood"
@@ -220,7 +215,6 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                     minLength={2}
                     placeholder="Ex.: Nazaré — ou deixe vazio se for delivery"
                   />
-                </div>
                 </div>
 
                 <ServiceAreaField

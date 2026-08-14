@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { AdvertisementType, ProviderLeadStatus, ServiceArea } from "@/domain/enums";
 import { CATEGORY_OTHER_VALUE } from "@/config/advertisement-form";
-import { isPilotCity } from "@/config/pricing";
 import { normalizeWhatsAppIdentity } from "@/lib/whatsapp";
 
 const optionalEmail = z.preprocess((value) => {
@@ -249,14 +248,6 @@ export const createAdvertisementSchema = z
       });
     }
 
-    if (!isPilotCity(data.city, data.state)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "No momento, anúncios só podem ser criados em Belém ou Ananindeua (PA)",
-        path: ["city"],
-      });
-    }
-
     refineSecondaryWhatsappPair(
       {
         primary: data.whatsappNumber,
@@ -307,14 +298,6 @@ export const createProviderLeadSchema = z
       .max(5000, "Descrição muito longa"),
   })
   .superRefine((data, ctx) => {
-    if (!isPilotCity(data.city, data.state)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "No momento, só aceitamos Belém ou Ananindeua (PA)",
-        path: ["city"],
-      });
-    }
-
     refineSecondaryWhatsappPair(
       {
         primary: data.whatsapp,
@@ -419,14 +402,6 @@ export const adminCreateAdvertisementSchema = z
       });
     }
 
-    if (!isPilotCity(data.city, data.state)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "No momento, anúncios só podem ser criados em Belém ou Ananindeua (PA)",
-        path: ["city"],
-      });
-    }
-
     refineSecondaryWhatsappPair(
       {
         primary: data.whatsappNumber,
@@ -473,14 +448,6 @@ export const adminUpdateAdvertisementSchema = z
         code: z.ZodIssueCode.custom,
         message: "Informe a categoria desejada",
         path: ["customCategory"],
-      });
-    }
-
-    if (!isPilotCity(data.city, data.state)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "No momento, anúncios só podem ser criados em Belém ou Ananindeua (PA)",
-        path: ["city"],
       });
     }
 

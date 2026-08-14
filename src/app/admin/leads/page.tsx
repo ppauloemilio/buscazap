@@ -9,6 +9,7 @@ import {
   resolveLeadPhotoUrl,
 } from "@/application/services/provider-lead-service";
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
+import { listActiveCatalogLocationOptions } from "@/application/services/catalog-location";
 import { AdvertisementDescription } from "@/components/advertisement/advertisement-description";
 import {
   PROVIDER_LEAD_STATUS_LABELS,
@@ -45,9 +46,10 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
   if (!admin) redirect("/admin/entrar");
 
   const params = await searchParams;
-  const [leads, categories] = await Promise.all([
+  const [leads, categories, locationOptions] = await Promise.all([
     listProviderLeads(params.status),
     getCategoriesWithCounts(),
+    listActiveCatalogLocationOptions(),
   ]);
   const notifyHref =
     typeof params.notify === "string" && params.notify.startsWith("https://wa.me/")
@@ -227,7 +229,13 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                         WhatsApp
                       </a>
                     </Button>
-                    {canPublish && <AdminEditLeadForm lead={lead} />}
+                    {canPublish && (
+                      <AdminEditLeadForm
+                        lead={lead}
+                        states={locationOptions.states}
+                        cities={locationOptions.cities}
+                      />
+                    )}
                     <AdminDeleteLeadForm
                       leadId={lead.id}
                       leadTitle={lead.adTitle}

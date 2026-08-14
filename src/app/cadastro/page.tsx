@@ -26,7 +26,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
       <PageHeader
         compact
         title="Criar conta de anunciante"
-        description={`Cadastre-se com ${PRICING.LAUNCH_TRIAL_DAYS} dias grátis para publicar em Belém e Ananindeua`}
+        description={`Cadastre-se com ${PRICING.LAUNCH_TRIAL_DAYS} dias grátis para publicar na sua cidade`}
       />
       <section className="container mx-auto max-w-md px-4 py-5">
         <div className="rounded-xl border bg-card p-4">

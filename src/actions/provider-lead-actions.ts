@@ -9,6 +9,7 @@ import {
   updateProviderLeadContent,
   updateProviderLeadStatus,
 } from "@/application/services/provider-lead-service";
+import { getCatalogLocationError } from "@/application/services/catalog-location";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { buildAdvertisementNotifyWhatsAppHref } from "@/lib/advertisement-notify-message";
 import { uploadLeadImage, validateImageFile } from "@/lib/image-upload";
@@ -41,6 +42,14 @@ export async function submitProviderLeadAction(formData: FormData) {
     redirect(
       `/parceiro?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
     );
+  }
+
+  const locationError = await getCatalogLocationError(
+    parsed.data.city,
+    parsed.data.state
+  );
+  if (locationError) {
+    redirect(`/parceiro?error=${encodeURIComponent(locationError)}`);
   }
 
   const photoFile = formData.get("photo");
@@ -168,6 +177,14 @@ export async function adminEditProviderLeadAction(formData: FormData) {
     redirect(
       `/admin/leads?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
     );
+  }
+
+  const locationError = await getCatalogLocationError(
+    parsed.data.city,
+    parsed.data.state
+  );
+  if (locationError) {
+    redirect(`/admin/leads?error=${encodeURIComponent(locationError)}`);
   }
 
   try {

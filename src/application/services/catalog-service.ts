@@ -1,6 +1,5 @@
 import type { Category } from "@/domain/entities";
 import { AdvertisementStatus } from "@/domain/enums";
-import { PILOT_CITIES } from "@/config/pricing";
 import { prisma } from "@/lib/prisma";
 import { markDataFetchDynamic } from "@/lib/db";
 
@@ -88,10 +87,6 @@ export async function listCityNamesForSearch() {
   const names = grouped
     .map((item) => item.city.trim())
     .filter(Boolean);
-
-  if (names.length === 0) {
-    return PILOT_CITIES.map((city) => city.name);
-  }
 
   return Array.from(new Set(names)).sort((a, b) =>
     a.localeCompare(b, "pt-BR")

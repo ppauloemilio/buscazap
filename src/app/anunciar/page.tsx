@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 const BENEFITS = [
   "1º mês grátis para anunciar (depois R$ 10/mês via PIX)",
-  "Por enquanto, disponível em Belém e Ananindeua",
+  "Disponível nas cidades ativas do catálogo (todo o Brasil)",
   "Contato direto via WhatsApp",
   "Destaque premium: R$ 5,00/30 dias (ou 15 dias via indicação)",
 ] as const;
@@ -25,7 +25,7 @@ export default async function AdvertisePage() {
       <PageHeader
         compact
         title="Anuncie no BuscaZapp"
-        description="Cadastre-se em Belém ou Ananindeua e seja encontrado no WhatsApp"
+        description="Cadastre-se na sua cidade e seja encontrado no WhatsApp"
       />
       <section className="container mx-auto max-w-2xl px-4 py-5">
         <div className="rounded-xl border bg-card p-4 md:p-5">

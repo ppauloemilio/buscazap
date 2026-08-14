@@ -24,19 +24,8 @@ export function formatPriceBRL(amount: number): string {
 
 export const PROVIDER_SESSION_COOKIE = "buscazapp_provider_id";
 
-/** Cidades do piloto de lançamento. */
+/** Preferência histórica de default (Belém). Catálogo ativo é a fonte da verdade. */
 export const PILOT_CITIES = [
   { name: "Belém", state: "PA" },
   { name: "Ananindeua", state: "PA" },
 ] as const;
-
-export function isPilotCity(city: string, state?: string): boolean {
-  const normalizedCity = city.trim().toLowerCase();
-  const normalizedState = state?.trim().toUpperCase();
-
-  return PILOT_CITIES.some(
-    (pilot) =>
-      pilot.name.toLowerCase() === normalizedCity &&
-      (!normalizedState || pilot.state === normalizedState)
-  );
-}
