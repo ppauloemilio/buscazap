@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FavoriteButton } from "@/features/favorites/favorite-button";
+import { AdvertisementShareActions } from "@/features/dashboard/components/advertisement-share-actions";
 import { ReviewForm } from "@/features/dashboard/components/review-form";
 import { StickyWhatsAppCta } from "@/features/dashboard/components/sticky-whatsapp-cta";
 import {
@@ -19,6 +20,7 @@ import {
   getServiceAreaLabel,
 } from "@/config/service-area";
 import type { Advertisement } from "@/domain/entities";
+import { buildAbsoluteUrl } from "@/lib/site-url";
 import {
   buildWhatsAppLink,
   formatRating,
@@ -65,6 +67,9 @@ export async function AdvertisementDetailView({
   const serviceAreaLabel = getServiceAreaLabel(advertisement.serviceArea);
   const hasReviews = advertisement.reviewCount > 0;
   const backHref = resolveReturnPath(returnTo);
+  const sharePath =
+    advertisement.publicHref?.trim() || `/anuncio/${advertisement.id}`;
+  const shareUrl = buildAbsoluteUrl(sharePath);
 
   return (
     <section className="container mx-auto px-4 py-6 pb-24 md:pb-8">
@@ -195,6 +200,13 @@ export async function AdvertisementDetailView({
               </Button>
             )}
           </div>
+
+          <AdvertisementShareActions
+            className="mt-4"
+            variant="public"
+            title={advertisement.title}
+            shareUrl={shareUrl}
+          />
         </div>
       </div>
 

@@ -382,11 +382,23 @@ export async function findProviderAdvertisements(providerId: string) {
     orderBy: { createdAt: "desc" },
   });
 
-  return advertisements.map((ad) => ({
-    ...mapAdvertisementToEntity(ad),
-    premiumExpiresAt: ad.premiumExpiresAt,
-    premiumActive: isPremiumActive(ad.premiumExpiresAt),
-  }));
+  const mapped = await enrichWithPublicHref(
+    advertisements.map(mapAdvertisementToEntity),
+    { persistMissingSlug: false }
+  );
+
+  const premiumById = new Map(
+    advertisements.map((ad) => [ad.id, ad.premiumExpiresAt] as const)
+  );
+
+  return mapped.map((ad) => {
+    const premiumExpiresAt = premiumById.get(ad.id) ?? null;
+    return {
+      ...ad,
+      premiumExpiresAt,
+      premiumActive: isPremiumActive(premiumExpiresAt),
+    };
+  });
 }
 
 export async function findProviderAdvertisementForEdit(

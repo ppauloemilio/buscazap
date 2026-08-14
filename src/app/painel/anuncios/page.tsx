@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { Crown, ImageIcon } from "lucide-react";
 import { findProviderAdvertisements, providerHasAdSlotAvailable } from "@/application/services/advertisement-service";
 import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
+import { buildAbsoluteUrl } from "@/lib/site-url";
+import { AdvertisementShareActions } from "@/features/dashboard/components/advertisement-share-actions";
 import { BoostAdvertisementForm } from "@/features/panel/components/boost-advertisement-form";
 import { DeleteAdvertisementForm } from "@/features/panel/components/delete-advertisement-form";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
@@ -114,31 +116,40 @@ export default async function ProviderAdsPage({
                   )}
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/anuncio/${ad.id}`}>Ver</Link>
-                  </Button>
-                  {ad.premiumActive && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/painel/anuncios/${ad.id}/editar`}>
-                        <ImageIcon className="h-4 w-4" />
-                        Editar fotos
-                      </Link>
+                      <Link href={ad.publicHref ?? `/anuncio/${ad.id}`}>Ver</Link>
                     </Button>
-                  )}
-                  {!ad.premiumActive && subscriptionActive && (
-                    <BoostAdvertisementForm
+                    {ad.premiumActive && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/painel/anuncios/${ad.id}/editar`}>
+                          <ImageIcon className="h-4 w-4" />
+                          Editar fotos
+                        </Link>
+                      </Button>
+                    )}
+                    {!ad.premiumActive && subscriptionActive && (
+                      <BoostAdvertisementForm
+                        advertisementId={ad.id}
+                        paidLabel={boostLabel}
+                        freeCredits={freeCredits}
+                        referralDays={PRICING.REFERRAL_PREMIUM_DAYS}
+                      />
+                    )}
+                    <DeleteAdvertisementForm
                       advertisementId={ad.id}
-                      paidLabel={boostLabel}
-                      freeCredits={freeCredits}
-                      referralDays={PRICING.REFERRAL_PREMIUM_DAYS}
+                      advertisementTitle={ad.title}
+                      premiumActive={ad.premiumActive}
+                      premiumAmountLabel={premiumAmountLabel}
                     />
-                  )}
-                  <DeleteAdvertisementForm
-                    advertisementId={ad.id}
-                    advertisementTitle={ad.title}
-                    premiumActive={ad.premiumActive}
-                    premiumAmountLabel={premiumAmountLabel}
+                  </div>
+                  <AdvertisementShareActions
+                    variant="panel"
+                    title={ad.title}
+                    shareUrl={buildAbsoluteUrl(
+                      ad.publicHref ?? `/anuncio/${ad.id}`
+                    )}
                   />
                 </div>
               </CardContent>
