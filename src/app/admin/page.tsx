@@ -69,7 +69,7 @@ export default async function AdminDashboardPage() {
         <StatCard
           title="Indicações (7 dias)"
           value={stats.referralsLast7Days}
-          href="/admin/relatorios"
+          href="/admin/indicacoes?days=7"
         />
         <StatCard
           title="Em trial ativo"

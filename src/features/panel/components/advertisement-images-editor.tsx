@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useFormStatus } from "react-dom";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { ImagePlus, Trash2 } from "lucide-react";
 import {
   removeAdvertisementGalleryImageAction,
@@ -15,7 +15,10 @@ import {
 } from "@/components/advertisement/image-file-input";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { Button } from "@/components/ui/button";
-import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
+import {
+  formatMaxImageSizeLabel,
+  getFriendlyImageUploadError,
+} from "@/shared/utils/image-file-validation";
 
 interface GalleryImage {
   readonly id: string;
@@ -37,33 +40,6 @@ interface AdvertisementImagesEditorProps {
   readonly forceGalleryEdit?: boolean;
 }
 
-function SaveButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" variant="whatsapp" size="sm" disabled={pending}>
-      {pending ? "Salvando..." : "Salvar fotos"}
-    </Button>
-  );
-}
-
-function RemoveGalleryButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button
-      type="submit"
-      variant="outline"
-      size="sm"
-      disabled={pending}
-      className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
-    >
-      <Trash2 className="h-4 w-4" />
-      {pending ? "Removendo..." : "Remover"}
-    </Button>
-  );
-}
-
 export function AdvertisementImagesEditor({
   advertisementId,
   title,
@@ -76,11 +52,61 @@ export function AdvertisementImagesEditor({
   forceGalleryEdit = false,
 }: AdvertisementImagesEditorProps) {
   const [formError, setFormError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [removingImageId, setRemovingImageId] = useState<string | null>(null);
   const canEditGallery = premiumActive || forceGalleryEdit;
   const remainingGallerySlots = Math.max(
     0,
     ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages - galleryImages.length
   );
+
+  function handleUpdateSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const validationError = validateFormImageInputs(form);
+
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
+
+    const formData = new FormData(form);
+    setFormError(null);
+
+    startTransition(async () => {
+      try {
+        await updateAction(formData);
+      } catch (error) {
+        if (isRedirectError(error)) {
+          throw error;
+        }
+        setFormError(getFriendlyImageUploadError(error));
+      }
+    });
+  }
+
+  function handleRemoveSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+    imageId: string
+  ) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    setFormError(null);
+    setRemovingImageId(imageId);
+
+    startTransition(async () => {
+      try {
+        await removeGalleryAction(formData);
+      } catch (error) {
+        if (isRedirectError(error)) {
+          throw error;
+        }
+        setFormError(getFriendlyImageUploadError(error));
+      } finally {
+        setRemovingImageId(null);
+      }
+    });
+  }
 
   return (
     <div className="space-y-3">
@@ -104,10 +130,19 @@ export function AdvertisementImagesEditor({
                     sizes="200px"
                   />
                 </div>
-                <form action={removeGalleryAction}>
+                <form onSubmit={(event) => handleRemoveSubmit(event, image.id)}>
                   <input type="hidden" name="advertisementId" value={advertisementId} />
                   <input type="hidden" name="imageId" value={image.id} />
-                  <RemoveGalleryButton />
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    size="sm"
+                    disabled={isPending}
+                    className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {removingImageId === image.id ? "Removendo..." : "Remover"}
+                  </Button>
                 </form>
               </div>
             ))}
@@ -116,18 +151,9 @@ export function AdvertisementImagesEditor({
       )}
 
       <form
-        action={updateAction}
         encType="multipart/form-data"
         className="space-y-3"
-        onSubmit={(event) => {
-          const error = validateFormImageInputs(event.currentTarget);
-          if (error) {
-            event.preventDefault();
-            setFormError(error);
-            return;
-          }
-          setFormError(null);
-        }}
+        onSubmit={handleUpdateSubmit}
       >
         <input type="hidden" name="advertisementId" value={advertisementId} />
 
@@ -188,7 +214,7 @@ export function AdvertisementImagesEditor({
                   name="galleryImages"
                   label="Foto da galeria"
                   multiple
-                  hint={`Adicione até ${remainingGallerySlots} foto${remainingGallerySlots === 1 ? "" : "s"} extra${remainingGallerySlots === 1 ? "" : "s"} (máx. ${formatMaxImageSizeLabel()} cada).`}
+                  hint={`Adicione até ${remainingGallerySlots} foto${remainingGallerySlots === 1 ? "" : "s"} extra${remainingGallerySlots === 1 ? "" : "s"} (máx. ${formatMaxImageSizeLabel()} cada). Se o envio falhar, tente uma foto por vez.`}
                 />
               </div>
             ) : (
@@ -207,7 +233,9 @@ export function AdvertisementImagesEditor({
         )}
 
         <div className="flex gap-2">
-          <SaveButton />
+          <Button type="submit" variant="whatsapp" size="sm" disabled={isPending}>
+            {isPending && !removingImageId ? "Salvando..." : "Salvar fotos"}
+          </Button>
           <Button type="button" variant="outline" size="sm" asChild>
             <Link href={backHref}>Voltar</Link>
           </Button>

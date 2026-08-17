@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto";
 import { PRICING } from "@/config/pricing";
+import { UserRole } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
 
 export async function generateUniqueReferralCode(): Promise<string> {
@@ -128,6 +129,116 @@ export async function getReferralDashboard(providerId: string) {
       createdAt: item.createdAt,
       referredName: item.referred.name,
       referredEmail: item.referred.email,
+    })),
+  };
+}
+
+export async function listAdminReferrers(filters?: {
+  readonly createdSince?: Date;
+}) {
+  const referrers = await prisma.provider.findMany({
+    where: {
+      role: UserRole.PROVIDER,
+      referralsMade: filters?.createdSince
+        ? { some: { createdAt: { gte: filters.createdSince } } }
+        : { some: {} },
+    },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      whatsapp: true,
+      referralCode: true,
+      freePremiumCredits: true,
+      createdAt: true,
+      referralsMade: {
+        where: filters?.createdSince
+          ? { createdAt: { gte: filters.createdSince } }
+          : undefined,
+        select: { id: true },
+      },
+    },
+  });
+
+  return referrers
+    .map((provider) => ({
+      id: provider.id,
+      name: provider.name,
+      email: provider.email,
+      whatsapp: provider.whatsapp,
+      referralCode: provider.referralCode,
+      freePremiumCredits: provider.freePremiumCredits,
+      createdAt: provider.createdAt,
+      referralCount: provider.referralsMade.length,
+    }))
+    .filter((provider) => provider.referralCount > 0)
+    .sort((a, b) => b.referralCount - a.referralCount);
+}
+
+export async function getAdminReferrerDetail(referrerId: string) {
+  const provider = await prisma.provider.findUnique({
+    where: { id: referrerId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      whatsapp: true,
+      referralCode: true,
+      freePremiumCredits: true,
+      status: true,
+      createdAt: true,
+    },
+  });
+
+  if (!provider) {
+    return null;
+  }
+
+  const referrals = await prisma.referral.findMany({
+    where: { referrerId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      referred: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          whatsapp: true,
+          status: true,
+          createdAt: true,
+          advertisements: {
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              category: true,
+              city: true,
+              state: true,
+              createdAt: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return {
+    ...provider,
+    referralCount: referrals.length,
+    referrals: referrals.map((referral) => ({
+      id: referral.id,
+      createdAt: referral.createdAt,
+      referred: {
+        id: referral.referred.id,
+        name: referral.referred.name,
+        email: referral.referred.email,
+        whatsapp: referral.referred.whatsapp,
+        status: referral.referred.status,
+        createdAt: referral.referred.createdAt,
+        advertisements: referral.referred.advertisements,
+      },
     })),
   };
 }

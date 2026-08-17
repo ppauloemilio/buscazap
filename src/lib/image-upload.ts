@@ -3,6 +3,7 @@ import path from "node:path";
 import { put } from "@vercel/blob";
 import {
   ADVERTISEMENT_IMAGE_LIMITS,
+  isAllowedImageExtension,
   isAllowedImageMimeType,
 } from "@/config/advertisement-images";
 import { getBlobAccessType } from "@/lib/blob-access";
@@ -22,15 +23,22 @@ function sanitizeExtension(filename: string): string {
 
 export function validateImageFile(file: File, label: string): string | null {
   if (!(file instanceof File) || file.size === 0) {
-    return `${label} é obrigatória`;
+    return `${label} é obrigatória. Selecione um arquivo JPG, PNG ou WebP.`;
   }
 
-  if (!isAllowedImageMimeType(file.type)) {
+  const mimeOk = Boolean(file.type) && isAllowedImageMimeType(file.type);
+  const extensionOk = isAllowedImageExtension(file.name);
+
+  if (!mimeOk && !extensionOk) {
+    return `${label} deve ser JPG, PNG ou WebP (HEIC do iPhone não é aceito)`;
+  }
+
+  if (file.type && !isAllowedImageMimeType(file.type) && !extensionOk) {
     return `${label} deve ser JPG, PNG ou WebP (HEIC do iPhone não é aceito)`;
   }
 
   if (file.size > ADVERTISEMENT_IMAGE_LIMITS.maxFileSizeBytes) {
-    return `${label} deve ter no máximo 5 MB`;
+    return `${label} deve ter no máximo ${ADVERTISEMENT_IMAGE_LIMITS.maxFileSizeBytes / (1024 * 1024)} MB. Reduza a imagem e tente novamente.`;
   }
 
   return null;

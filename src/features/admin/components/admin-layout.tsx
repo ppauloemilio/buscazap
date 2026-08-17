@@ -14,6 +14,7 @@ import {
   BarChart3,
   Handshake,
   Search,
+  Gift,
 } from "lucide-react";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { href: "/admin/leads", label: "Leads", icon: Handshake },
   { href: "/admin/usuarios", label: "Usuários", icon: Users },
   { href: "/admin/anuncios", label: "Anúncios", icon: Megaphone },
+  { href: "/admin/indicacoes", label: "Indicações", icon: Gift },
   { href: "/admin/relatorios", label: "Relatórios", icon: BarChart3 },
   { href: "/admin/categorias", label: "Categorias", icon: Tags },
   { href: "/admin/estados", label: "Estados", icon: Map },

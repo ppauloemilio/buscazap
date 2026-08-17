@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import bcrypt from "bcryptjs";
 import { PROVIDER_SESSION_COOKIE, PRICING } from "@/config/pricing";
 import {
@@ -448,41 +449,57 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
     redirect("/painel/anuncios");
   }
 
-  await requireOwnedPremiumAdvertisement(provider.id, advertisementId);
-
-  const coverFile = formData.get("coverImage");
-  const galleryFiles = parseImageFiles(formData, "galleryImages");
-
-  if (galleryFiles.length > ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages) {
-    redirectToEditImages(advertisementId, {
-      error: `Envie no máximo ${ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos por vez`,
-    });
-  }
-
-  for (const galleryFile of galleryFiles) {
-    const galleryValidationError = validateImageFile(galleryFile, "Foto da galeria");
-    if (galleryValidationError) {
-      redirectToEditImages(advertisementId, { error: galleryValidationError });
-    }
-  }
-
-  const hasCoverFile = coverFile instanceof File && coverFile.size > 0;
-  const hasGalleryFiles = galleryFiles.length > 0;
-
-  if (!hasCoverFile && !hasGalleryFiles) {
-    redirectToEditImages(advertisementId, {
-      error: "Selecione ao menos uma foto para atualizar",
-    });
-  }
-
-  if (hasCoverFile) {
-    const coverValidationError = validateImageFile(coverFile, "Foto de capa");
-    if (coverValidationError) {
-      redirectToEditImages(advertisementId, { error: coverValidationError });
-    }
-  }
-
   try {
+    await requireOwnedPremiumAdvertisement(provider.id, advertisementId);
+
+    const coverFile = formData.get("coverImage");
+    const galleryFiles = parseImageFiles(formData, "galleryImages");
+
+    if (galleryFiles.length > ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages) {
+      redirectToEditImages(advertisementId, {
+        error: `Envie no máximo ${ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos por vez`,
+      });
+    }
+
+    for (const galleryFile of galleryFiles) {
+      const galleryValidationError = validateImageFile(
+        galleryFile,
+        "Foto da galeria"
+      );
+      if (galleryValidationError) {
+        redirectToEditImages(advertisementId, { error: galleryValidationError });
+      }
+    }
+
+    const hasCoverFile = coverFile instanceof File && coverFile.size > 0;
+    const hasGalleryFiles = galleryFiles.length > 0;
+
+    if (!hasCoverFile && !hasGalleryFiles) {
+      redirectToEditImages(advertisementId, {
+        error: "Selecione ao menos uma foto para atualizar",
+      });
+    }
+
+    if (hasCoverFile) {
+      const coverValidationError = validateImageFile(coverFile, "Foto de capa");
+      if (coverValidationError) {
+        redirectToEditImages(advertisementId, { error: coverValidationError });
+      }
+    }
+
+    const requestFiles = [
+      ...(hasCoverFile ? [coverFile as File] : []),
+      ...galleryFiles,
+    ];
+    const requestBytes = requestFiles.reduce((sum, file) => sum + file.size, 0);
+    if (requestBytes > ADVERTISEMENT_IMAGE_LIMITS.maxRequestBytes) {
+      redirectToEditImages(advertisementId, {
+        error:
+          `O conjunto de fotos ultrapassa ${ADVERTISEMENT_IMAGE_LIMITS.maxRequestBytes / (1024 * 1024)} MB. ` +
+          "Envie menos fotos por vez ou reduza o tamanho das imagens.",
+      });
+    }
+
     if (hasCoverFile) {
       await replaceAdvertisementCover(advertisementId, coverFile);
     }
@@ -491,6 +508,10 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
       await addAdvertisementGalleryImages(advertisementId, galleryFiles);
     }
   } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
     const message =
       error instanceof Error
         ? error.message

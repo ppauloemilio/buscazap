@@ -772,6 +772,19 @@ export async function adminUpdateAdvertisementImagesAction(formData: FormData) {
     }
   }
 
+  const requestFiles = [
+    ...(hasCoverFile ? [coverFile as File] : []),
+    ...galleryFiles,
+  ];
+  const requestBytes = requestFiles.reduce((sum, file) => sum + file.size, 0);
+  if (requestBytes > ADVERTISEMENT_IMAGE_LIMITS.maxRequestBytes) {
+    redirectToAdminEditImages(id, {
+      error:
+        `O conjunto de fotos ultrapassa ${ADVERTISEMENT_IMAGE_LIMITS.maxRequestBytes / (1024 * 1024)} MB. ` +
+        "Envie menos fotos por vez ou reduza o tamanho das imagens.",
+    });
+  }
+
   try {
     if (hasCoverFile) {
       const existingCover = await prisma.advertisementImage.findFirst({

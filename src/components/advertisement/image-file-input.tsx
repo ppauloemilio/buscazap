@@ -6,6 +6,7 @@ import {
   formatMaxImageSizeLabel,
   validateImageFileClient,
   validateImageFilesClient,
+  validateImageRequestSizeClient,
 } from "@/shared/utils/image-file-validation";
 import { cn } from "@/lib/utils";
 
@@ -55,10 +56,17 @@ export function ImageFileInput({
       return;
     }
 
+    const requestError = validateImageRequestSizeClient(files);
+    if (requestError) {
+      setError(requestError);
+      input.value = "";
+      return;
+    }
+
     setError(null);
   }
 
-  const defaultHint = `JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}`;
+  const defaultHint = `JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()} por foto`;
 
   return (
     <div className={cn("min-w-0 flex-1", className)}>
@@ -91,9 +99,13 @@ export function validateFormImageInputs(form: HTMLFormElement): string | null {
     'input[type="file"][accept*="image"]'
   );
 
+  const allFiles: File[] = [];
+
   for (const input of inputs) {
     const files = input.files ? Array.from(input.files) : [];
     if (files.length === 0) continue;
+
+    allFiles.push(...files);
 
     const label =
       form.querySelector(`label[for="${input.id}"]`)?.textContent?.trim() ||
@@ -106,5 +118,5 @@ export function validateFormImageInputs(form: HTMLFormElement): string | null {
     if (error) return error;
   }
 
-  return null;
+  return validateImageRequestSizeClient(allFiles);
 }

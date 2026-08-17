@@ -1,10 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Fotos até 5 MB cada; capa + até 5 da galeria no mesmo envio.
+  // Fotos até 4 MB cada; limite alinhado ao teto prático da Vercel (~4,5 MB por request).
   experimental: {
     serverActions: {
-      bodySizeLimit: "32mb",
+      bodySizeLimit: "5mb",
     },
   },
   images: {
