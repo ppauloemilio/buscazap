@@ -26,8 +26,11 @@ import {
 } from "@/application/services/admin-manual-billing-service";
 import {
   ADVERTISEMENT_IMAGE_KIND,
+  ADVERTISEMENT_IMAGE_LIMITS,
 } from "@/config/advertisement-images";
 import {
+  addAdvertisementGalleryImages,
+  removeAdvertisementGalleryImage,
   replaceAdvertisementCover,
   saveAdvertisementImages,
 } from "@/application/services/advertisement-image-service";
@@ -35,7 +38,7 @@ import { deleteProviderAdvertisement } from "@/application/services/advertisemen
 import { getCatalogLocationError } from "@/application/services/catalog-location";
 import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import { getCurrentAdmin } from "@/lib/admin-session";
-import { validateImageFile } from "@/lib/image-upload";
+import { parseImageFiles, validateImageFile } from "@/lib/image-upload";
 import { prisma } from "@/lib/prisma";
 import {
   adminCreateAdvertisementSchema,
@@ -700,6 +703,149 @@ export async function adminUpdateAdvertisementAction(formData: FormData) {
   revalidatePath(redirectBase);
 
   redirect(`${redirectBase}?saved=1`);
+}
+
+function redirectToAdminEditImages(
+  advertisementId: string,
+  params: { readonly error?: string; readonly saved?: string }
+): never {
+  const query = new URLSearchParams();
+  if (params.error) query.set("error", params.error);
+  if (params.saved) query.set("saved", params.saved);
+  const qs = query.toString();
+  redirect(
+    qs
+      ? `/admin/anuncios/${advertisementId}/editar?${qs}`
+      : `/admin/anuncios/${advertisementId}/editar`
+  );
+}
+
+export async function adminUpdateAdvertisementImagesAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const advertisementId = formData.get("advertisementId");
+
+  if (typeof advertisementId !== "string" || !advertisementId.trim()) {
+    redirect("/admin/anuncios?error=Anúncio inválido");
+  }
+
+  const id = advertisementId.trim();
+  const existing = await prisma.advertisement.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    redirect("/admin/anuncios?error=Anúncio não encontrado");
+  }
+
+  const coverFile = formData.get("coverImage");
+  const galleryFiles = parseImageFiles(formData, "galleryImages");
+
+  if (galleryFiles.length > ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages) {
+    redirectToAdminEditImages(id, {
+      error: `Envie no máximo ${ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos por vez`,
+    });
+  }
+
+  for (const galleryFile of galleryFiles) {
+    const galleryValidationError = validateImageFile(galleryFile, "Foto da galeria");
+    if (galleryValidationError) {
+      redirectToAdminEditImages(id, { error: galleryValidationError });
+    }
+  }
+
+  const hasCoverFile = coverFile instanceof File && coverFile.size > 0;
+  const hasGalleryFiles = galleryFiles.length > 0;
+
+  if (!hasCoverFile && !hasGalleryFiles) {
+    redirectToAdminEditImages(id, {
+      error: "Selecione ao menos uma foto para atualizar",
+    });
+  }
+
+  if (hasCoverFile) {
+    const coverValidationError = validateImageFile(coverFile, "Foto de capa");
+    if (coverValidationError) {
+      redirectToAdminEditImages(id, { error: coverValidationError });
+    }
+  }
+
+  try {
+    if (hasCoverFile) {
+      const existingCover = await prisma.advertisementImage.findFirst({
+        where: {
+          advertisementId: id,
+          kind: ADVERTISEMENT_IMAGE_KIND.COVER,
+        },
+        select: { id: true },
+      });
+
+      if (existingCover) {
+        await replaceAdvertisementCover(id, coverFile);
+      } else {
+        await saveAdvertisementImages(id, coverFile, []);
+      }
+    }
+
+    if (hasGalleryFiles) {
+      await addAdvertisementGalleryImages(id, galleryFiles);
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível atualizar as fotos";
+    redirectToAdminEditImages(id, { error: message });
+  }
+
+  revalidatePath("/admin/anuncios");
+  revalidatePath(`/admin/anuncios/${id}/editar`);
+  revalidatePath(`/anuncio/${id}`);
+  revalidatePath("/buscar");
+  revalidatePath("/");
+
+  redirectToAdminEditImages(id, { saved: "1" });
+}
+
+export async function adminRemoveAdvertisementGalleryImageAction(
+  formData: FormData
+) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const advertisementId = formData.get("advertisementId");
+  const imageId = formData.get("imageId");
+
+  if (
+    typeof advertisementId !== "string" ||
+    !advertisementId.trim() ||
+    typeof imageId !== "string" ||
+    !imageId.trim()
+  ) {
+    redirect("/admin/anuncios?error=Dados inválidos");
+  }
+
+  const id = advertisementId.trim();
+
+  try {
+    await removeAdvertisementGalleryImage(id, imageId.trim());
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível remover a foto da galeria";
+    redirectToAdminEditImages(id, { error: message });
+  }
+
+  revalidatePath("/admin/anuncios");
+  revalidatePath(`/admin/anuncios/${id}/editar`);
+  revalidatePath(`/anuncio/${id}`);
+  revalidatePath("/buscar");
+  revalidatePath("/");
+
+  redirectToAdminEditImages(id, { saved: "1" });
 }
 
 export async function adminNotifyAdvertisementWithNewPasswordAction(

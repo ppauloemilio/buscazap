@@ -77,6 +77,8 @@ export async function getAdminDashboardStats() {
     referralsLast7Days,
     paidSubscriptionsCount,
     trialActiveCount,
+    providersWithoutAdsCount,
+    expiredAdsCount,
     adsByCity,
     pendingCategorySuggestions,
   ] = await Promise.all([
@@ -127,6 +129,23 @@ export async function getAdminDashboardStats() {
         subscriptions: { none: {} },
       },
     }),
+    prisma.provider.count({
+      where: {
+        role: UserRole.PROVIDER,
+        advertisements: { none: {} },
+      },
+    }),
+    prisma.advertisement.count({
+      where: {
+        provider: {
+          role: UserRole.PROVIDER,
+          subscriptionExpiresAt: {
+            not: null,
+            lte: now,
+          },
+        },
+      },
+    }),
     prisma.advertisement.groupBy({
       by: ["city"],
       where: { status: AdvertisementStatus.APPROVED },
@@ -163,6 +182,8 @@ export async function getAdminDashboardStats() {
     referralsLast7Days,
     paidSubscriptionsCount,
     trialActiveCount,
+    providersWithoutAdsCount,
+    expiredAdsCount,
     signupsLast30Days,
     pendingCategorySuggestions,
     adsByCity: adsByCity
@@ -178,8 +199,18 @@ export async function getAdminDashboardStats() {
 export async function listAdminProviders(filters?: {
   readonly status?: string;
   readonly subscription?: string;
+  readonly ads?: string;
+  readonly createdDays?: number;
 }) {
   const now = new Date();
+  const createdSince =
+    filters?.createdDays && filters.createdDays > 0
+      ? (() => {
+          const date = new Date(now);
+          date.setDate(date.getDate() - filters.createdDays);
+          return date;
+        })()
+      : null;
 
   const providers = await prisma.provider.findMany({
     where: {
@@ -200,6 +231,22 @@ export async function listAdminProviders(filters?: {
             },
           }
         : {}),
+      ...(filters?.subscription === "trial"
+        ? {
+            status: ProviderStatus.ACTIVE,
+            subscriptionExpiresAt: { gt: now },
+            subscriptions: { none: {} },
+          }
+        : {}),
+      ...(filters?.subscription === "paid"
+        ? {
+            status: ProviderStatus.ACTIVE,
+            subscriptionExpiresAt: { gt: now },
+            subscriptions: { some: {} },
+          }
+        : {}),
+      ...(filters?.ads === "none" ? { advertisements: { none: {} } } : {}),
+      ...(createdSince ? { createdAt: { gte: createdSince } } : {}),
     },
     orderBy: { createdAt: "desc" },
     include: {
@@ -696,6 +743,12 @@ export async function findAdvertisementForAdminEdit(advertisementId: string) {
   const cover = advertisement.images.find(
     (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.COVER
   );
+  const galleryImages = advertisement.images
+    .filter((image) => image.kind === ADVERTISEMENT_IMAGE_KIND.GALLERY)
+    .map((image) => ({
+      id: image.id,
+      url: resolveAdvertisementImageUrl(image.url),
+    }));
 
   return {
     id: advertisement.id,
@@ -714,7 +767,12 @@ export async function findAdvertisementForAdminEdit(advertisementId: string) {
     secondaryWhatsappLabel: advertisement.secondaryWhatsappLabel,
     status: advertisement.status,
     provider: advertisement.provider,
+    premiumActive: isPremiumActive(advertisement.premiumExpiresAt),
+    coverImage: cover
+      ? { id: cover.id, url: resolveAdvertisementImageUrl(cover.url) }
+      : null,
     coverImageUrl: cover ? resolveAdvertisementImageUrl(cover.url) : null,
+    galleryImages,
   };
 }
 
@@ -861,8 +919,10 @@ export async function listAdminAdvertisements(filters?: {
   readonly type?: string;
   readonly query?: string;
   readonly published?: "yes" | "no";
+  readonly subscriptionExpired?: boolean;
 }) {
   const andConditions: object[] = [];
+  const now = new Date();
 
   if (filters?.status) {
     andConditions.push({ status: filters.status });
@@ -889,7 +949,18 @@ export async function listAdminAdvertisements(filters?: {
   }
 
   if (filters?.premium) {
-    andConditions.push({ premiumExpiresAt: { gt: new Date() } });
+    andConditions.push({ premiumExpiresAt: { gt: now } });
+  }
+
+  if (filters?.subscriptionExpired) {
+    andConditions.push({
+      provider: {
+        subscriptionExpiresAt: {
+          not: null,
+          lte: now,
+        },
+      },
+    });
   }
 
   if (filters?.published === "yes") {
@@ -933,6 +1004,7 @@ export async function listAdminAdvertisements(filters?: {
           name: true,
           email: true,
           whatsapp: true,
+          subscriptionExpiresAt: true,
         },
       },
       premiumBoosts: {
@@ -947,20 +1019,33 @@ export async function listAdminAdvertisements(filters?: {
     },
   });
 
-  return advertisements.map((ad) => ({
-    id: ad.id,
-    title: ad.title,
-    type: ad.type,
-    category: ad.category,
-    city: ad.city,
-    state: ad.state,
-    status: ad.status,
-    premiumActive: isPremiumActive(ad.premiumExpiresAt),
-    premiumExpiresAt: ad.premiumExpiresAt,
-    lastBoost: ad.premiumBoosts[0] ?? null,
-    provider: ad.provider,
-    createdAt: ad.createdAt,
-  }));
+  return advertisements.map((ad) => {
+    const subscriptionExpiresAt = ad.provider.subscriptionExpiresAt;
+    const subscriptionExpired =
+      subscriptionExpiresAt !== null && subscriptionExpiresAt <= now;
+
+    return {
+      id: ad.id,
+      title: ad.title,
+      type: ad.type,
+      category: ad.category,
+      city: ad.city,
+      state: ad.state,
+      status: ad.status,
+      premiumActive: isPremiumActive(ad.premiumExpiresAt),
+      premiumExpiresAt: ad.premiumExpiresAt,
+      lastBoost: ad.premiumBoosts[0] ?? null,
+      provider: {
+        id: ad.provider.id,
+        name: ad.provider.name,
+        email: ad.provider.email,
+        whatsapp: ad.provider.whatsapp,
+      },
+      subscriptionExpired,
+      subscriptionExpiresAt,
+      createdAt: ad.createdAt,
+    };
+  });
 }
 
 export async function updateAdvertisementStatusAsAdmin(input: {

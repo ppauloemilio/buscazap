@@ -41,3 +41,28 @@ export function buildAdvertisementNotifyWhatsAppHref(
     buildAdvertisementPublishedWhatsAppMessage(input)
   );
 }
+
+export interface AdvertisementRenewalMessageInput {
+  readonly providerName: string;
+  readonly adTitle: string;
+  readonly whatsapp: string;
+}
+
+export function buildAdvertisementRenewalWhatsAppMessage(
+  input: AdvertisementRenewalMessageInput
+): string {
+  return (
+    `Olá ${input.providerName}! Seu anúncio "${input.adTitle}" no BuscaZapp venceu e pode ter saído das buscas.\n\n` +
+    `Adoraríamos que você renovasse para continuar ajudando as pessoas a localizarem os seus serviços.\n\n` +
+    `Renove pelo painel: ${buildAbsoluteUrl("/painel/assinatura")}`
+  );
+}
+
+export function buildAdvertisementRenewalWhatsAppHref(
+  input: AdvertisementRenewalMessageInput
+): string {
+  return buildWhatsAppLink(
+    input.whatsapp,
+    buildAdvertisementRenewalWhatsAppMessage(input)
+  );
+}

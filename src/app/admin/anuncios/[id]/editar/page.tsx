@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { MessageCircle } from "lucide-react";
-import { adminUpdateAdvertisementAction } from "@/actions/admin-actions";
+import {
+  adminRemoveAdvertisementGalleryImageAction,
+  adminUpdateAdvertisementAction,
+  adminUpdateAdvertisementImagesAction,
+} from "@/actions/admin-actions";
 import { findAdvertisementForAdminEdit } from "@/application/services/admin-service";
 import { resolveAdvertisementNotifyContext } from "@/application/services/advertisement-notify-service";
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
@@ -12,18 +16,18 @@ import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminAdvertisementNotifyActions } from "@/features/admin/components/admin-advertisement-notify-actions";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
+import { AdvertisementImagesEditor } from "@/features/panel/components/advertisement-images-editor";
 import { LocationFields } from "@/features/panel/components/location-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
-import { ImageFileInput } from "@/components/advertisement/image-file-input";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdvertisementType } from "@/domain/enums";
-import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AdminEditAdvertisementPageProps {
   readonly params: Promise<{ readonly id: string }>;
@@ -201,29 +205,6 @@ export default async function AdminEditAdvertisementPage({
           defaultSecondaryLabel={advertisement.secondaryWhatsappLabel ?? ""}
         />
 
-        <div>
-          <label htmlFor="coverImage" className="mb-1 block text-sm font-medium">
-            Foto de capa
-          </label>
-          {advertisement.coverImageUrl && (
-            <img
-              src={advertisement.coverImageUrl}
-              alt="Capa atual"
-              className="mb-2 h-40 w-full max-w-sm rounded-md border bg-muted object-contain"
-            />
-          )}
-          <ImageFileInput
-            id="coverImage"
-            name="coverImage"
-            label="Foto de capa"
-            hint={
-              advertisement.coverImageUrl
-                ? `Envie um arquivo novo para substituir a capa. JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}.`
-                : `Opcional. JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}.`
-            }
-          />
-        </div>
-
         <div className="flex flex-wrap gap-2">
           <Button type="submit" variant="whatsapp">
             Salvar anúncio
@@ -235,6 +216,30 @@ export default async function AdminEditAdvertisementPage({
           </Button>
         </div>
       </form>
+
+      <Card className="mt-4 max-w-2xl">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Fotos (capa e galeria premium)</CardTitle>
+          <p className="text-sm font-normal text-muted-foreground">
+            {advertisement.premiumActive
+              ? "Premium ativo: você pode alterar a capa e a galeria."
+              : "Altere a capa e, se necessário, prepare a galeria (visível ao público só com premium ativo)."}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <AdvertisementImagesEditor
+            advertisementId={advertisement.id}
+            title={advertisement.title}
+            coverImage={advertisement.coverImage}
+            galleryImages={advertisement.galleryImages}
+            premiumActive={advertisement.premiumActive}
+            forceGalleryEdit
+            backHref="/admin/anuncios"
+            updateAction={adminUpdateAdvertisementImagesAction}
+            removeGalleryAction={adminRemoveAdvertisementGalleryImageAction}
+          />
+        </CardContent>
+      </Card>
     </AdminLayout>
   );
 }

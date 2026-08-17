@@ -26,6 +26,8 @@ interface AdminUsersPageProps {
     readonly deleted?: string;
     readonly status?: string;
     readonly subscription?: string;
+    readonly ads?: string;
+    readonly created?: string;
     readonly manual?: string;
     readonly adId?: string;
   }>;
@@ -36,10 +38,13 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   if (!admin) redirect("/admin/entrar");
 
   const params = await searchParams;
+  const createdDays = params.created === "7" ? 7 : undefined;
   const [providers, categories, locationOptions] = await Promise.all([
     listAdminProviders({
       status: params.status,
       subscription: params.subscription,
+      ads: params.ads,
+      createdDays,
     }),
     getCategoriesWithCounts(),
     listActiveCatalogLocationOptions(),
@@ -48,41 +53,69 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   function buildFilterUrl(overrides: {
     readonly status?: string;
     readonly subscription?: string;
+    readonly ads?: string;
+    readonly created?: string;
   }) {
     const query = new URLSearchParams();
     const merged = {
       status: params.status,
       subscription: params.subscription,
+      ads: params.ads,
+      created: params.created,
       ...overrides,
     };
 
     if (merged.status) query.set("status", merged.status);
     if (merged.subscription) query.set("subscription", merged.subscription);
+    if (merged.ads) query.set("ads", merged.ads);
+    if (merged.created) query.set("created", merged.created);
 
     const qs = query.toString();
     return qs ? `/admin/usuarios?${qs}` : "/admin/usuarios";
   }
 
-  const isExpiredFilter = params.subscription === "expired";
+  const filterHint =
+    params.ads === "none"
+      ? "Exibindo usuários cadastrados sem nenhum anúncio."
+      : params.created === "7"
+        ? "Exibindo cadastros dos últimos 7 dias."
+        : params.subscription === "expired"
+          ? "Exibindo apenas usuários com assinatura vencida."
+          : params.subscription === "trial"
+            ? "Exibindo usuários em trial ativo."
+            : params.subscription === "paid"
+              ? "Exibindo assinantes pagos."
+              : params.subscription === "active"
+                ? "Exibindo usuários com assinatura ativa."
+                : null;
+
+  const hasListFilter = Boolean(
+    params.status || params.subscription || params.ads || params.created
+  );
 
   return (
     <AdminLayout>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Usuários (anunciantes)</h2>
-          {isExpiredFilter && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Exibindo apenas usuários com assinatura vencida.
-            </p>
+          {filterHint && (
+            <p className="mt-1 text-sm text-muted-foreground">{filterHint}</p>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
-            variant={!params.status && !params.subscription ? "default" : "outline"}
+            variant={!hasListFilter ? "default" : "outline"}
             size="sm"
             asChild
           >
-            <Link href={buildFilterUrl({ status: undefined, subscription: undefined })}>
+            <Link
+              href={buildFilterUrl({
+                status: undefined,
+                subscription: undefined,
+                ads: undefined,
+                created: undefined,
+              })}
+            >
               Todos
             </Link>
           </Button>
@@ -91,7 +124,14 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
             size="sm"
             asChild
           >
-            <Link href={buildFilterUrl({ status: "ACTIVE", subscription: undefined })}>
+            <Link
+              href={buildFilterUrl({
+                status: "ACTIVE",
+                subscription: undefined,
+                ads: undefined,
+                created: undefined,
+              })}
+            >
               Ativos
             </Link>
           </Button>
@@ -100,7 +140,14 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
             size="sm"
             asChild
           >
-            <Link href={buildFilterUrl({ status: "BLOCKED", subscription: undefined })}>
+            <Link
+              href={buildFilterUrl({
+                status: "BLOCKED",
+                subscription: undefined,
+                ads: undefined,
+                created: undefined,
+              })}
+            >
               Bloqueados
             </Link>
           </Button>
@@ -109,7 +156,14 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
             size="sm"
             asChild
           >
-            <Link href={buildFilterUrl({ status: undefined, subscription: "active" })}>
+            <Link
+              href={buildFilterUrl({
+                status: undefined,
+                subscription: "active",
+                ads: undefined,
+                created: undefined,
+              })}
+            >
               Assinatura ativa
             </Link>
           </Button>
@@ -118,8 +172,31 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
             size="sm"
             asChild
           >
-            <Link href={buildFilterUrl({ status: undefined, subscription: "expired" })}>
+            <Link
+              href={buildFilterUrl({
+                status: undefined,
+                subscription: "expired",
+                ads: undefined,
+                created: undefined,
+              })}
+            >
               Assinatura vencida
+            </Link>
+          </Button>
+          <Button
+            variant={params.ads === "none" ? "default" : "outline"}
+            size="sm"
+            asChild
+          >
+            <Link
+              href={buildFilterUrl({
+                status: undefined,
+                subscription: undefined,
+                ads: "none",
+                created: undefined,
+              })}
+            >
+              Sem anúncio
             </Link>
           </Button>
         </div>

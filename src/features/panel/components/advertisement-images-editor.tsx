@@ -22,12 +22,19 @@ interface GalleryImage {
   readonly url: string;
 }
 
+type ImageFormAction = (formData: FormData) => void | Promise<void>;
+
 interface AdvertisementImagesEditorProps {
   readonly advertisementId: string;
   readonly title: string;
   readonly coverImage: GalleryImage | null;
   readonly galleryImages: readonly GalleryImage[];
   readonly premiumActive: boolean;
+  readonly backHref?: string;
+  readonly updateAction?: ImageFormAction;
+  readonly removeGalleryAction?: ImageFormAction;
+  /** When true, gallery editing is available even if premium is inactive (admin). */
+  readonly forceGalleryEdit?: boolean;
 }
 
 function SaveButton() {
@@ -63,8 +70,13 @@ export function AdvertisementImagesEditor({
   coverImage,
   galleryImages,
   premiumActive,
+  backHref = "/painel/anuncios",
+  updateAction = updateAdvertisementImagesAction,
+  removeGalleryAction = removeAdvertisementGalleryImageAction,
+  forceGalleryEdit = false,
 }: AdvertisementImagesEditorProps) {
   const [formError, setFormError] = useState<string | null>(null);
+  const canEditGallery = premiumActive || forceGalleryEdit;
   const remainingGallerySlots = Math.max(
     0,
     ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages - galleryImages.length
@@ -72,7 +84,7 @@ export function AdvertisementImagesEditor({
 
   return (
     <div className="space-y-3">
-      {premiumActive && galleryImages.length > 0 && (
+      {canEditGallery && galleryImages.length > 0 && (
         <div>
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-sm font-medium">Fotos atuais da galeria</p>
@@ -92,7 +104,7 @@ export function AdvertisementImagesEditor({
                     sizes="200px"
                   />
                 </div>
-                <form action={removeAdvertisementGalleryImageAction}>
+                <form action={removeGalleryAction}>
                   <input type="hidden" name="advertisementId" value={advertisementId} />
                   <input type="hidden" name="imageId" value={image.id} />
                   <RemoveGalleryButton />
@@ -104,7 +116,7 @@ export function AdvertisementImagesEditor({
       )}
 
       <form
-        action={updateAdvertisementImagesAction}
+        action={updateAction}
         encType="multipart/form-data"
         className="space-y-3"
         onSubmit={(event) => {
@@ -149,7 +161,7 @@ export function AdvertisementImagesEditor({
           </div>
         </div>
 
-        {premiumActive && (
+        {canEditGallery && (
           <div>
             <div className="mb-1 flex items-center justify-between gap-2">
               <label htmlFor="galleryImages" className="block text-sm font-medium">
@@ -161,6 +173,12 @@ export function AdvertisementImagesEditor({
                 </span>
               )}
             </div>
+
+            {!premiumActive && forceGalleryEdit && (
+              <p className="mb-2 text-xs text-muted-foreground">
+                Premium inativo: a galeria só aparece publicamente com destaque ativo.
+              </p>
+            )}
 
             {remainingGallerySlots > 0 ? (
               <div className="flex items-center gap-2 rounded-lg border border-dashed p-2.5">
@@ -191,7 +209,7 @@ export function AdvertisementImagesEditor({
         <div className="flex gap-2">
           <SaveButton />
           <Button type="button" variant="outline" size="sm" asChild>
-            <Link href="/painel/anuncios">Voltar</Link>
+            <Link href={backHref}>Voltar</Link>
           </Button>
         </div>
       </form>

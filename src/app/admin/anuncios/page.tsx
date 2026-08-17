@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Crown, MessageCircle } from "lucide-react";
@@ -13,6 +12,7 @@ import { AdminAdvertisementActions } from "@/features/admin/components/admin-adv
 import { AdminAdvertisementFilters } from "@/features/admin/components/admin-advertisement-filters";
 import { AdminAdvertisementNotifyActions } from "@/features/admin/components/admin-advertisement-notify-actions";
 import { getAdminAdStatusLabel } from "@/config/admin";
+import { buildAdvertisementRenewalWhatsAppHref } from "@/lib/advertisement-notify-message";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { formatWhatsAppDisplay } from "@/lib/whatsapp";
 import { getAdvertisementTypeLabel } from "@/shared/utils/format";
@@ -33,6 +33,7 @@ interface AdminAdsPageProps {
     readonly city?: string;
     readonly type?: string;
     readonly published?: string;
+    readonly subscription?: string;
     readonly manual?: string;
     readonly notify?: string;
     readonly password?: string;
@@ -46,6 +47,7 @@ export default async function AdminAdvertisementsPage({
   if (!admin) redirect("/admin/entrar");
 
   const params = await searchParams;
+  const isExpiredSubscriptionFilter = params.subscription === "expired";
   const filterState = {
     q: params.q,
     status: params.status,
@@ -55,6 +57,7 @@ export default async function AdminAdvertisementsPage({
     published: params.published,
     premium: params.premium,
     providerId: params.providerId,
+    subscription: params.subscription,
   };
 
   const [advertisements, categories, cities] = await Promise.all([
@@ -70,6 +73,7 @@ export default async function AdminAdvertisementsPage({
         params.published === "yes" || params.published === "no"
           ? params.published
           : undefined,
+      subscriptionExpired: isExpiredSubscriptionFilter,
     }),
     getCategoriesWithCounts(),
     listCityNamesForSearch(),
@@ -86,7 +90,9 @@ export default async function AdminAdvertisementsPage({
       <div className="mb-4">
         <h2 className="text-xl font-semibold">Anúncios</h2>
         <p className="text-sm text-muted-foreground">
-          Filtre por categoria, publicação, cidade e status.
+          {isExpiredSubscriptionFilter
+            ? "Anúncios cujo anunciante está com a assinatura vencida. Use o botão de renovação para avisar no WhatsApp."
+            : "Filtre por categoria, publicação, cidade e status."}
         </p>
       </div>
 
@@ -140,78 +146,118 @@ export default async function AdminAdvertisementsPage({
         <div className="space-y-4">
           {advertisements.map((ad) => {
             const notify = notifyContexts.get(ad.id);
+            const renewalHref = ad.subscriptionExpired
+              ? buildAdvertisementRenewalWhatsAppHref({
+                  providerName: ad.provider.name,
+                  adTitle: ad.title,
+                  whatsapp: ad.provider.whatsapp,
+                })
+              : null;
 
             return (
-            <Card key={ad.id}>
-              <CardContent className="space-y-4 p-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <h3 className="font-semibold">{ad.title}</h3>
-                      <Badge variant="outline">{getAdminAdStatusLabel(ad.status)}</Badge>
-                      <Badge variant="secondary">
-                        {getAdvertisementTypeLabel(ad.type)}
-                      </Badge>
-                      <Badge variant="secondary">{ad.category}</Badge>
-                      {ad.premiumActive && (
-                        <Badge variant="premium" className="gap-1">
-                          <Crown className="h-3 w-3" />
-                          Premium pago
+              <Card
+                key={ad.id}
+                className={
+                  ad.subscriptionExpired ? "border-destructive/40" : undefined
+                }
+              >
+                <CardContent className="space-y-4 p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold">{ad.title}</h3>
+                        <Badge variant="outline">
+                          {getAdminAdStatusLabel(ad.status)}
                         </Badge>
+                        <Badge variant="secondary">
+                          {getAdvertisementTypeLabel(ad.type)}
+                        </Badge>
+                        <Badge variant="secondary">{ad.category}</Badge>
+                        {ad.premiumActive && (
+                          <Badge variant="premium" className="gap-1">
+                            <Crown className="h-3 w-3" />
+                            Premium pago
+                          </Badge>
+                        )}
+                        {ad.subscriptionExpired && (
+                          <Badge variant="destructive">Assinatura vencida</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {ad.city}/{ad.state}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Anunciante: {ad.provider.name}
+                        {ad.provider.email ? ` (${ad.provider.email})` : ""}
+                        {" · "}
+                        {formatWhatsAppDisplay(ad.provider.whatsapp)}
+                      </p>
+                      {notify?.hasStoredPassword && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Senha do lead disponível nas observações do lead convertido.
+                        </p>
+                      )}
+                      {ad.premiumActive && ad.premiumExpiresAt && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Destaque até{" "}
+                          {ad.premiumExpiresAt.toLocaleDateString("pt-BR")}
+                          {ad.lastBoost
+                            ? ` · pago R$ ${ad.lastBoost.amount
+                                .toFixed(2)
+                                .replace(".", ",")}`
+                            : ""}
+                        </p>
+                      )}
+                      {ad.subscriptionExpired && ad.subscriptionExpiresAt && (
+                        <p className="mt-1 text-xs font-medium text-destructive">
+                          Assinatura venceu em{" "}
+                          {ad.subscriptionExpiresAt.toLocaleDateString("pt-BR")}
+                        </p>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {ad.city}/{ad.state}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Anunciante: {ad.provider.name}
-                      {ad.provider.email ? ` (${ad.provider.email})` : ""}
-                      {" · "}
-                      {formatWhatsAppDisplay(ad.provider.whatsapp)}
-                    </p>
-                    {notify?.hasStoredPassword && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Senha do lead disponível nas observações do lead convertido.
-                      </p>
-                    )}
-                    {ad.premiumActive && ad.premiumExpiresAt && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Destaque até {ad.premiumExpiresAt.toLocaleDateString("pt-BR")}
-                        {ad.lastBoost
-                          ? ` · pago R$ ${ad.lastBoost.amount.toFixed(2).replace(".", ",")}`
-                          : ""}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/admin/anuncios/${ad.id}/editar`}>Editar</Link>
-                      </Button>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/anuncio/${ad.id}`}>Ver público</Link>
-                      </Button>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/admin/anuncios/${ad.id}/editar`}>
+                            Editar
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/anuncio/${ad.id}`}>Ver público</Link>
+                        </Button>
+                      </div>
+                      {renewalHref && (
+                        <Button variant="whatsapp" size="sm" asChild>
+                          <a
+                            href={renewalHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            Avisar renovação
+                          </a>
+                        </Button>
+                      )}
+                      {notify && (
+                        <AdminAdvertisementNotifyActions
+                          advertisementId={ad.id}
+                          notifyHref={notify.notifyHref}
+                          hasStoredPassword={notify.hasStoredPassword}
+                          returnTo="/admin/anuncios"
+                          compact
+                        />
+                      )}
                     </div>
-                    {notify && (
-                      <AdminAdvertisementNotifyActions
-                        advertisementId={ad.id}
-                        notifyHref={notify.notifyHref}
-                        hasStoredPassword={notify.hasStoredPassword}
-                        returnTo="/admin/anuncios"
-                        compact
-                      />
-                    )}
                   </div>
-                </div>
 
-                <AdminAdvertisementActions
-                  advertisementId={ad.id}
-                  currentStatus={ad.status}
-                  title={ad.title}
-                  premiumActive={ad.premiumActive}
-                />
-              </CardContent>
-            </Card>
+                  <AdminAdvertisementActions
+                    advertisementId={ad.id}
+                    currentStatus={ad.status}
+                    title={ad.title}
+                    premiumActive={ad.premiumActive}
+                  />
+                </CardContent>
+              </Card>
             );
           })}
         </div>

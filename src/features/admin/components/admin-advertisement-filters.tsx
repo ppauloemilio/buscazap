@@ -14,6 +14,7 @@ export interface AdminAdvertisementFiltersState {
   readonly published?: string;
   readonly premium?: string;
   readonly providerId?: string;
+  readonly subscription?: string;
 }
 
 interface AdminAdvertisementFiltersProps {
@@ -33,6 +34,7 @@ function buildHref(filters: AdminAdvertisementFiltersState): string {
   if (filters.type?.trim()) params.set("type", filters.type.trim());
   if (filters.published?.trim()) params.set("published", filters.published.trim());
   if (filters.premium === "1") params.set("premium", "1");
+  if (filters.subscription === "expired") params.set("subscription", "expired");
   if (filters.providerId?.trim()) params.set("providerId", filters.providerId.trim());
 
   const qs = params.toString();
@@ -47,7 +49,8 @@ function hasActiveFilters(filters: AdminAdvertisementFiltersState): boolean {
       filters.city?.trim() ||
       filters.type?.trim() ||
       filters.published?.trim() ||
-      filters.premium === "1"
+      filters.premium === "1" ||
+      filters.subscription === "expired"
   );
 }
 
@@ -150,6 +153,17 @@ export function AdminAdvertisementFilters({
             className="h-4 w-4 accent-whatsapp"
           />
           Só premium ativo
+        </label>
+
+        <label className="flex h-9 items-center gap-2 rounded-md border px-2 text-sm">
+          <input
+            type="checkbox"
+            name="subscription"
+            value="expired"
+            defaultChecked={filters.subscription === "expired"}
+            className="h-4 w-4 accent-whatsapp"
+          />
+          Assinatura vencida
         </label>
 
         {filters.providerId && (
