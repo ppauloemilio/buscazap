@@ -12,6 +12,12 @@ export const PRICING = {
   PREMIUM_BOOST_DAYS: 30,
   REFERRAL_PREMIUM_DAYS: 15,
   SUBSCRIPTION_RENEWAL_WINDOW_DAYS: 10,
+  /**
+   * Crédito de destaque grátis a cada N anúncios com status Aprovado
+   * publicados por usuários indicados (código de indicação).
+   */
+  REFERRAL_PUBLISHED_ADS_PER_CREDIT: 5,
+  /** @deprecated Use REFERRAL_PUBLISHED_ADS_PER_CREDIT */
   REFERRALS_PER_PREMIUM_CREDIT: 5,
   LAUNCH_TRIAL_DAYS: 30,
   PAYMENT_EXPIRATION_MINUTES: 30,

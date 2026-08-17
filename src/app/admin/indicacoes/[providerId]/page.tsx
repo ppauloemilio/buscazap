@@ -50,8 +50,19 @@ export default async function AdminReferrerDetailPage({
           {detail.email ? ` · ${detail.email}` : ""}
           {" · "}
           {detail.referralCount} indicação
-          {detail.referralCount === 1 ? "" : "ões"} válida
-          {detail.referralCount === 1 ? "" : "s"}
+          {detail.referralCount === 1 ? "" : "ões"}
+          {" · "}
+          {detail.publishedAdsCount} anúncio
+          {detail.publishedAdsCount === 1 ? "" : "s"} publicado
+          {detail.publishedAdsCount === 1 ? "" : "s"} pelos indicados
+          {" · "}
+          {detail.freePremiumCredits} crédito
+          {detail.freePremiumCredits === 1 ? "" : "s"} disponível
+          {detail.freePremiumCredits === 1 ? "" : "s"}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Crédito a cada {detail.adsPerCredit} anúncios publicados. Faltam{" "}
+          {detail.remainingForCredit} para o próximo.
         </p>
         <div className="mt-3">
           <Button variant="outline" size="sm" asChild>

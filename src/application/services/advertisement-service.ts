@@ -490,6 +490,11 @@ export async function createAdvertisement(input: {
     },
   });
 
+  const { syncReferralCreditsForProvider } = await import(
+    "@/application/services/referral-service"
+  );
+  await syncReferralCreditsForProvider(input.providerId);
+
   const entity = mapAdvertisementToEntity(advertisement);
   const categorySlug = await resolveCategorySlugByName(input.category);
 
@@ -520,6 +525,11 @@ export async function deleteProviderAdvertisement(
   await prisma.advertisement.delete({
     where: { id: advertisementId },
   });
+
+  const { syncReferralCreditsForProvider } = await import(
+    "@/application/services/referral-service"
+  );
+  await syncReferralCreditsForProvider(providerId);
 }
 
 export async function getPremiumAdvertisements() {

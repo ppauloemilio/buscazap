@@ -1,7 +1,10 @@
 import { randomBytes } from "crypto";
 import { PRICING } from "@/config/pricing";
-import { UserRole } from "@/domain/enums";
+import { AdvertisementStatus, UserRole } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
+
+const REFERRAL_BONUS_SOURCE = "REFERRAL_BONUS";
+const ADS_PER_CREDIT = PRICING.REFERRAL_PUBLISHED_ADS_PER_CREDIT;
 
 export async function generateUniqueReferralCode(): Promise<string> {
   for (let attempt = 0; attempt < 10; attempt += 1) {
@@ -30,6 +33,73 @@ export async function findReferrerByCode(code: string) {
       status: true,
     },
   });
+}
+
+export async function countPublishedAdsFromReferrals(
+  referrerId: string
+): Promise<number> {
+  return prisma.advertisement.count({
+    where: {
+      status: AdvertisementStatus.APPROVED,
+      provider: {
+        OR: [
+          { referredById: referrerId },
+          { referralReceived: { is: { referrerId } } },
+        ],
+      },
+    },
+  });
+}
+
+/**
+ * Recalcula créditos grátis: floor(anúncios aprovados dos indicados / N)
+ * menos créditos já resgatados (PremiumBoost REFERRAL_BONUS).
+ */
+export async function syncReferralPremiumCredits(referrerId: string) {
+  const [publishedAdsCount, redeemedCredits] = await Promise.all([
+    countPublishedAdsFromReferrals(referrerId),
+    prisma.premiumBoost.count({
+      where: {
+        providerId: referrerId,
+        source: REFERRAL_BONUS_SOURCE,
+      },
+    }),
+  ]);
+
+  const earnedCredits = Math.floor(publishedAdsCount / ADS_PER_CREDIT);
+  const freePremiumCredits = Math.max(0, earnedCredits - redeemedCredits);
+
+  await prisma.provider.update({
+    where: { id: referrerId },
+    data: { freePremiumCredits },
+  });
+
+  return {
+    publishedAdsCount,
+    earnedCredits,
+    redeemedCredits,
+    freePremiumCredits,
+  };
+}
+
+/** Se o anunciante foi indicado, sincroniza os créditos do indicador. */
+export async function syncReferralCreditsForProvider(providerId: string) {
+  const provider = await prisma.provider.findUnique({
+    where: { id: providerId },
+    select: {
+      referredById: true,
+      referralReceived: { select: { referrerId: true } },
+    },
+  });
+
+  const referrerId =
+    provider?.referredById ?? provider?.referralReceived?.referrerId ?? null;
+
+  if (!referrerId) {
+    return null;
+  }
+
+  return syncReferralPremiumCredits(referrerId);
 }
 
 export async function applyReferralOnRegistration(input: {
@@ -66,21 +136,25 @@ export async function applyReferralOnRegistration(input: {
       data: { referredById: referrer.id },
     });
 
-    const referralCount = await tx.referral.count({
-      where: { referrerId: referrer.id },
-    });
-
-    let creditGranted = false;
-    if (referralCount > 0 && referralCount % PRICING.REFERRALS_PER_PREMIUM_CREDIT === 0) {
-      await tx.provider.update({
-        where: { id: referrer.id },
-        data: { freePremiumCredits: { increment: 1 } },
-      });
-      creditGranted = true;
-    }
-
-    return { applied: true as const, creditGranted };
+    // Crédito só é concedido quando indicados publicam anúncios (APPROVED).
+    return { applied: true as const, creditGranted: false as const };
   });
+}
+
+function creditProgress(publishedAdsCount: number) {
+  const progressInCycle = publishedAdsCount % ADS_PER_CREDIT;
+  const remainingForCredit =
+    progressInCycle === 0
+      ? ADS_PER_CREDIT
+      : ADS_PER_CREDIT - progressInCycle;
+
+  return {
+    publishedAdsCount,
+    adsPerCredit: ADS_PER_CREDIT,
+    remainingForCredit,
+    progressInCycle:
+      progressInCycle === 0 && publishedAdsCount > 0 ? 0 : progressInCycle,
+  };
 }
 
 export async function getReferralDashboard(providerId: string) {
@@ -97,31 +171,38 @@ export async function getReferralDashboard(providerId: string) {
     throw new Error("PROVIDER_NOT_FOUND");
   }
 
+  const synced = await syncReferralPremiumCredits(providerId);
+
   const referrals = await prisma.referral.findMany({
     where: { referrerId: providerId },
     orderBy: { createdAt: "desc" },
     include: {
       referred: {
-        select: { id: true, name: true, email: true, createdAt: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          createdAt: true,
+          advertisements: {
+            where: { status: AdvertisementStatus.APPROVED },
+            select: { id: true },
+          },
+        },
       },
     },
   });
 
-  const referralCount = referrals.length;
-  const progressInCycle = referralCount % PRICING.REFERRALS_PER_PREMIUM_CREDIT;
-  const remainingForCredit =
-    progressInCycle === 0
-      ? PRICING.REFERRALS_PER_PREMIUM_CREDIT
-      : PRICING.REFERRALS_PER_PREMIUM_CREDIT - progressInCycle;
+  const progress = creditProgress(synced.publishedAdsCount);
 
   return {
     referralCode: provider.referralCode,
-    freePremiumCredits: provider.freePremiumCredits,
-    referralCount,
-    referralsPerCredit: PRICING.REFERRALS_PER_PREMIUM_CREDIT,
-    remainingForCredit,
-    progressInCycle:
-      progressInCycle === 0 && referralCount > 0 ? 0 : progressInCycle,
+    freePremiumCredits: synced.freePremiumCredits,
+    referralCount: referrals.length,
+    publishedAdsCount: synced.publishedAdsCount,
+    referralsPerCredit: ADS_PER_CREDIT,
+    adsPerCredit: ADS_PER_CREDIT,
+    remainingForCredit: progress.remainingForCredit,
+    progressInCycle: progress.progressInCycle,
     referralPremiumDays: PRICING.REFERRAL_PREMIUM_DAYS,
     paidPremiumDays: PRICING.PREMIUM_BOOST_DAYS,
     referrals: referrals.map((item) => ({
@@ -129,6 +210,7 @@ export async function getReferralDashboard(providerId: string) {
       createdAt: item.createdAt,
       referredName: item.referred.name,
       referredEmail: item.referred.email,
+      publishedAdsCount: item.referred.advertisements.length,
     })),
   };
 }
@@ -161,17 +243,24 @@ export async function listAdminReferrers(filters?: {
     },
   });
 
-  return referrers
-    .map((provider) => ({
-      id: provider.id,
-      name: provider.name,
-      email: provider.email,
-      whatsapp: provider.whatsapp,
-      referralCode: provider.referralCode,
-      freePremiumCredits: provider.freePremiumCredits,
-      createdAt: provider.createdAt,
-      referralCount: provider.referralsMade.length,
-    }))
+  const withCounts = await Promise.all(
+    referrers.map(async (provider) => {
+      const synced = await syncReferralPremiumCredits(provider.id);
+      return {
+        id: provider.id,
+        name: provider.name,
+        email: provider.email,
+        whatsapp: provider.whatsapp,
+        referralCode: provider.referralCode,
+        freePremiumCredits: synced.freePremiumCredits,
+        publishedAdsCount: synced.publishedAdsCount,
+        createdAt: provider.createdAt,
+        referralCount: provider.referralsMade.length,
+      };
+    })
+  );
+
+  return withCounts
     .filter((provider) => provider.referralCount > 0)
     .sort((a, b) => b.referralCount - a.referralCount);
 }
@@ -194,6 +283,9 @@ export async function getAdminReferrerDetail(referrerId: string) {
   if (!provider) {
     return null;
   }
+
+  const synced = await syncReferralPremiumCredits(referrerId);
+  const progress = creditProgress(synced.publishedAdsCount);
 
   const referrals = await prisma.referral.findMany({
     where: { referrerId },
@@ -226,6 +318,10 @@ export async function getAdminReferrerDetail(referrerId: string) {
 
   return {
     ...provider,
+    freePremiumCredits: synced.freePremiumCredits,
+    publishedAdsCount: synced.publishedAdsCount,
+    adsPerCredit: ADS_PER_CREDIT,
+    remainingForCredit: progress.remainingForCredit,
     referralCount: referrals.length,
     referrals: referrals.map((referral) => ({
       id: referral.id,
@@ -238,6 +334,9 @@ export async function getAdminReferrerDetail(referrerId: string) {
         status: referral.referred.status,
         createdAt: referral.referred.createdAt,
         advertisements: referral.referred.advertisements,
+        publishedAdsCount: referral.referred.advertisements.filter(
+          (ad) => ad.status === AdvertisementStatus.APPROVED
+        ).length,
       },
     })),
   };

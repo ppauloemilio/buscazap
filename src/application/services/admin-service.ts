@@ -1063,6 +1063,11 @@ export async function updateAdvertisementStatusAsAdmin(input: {
     data: { status: input.status },
   });
 
+  const { syncReferralCreditsForProvider } = await import(
+    "@/application/services/referral-service"
+  );
+  await syncReferralCreditsForProvider(advertisement.providerId);
+
   await logAdminAction({
     adminId: input.adminId,
     action: "UPDATE_ADVERTISEMENT_STATUS",
@@ -1089,6 +1094,11 @@ export async function deleteAdvertisementAsAdmin(input: {
   await prisma.advertisement.delete({
     where: { id: input.advertisementId },
   });
+
+  const { syncReferralCreditsForProvider } = await import(
+    "@/application/services/referral-service"
+  );
+  await syncReferralCreditsForProvider(advertisement.providerId);
 
   await logAdminAction({
     adminId: input.adminId,

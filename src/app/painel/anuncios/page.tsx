@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Crown, ImageIcon } from "lucide-react";
 import { findProviderAdvertisements, providerHasAdSlotAvailable } from "@/application/services/advertisement-service";
+import { syncReferralPremiumCredits } from "@/application/services/referral-service";
 import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
 import { buildAbsoluteUrl } from "@/lib/site-url";
 import { AdvertisementShareActions } from "@/features/dashboard/components/advertisement-share-actions";
@@ -30,13 +31,20 @@ export default async function ProviderAdsPage({
   const params = await searchParams;
   const subscriptionActive = canProviderPublish(provider);
   const isAdmin = isAdminProvider(provider);
-  const advertisements = await findProviderAdvertisements(provider.id);
-  const hasAdSlot = isAdmin || (await providerHasAdSlotAvailable(provider.id));
+  const [advertisements, hasAdSlot, referralCredits] = await Promise.all([
+    findProviderAdvertisements(provider.id),
+    isAdmin
+      ? Promise.resolve(true)
+      : providerHasAdSlotAvailable(provider.id),
+    isAdmin
+      ? Promise.resolve({ freePremiumCredits: 0 })
+      : syncReferralPremiumCredits(provider.id),
+  ]);
   const boostLabel = isAdmin
     ? "Destacar grátis"
     : `Destacar ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)} (30 dias)`;
   const premiumAmountLabel = formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT);
-  const freeCredits = isAdmin ? 0 : provider.freePremiumCredits;
+  const freeCredits = isAdmin ? 0 : referralCredits.freePremiumCredits;
 
   return (
     <PanelLayout>

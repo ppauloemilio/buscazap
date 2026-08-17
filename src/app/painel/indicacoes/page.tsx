@@ -20,12 +20,13 @@ export default async function ReferralsPage() {
     <PanelLayout>
       <h2 className="mb-1 text-lg font-semibold">Indicações</h2>
       <p className="mb-3 text-xs text-muted-foreground">
-        Indique {PRICING.REFERRALS_PER_PREMIUM_CREDIT} anunciantes e ganhe 1 destaque
-        premium grátis de {PRICING.REFERRAL_PREMIUM_DAYS} dias. Destaque pago continua
-        com {PRICING.PREMIUM_BOOST_DAYS} dias.
+        A cada {PRICING.REFERRAL_PUBLISHED_ADS_PER_CREDIT} anúncios publicados pelos
+        seus indicados, você ganha 1 destaque premium grátis de{" "}
+        {PRICING.REFERRAL_PREMIUM_DAYS} dias. Destaque pago continua com{" "}
+        {PRICING.PREMIUM_BOOST_DAYS} dias.
       </p>
 
-      <div className="mb-2 grid gap-2 sm:grid-cols-3">
+      <div className="mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="p-3 pb-1">
             <CardTitle className="text-xs font-medium text-muted-foreground">
@@ -44,6 +45,16 @@ export default async function ReferralsPage() {
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <p className="text-xl font-bold">{dashboard.referralCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Anúncios publicados
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <p className="text-xl font-bold">{dashboard.publishedAdsCount}</p>
             <p className="text-[11px] text-muted-foreground">
               Faltam {dashboard.remainingForCredit} para o próximo crédito
             </p>
@@ -100,7 +111,11 @@ export default async function ReferralsPage() {
                   <div>
                     <p className="font-medium">{referral.referredName}</p>
                     <p className="text-xs text-muted-foreground">
-                      {referral.referredEmail}
+                      {referral.referredEmail ?? "Sem e-mail"}
+                      {" · "}
+                      {referral.publishedAdsCount} anúncio
+                      {referral.publishedAdsCount === 1 ? "" : "s"} publicado
+                      {referral.publishedAdsCount === 1 ? "" : "s"}
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground">

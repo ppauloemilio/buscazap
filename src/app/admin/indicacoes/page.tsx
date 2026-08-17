@@ -72,6 +72,11 @@ export default async function AdminReferralsPage({
                     <Badge variant="secondary">
                       Código {referrer.referralCode}
                     </Badge>
+                    <Badge variant="outline">
+                      {referrer.publishedAdsCount} anúncio
+                      {referrer.publishedAdsCount === 1 ? "" : "s"} publicado
+                      {referrer.publishedAdsCount === 1 ? "" : "s"}
+                    </Badge>
                     {referrer.freePremiumCredits > 0 && (
                       <Badge variant="whatsapp">
                         {referrer.freePremiumCredits} crédito(s) premium
