@@ -86,29 +86,32 @@ export async function activateSubscription(
     where: { id: providerId },
     data: { subscriptionExpiresAt: expiresAt },
   });
+
+  await tx.advertisement.updateMany({
+    where: {
+      providerId,
+      status: "INACTIVE",
+    },
+    data: { status: "APPROVED" },
+  });
 }
 
 export async function expireSubscriptions() {
   const now = new Date();
 
-  const expiredProviders = await prisma.provider.findMany({
+  const result = await prisma.advertisement.updateMany({
     where: {
-      role: { not: "ADMIN" },
-      subscriptionExpiresAt: { lt: now },
+      status: "APPROVED",
+      provider: {
+        role: { not: "ADMIN" },
+        OR: [
+          { subscriptionExpiresAt: null },
+          { subscriptionExpiresAt: { lte: now } },
+        ],
+      },
     },
+    data: { status: "INACTIVE" },
   });
 
-  for (const provider of expiredProviders) {
-    await prisma.provider.update({
-      where: { id: provider.id },
-      data: { subscriptionExpiresAt: null },
-    });
-
-    await prisma.advertisement.updateMany({
-      where: { providerId: provider.id, status: "APPROVED" },
-      data: { status: "INACTIVE" },
-    });
-  }
-
-  return expiredProviders.length;
+  return result.count;
 }

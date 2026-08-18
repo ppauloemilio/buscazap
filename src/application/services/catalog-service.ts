@@ -1,7 +1,7 @@
 import type { Category } from "@/domain/entities";
-import { AdvertisementStatus } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
 import { markDataFetchDynamic } from "@/lib/db";
+import { publicListingAdvertisementWhere } from "@/lib/public-advertisement-visibility";
 
 export async function listActiveCategories() {
   markDataFetchDynamic();
@@ -81,7 +81,7 @@ export async function listCityNamesForSearch() {
 
   const grouped = await prisma.advertisement.groupBy({
     by: ["city"],
-    where: { status: AdvertisementStatus.APPROVED },
+    where: publicListingAdvertisementWhere(),
   });
 
   const names = grouped
@@ -99,7 +99,7 @@ export async function listNeighborhoodNamesForSearch(city?: string) {
   const cityFilter = city?.trim();
   const rows = await prisma.advertisement.findMany({
     where: {
-      status: AdvertisementStatus.APPROVED,
+      ...publicListingAdvertisementWhere(),
       neighborhood: { not: null },
     },
     select: { city: true, neighborhood: true },
@@ -133,7 +133,7 @@ export async function listNeighborhoodsByCityForSearch(): Promise<
 
   const rows = await prisma.advertisement.findMany({
     where: {
-      status: AdvertisementStatus.APPROVED,
+      ...publicListingAdvertisementWhere(),
       neighborhood: { not: null },
     },
     select: { city: true, neighborhood: true },
@@ -165,7 +165,7 @@ export async function getCategoriesWithCounts(): Promise<Category[]> {
     prisma.advertisement.groupBy({
       by: ["category"],
       _count: { category: true },
-      where: { status: AdvertisementStatus.APPROVED },
+      where: publicListingAdvertisementWhere(),
     }),
   ]);
 

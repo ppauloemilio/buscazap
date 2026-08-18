@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
-import { AdvertisementStatus, ProviderStatus } from "@/domain/enums";
 import { resolveCategorySlugByName } from "@/application/services/slug-service";
 import { prisma } from "@/lib/prisma";
+import { publicListingAdvertisementWhere } from "@/lib/public-advertisement-visibility";
 import { getSiteUrl } from "@/lib/site-url";
 
 const STATIC_PATHS = [
@@ -30,9 +30,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const advertisements = await prisma.advertisement.findMany({
     where: {
-      status: AdvertisementStatus.APPROVED,
       slug: { not: null },
-      provider: { status: ProviderStatus.ACTIVE },
+      ...publicListingAdvertisementWhere(now),
     },
     select: {
       slug: true,

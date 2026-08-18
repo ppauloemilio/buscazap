@@ -1,6 +1,6 @@
 import type { AdvertisementType, ServiceArea } from "@/domain/enums";
 import type { SearchFilters } from "@/domain/entities";
-import { AdvertisementStatus, ProviderStatus } from "@/domain/enums";
+import { AdvertisementStatus } from "@/domain/enums";
 import { getCategoryBySlug } from "@/application/services/catalog-service";
 import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
@@ -8,6 +8,7 @@ import { mapAdvertisementToEntity } from "@/infrastructure/mappers/advertisement
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { markDataFetchDynamic } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
+import { publicListingAdvertisementWhere } from "@/lib/public-advertisement-visibility";
 import { isPremiumActive } from "@/lib/provider-session";
 import { slugify } from "@/lib/slug";
 import {
@@ -129,8 +130,7 @@ export async function findPublicAdvertisements(
 
   const advertisements = await prisma.advertisement.findMany({
     where: {
-      status: AdvertisementStatus.APPROVED,
-      provider: { status: ProviderStatus.ACTIVE },
+      ...publicListingAdvertisementWhere(now),
       ...(filters.type ? { type: filters.type } : {}),
       ...(categoryName
         ? { category: { equals: categoryName, mode: "insensitive" } }
@@ -237,8 +237,11 @@ export async function findPublicAdvertisements(
 export async function findAdvertisementById(id: string) {
   markDataFetchDynamic();
 
-  const advertisement = await prisma.advertisement.findUnique({
-    where: { id },
+  const advertisement = await prisma.advertisement.findFirst({
+    where: {
+      id,
+      ...publicListingAdvertisementWhere(),
+    },
     include: {
       images: {
         orderBy: { sortOrder: "asc" },
@@ -255,11 +258,7 @@ export async function findAdvertisementById(id: string) {
     },
   });
 
-  if (!advertisement || advertisement.status === "BLOCKED") {
-    return undefined;
-  }
-
-  if (advertisement.provider.status === ProviderStatus.BLOCKED) {
+  if (!advertisement) {
     return undefined;
   }
 
@@ -306,8 +305,7 @@ export async function findAdvertisementByCategoryAndSlug(
     where: {
       slug: adSlug,
       category: category.name,
-      status: { not: AdvertisementStatus.BLOCKED },
-      provider: { status: { not: ProviderStatus.BLOCKED } },
+      ...publicListingAdvertisementWhere(),
     },
     include: {
       images: {
@@ -348,8 +346,7 @@ export async function findAdvertisementsByIds(ids: readonly string[]) {
   const advertisements = await prisma.advertisement.findMany({
     where: {
       id: { in: [...ids] },
-      status: { not: AdvertisementStatus.BLOCKED },
-      provider: { status: { not: ProviderStatus.BLOCKED } },
+      ...publicListingAdvertisementWhere(),
     },
     include: {
       images: {

@@ -78,14 +78,6 @@ export async function registerManualSubscriptionAsAdmin(input: {
 
     await activateSubscription(tx, provider.id, payment.id, paidAt);
 
-    await tx.advertisement.updateMany({
-      where: {
-        providerId: provider.id,
-        status: "INACTIVE",
-      },
-      data: { status: "APPROVED" },
-    });
-
     const updated = await tx.provider.findUnique({
       where: { id: provider.id },
       select: { subscriptionExpiresAt: true },
