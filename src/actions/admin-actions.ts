@@ -863,21 +863,15 @@ export async function adminRemoveAdvertisementGalleryImageAction(
 
 export async function adminNotifyAdvertisementWithNewPasswordAction(
   formData: FormData
-) {
+): Promise<{ ok: true; notifyHref: string } | { ok: false; error: string }> {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/entrar");
 
   const advertisementId = formData.get("advertisementId");
-  const returnToRaw = formData.get("returnTo");
 
   if (typeof advertisementId !== "string" || !advertisementId.trim()) {
-    redirect("/admin/anuncios?error=Anúncio inválido");
+    return { ok: false, error: "Anúncio inválido" };
   }
-
-  const returnTo =
-    typeof returnToRaw === "string" && returnToRaw.startsWith("/admin")
-      ? returnToRaw
-      : "/admin/anuncios";
 
   try {
     const result = await resetAdvertisementProviderPasswordForNotify({
@@ -891,15 +885,13 @@ export async function adminNotifyAdvertisementWithNewPasswordAction(
     revalidatePath("/admin/busca");
     revalidatePath(`/admin/anuncios/${advertisementId.trim()}/editar`);
 
-    redirect(
-      `${returnTo}?notify=${encodeURIComponent(result.notifyHref)}&password=1`
-    );
+    return { ok: true, notifyHref: result.notifyHref };
   } catch (error) {
     const message =
       error instanceof Error
         ? error.message
         : "Não foi possível gerar a senha";
-    redirect(`${returnTo}?error=${encodeURIComponent(message)}`);
+    return { ok: false, error: message };
   }
 }
 
