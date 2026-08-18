@@ -66,3 +66,37 @@ export function buildAdvertisementRenewalWhatsAppHref(
     buildAdvertisementRenewalWhatsAppMessage(input)
   );
 }
+
+export interface PixCopyPasteWhatsAppInput {
+  readonly providerName: string;
+  readonly whatsapp: string;
+  readonly amountLabel: string;
+  readonly pixCopyPaste: string;
+  readonly kind: "subscription" | "premium";
+  readonly adTitle?: string;
+}
+
+export function buildPixCopyPasteWhatsAppMessage(
+  input: PixCopyPasteWhatsAppInput
+): string {
+  const subject =
+    input.kind === "premium"
+      ? `destaque premium do anúncio "${input.adTitle ?? "seu anúncio"}"`
+      : "assinatura mensal do BuscaZapp";
+
+  return (
+    `Olá ${input.providerName}! Segue o Pix copia e cola da ${subject} (${input.amountLabel}).\n\n` +
+    `Cole o código abaixo no app do seu banco para pagar:\n\n` +
+    `${input.pixCopyPaste}\n\n` +
+    `Após o pagamento, a liberação é automática.`
+  );
+}
+
+export function buildPixCopyPasteWhatsAppHref(
+  input: PixCopyPasteWhatsAppInput
+): string {
+  return buildWhatsAppLink(
+    input.whatsapp,
+    buildPixCopyPasteWhatsAppMessage(input)
+  );
+}

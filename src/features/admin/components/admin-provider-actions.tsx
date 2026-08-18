@@ -1,14 +1,16 @@
 "use client";
 
 import {
+  adminCreateSubscriptionPixWhatsAppAction,
   adminDeleteProviderAction,
   adminRegisterSubscriptionAction,
   adminResetProviderPasswordAction,
   moderateProviderAction,
 } from "@/actions/admin-actions";
+import { AdminPixWhatsAppButton } from "@/features/admin/components/admin-pix-whatsapp-button";
 import { MANUAL_PAYMENT_METHODS } from "@/config/manual-payment";
 import { ADMIN_PROVIDER_STATUS_OPTIONS } from "@/config/admin";
-import { PRICING } from "@/config/pricing";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -131,6 +133,13 @@ export function AdminProviderActions({
           Registrar assinatura
         </Button>
       </form>
+
+      <AdminPixWhatsAppButton
+        action={adminCreateSubscriptionPixWhatsAppAction}
+        hiddenFields={{ providerId }}
+        label={`Pix assinatura ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)} + WhatsApp`}
+        confirmMessage={`Gerar Pix da assinatura (${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}) para "${name}" e abrir o WhatsApp com o copia e cola?`}
+      />
 
       <form
         action={adminResetProviderPasswordAction}

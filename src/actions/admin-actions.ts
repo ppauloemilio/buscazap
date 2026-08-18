@@ -10,6 +10,7 @@ import {
   createReport,
   deleteAdvertisementAsAdmin,
   deleteProviderAsAdmin,
+  logAdminAction,
   resetProviderPasswordAsAdmin,
   updateAdvertisementAsAdmin,
   updateAdvertisementStatusAsAdmin,
@@ -25,6 +26,10 @@ import {
   registerManualSubscriptionAsAdmin,
 } from "@/application/services/admin-manual-billing-service";
 import {
+  createPremiumBoostPayment,
+  createSubscriptionPayment,
+} from "@/application/services/payment-service";
+import {
   ADVERTISEMENT_IMAGE_KIND,
   ADVERTISEMENT_IMAGE_LIMITS,
 } from "@/config/advertisement-images";
@@ -36,8 +41,9 @@ import {
 } from "@/application/services/advertisement-image-service";
 import { deleteProviderAdvertisement } from "@/application/services/advertisement-service";
 import { getCatalogLocationError } from "@/application/services/catalog-location";
-import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
+import { PROVIDER_SESSION_COOKIE, PRICING, formatPriceBRL } from "@/config/pricing";
 import { getCurrentAdmin } from "@/lib/admin-session";
+import { buildPixCopyPasteWhatsAppHref } from "@/lib/advertisement-notify-message";
 import { parseImageFiles, validateImageFile } from "@/lib/image-upload";
 import { prisma } from "@/lib/prisma";
 import {
@@ -891,6 +897,136 @@ export async function adminNotifyAdvertisementWithNewPasswordAction(
       error instanceof Error
         ? error.message
         : "Não foi possível gerar a senha";
+    return { ok: false, error: message };
+  }
+}
+
+type AdminPixWhatsAppResult =
+  | { ok: true; notifyHref: string; pixCopyPaste: string }
+  | { ok: false; error: string };
+
+export async function adminCreateSubscriptionPixWhatsAppAction(
+  formData: FormData
+): Promise<AdminPixWhatsAppResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const providerId = formData.get("providerId");
+  if (typeof providerId !== "string" || !providerId.trim()) {
+    return { ok: false, error: "Usuário inválido" };
+  }
+
+  try {
+    const provider = await prisma.provider.findUnique({
+      where: { id: providerId.trim() },
+      select: { id: true, name: true, whatsapp: true },
+    });
+
+    if (!provider) {
+      return { ok: false, error: "Anunciante não encontrado" };
+    }
+
+    const payment = await createSubscriptionPayment(provider.id, {
+      bypassRenewalWindow: true,
+    });
+
+    await logAdminAction({
+      adminId: admin.id,
+      action: "CREATE_SUBSCRIPTION_PIX_WHATSAPP",
+      entityType: "Payment",
+      entityId: payment.id,
+      metadata: { providerId: provider.id, amount: payment.amount },
+    });
+
+    revalidatePath("/admin/usuarios");
+    revalidatePath("/admin/pagamentos");
+    revalidatePath("/admin/anuncios");
+
+    return {
+      ok: true,
+      pixCopyPaste: payment.pixCopyPaste,
+      notifyHref: buildPixCopyPasteWhatsAppHref({
+        providerName: provider.name,
+        whatsapp: provider.whatsapp,
+        amountLabel: formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT),
+        pixCopyPaste: payment.pixCopyPaste,
+        kind: "subscription",
+      }),
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível gerar o Pix da assinatura";
+    return { ok: false, error: message };
+  }
+}
+
+export async function adminCreatePremiumPixWhatsAppAction(
+  formData: FormData
+): Promise<AdminPixWhatsAppResult> {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const advertisementId = formData.get("advertisementId");
+  if (typeof advertisementId !== "string" || !advertisementId.trim()) {
+    return { ok: false, error: "Anúncio inválido" };
+  }
+
+  try {
+    const advertisement = await prisma.advertisement.findUnique({
+      where: { id: advertisementId.trim() },
+      select: {
+        id: true,
+        title: true,
+        provider: {
+          select: { id: true, name: true, whatsapp: true },
+        },
+      },
+    });
+
+    if (!advertisement) {
+      return { ok: false, error: "Anúncio não encontrado" };
+    }
+
+    const payment = await createPremiumBoostPayment(
+      advertisement.provider.id,
+      advertisement.id
+    );
+
+    await logAdminAction({
+      adminId: admin.id,
+      action: "CREATE_PREMIUM_PIX_WHATSAPP",
+      entityType: "Payment",
+      entityId: payment.id,
+      metadata: {
+        providerId: advertisement.provider.id,
+        advertisementId: advertisement.id,
+        amount: payment.amount,
+      },
+    });
+
+    revalidatePath("/admin/anuncios");
+    revalidatePath("/admin/pagamentos");
+    revalidatePath("/admin/usuarios");
+
+    return {
+      ok: true,
+      pixCopyPaste: payment.pixCopyPaste,
+      notifyHref: buildPixCopyPasteWhatsAppHref({
+        providerName: advertisement.provider.name,
+        whatsapp: advertisement.provider.whatsapp,
+        amountLabel: formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT),
+        pixCopyPaste: payment.pixCopyPaste,
+        kind: "premium",
+        adTitle: advertisement.title,
+      }),
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível gerar o Pix do destaque premium";
     return { ok: false, error: message };
   }
 }

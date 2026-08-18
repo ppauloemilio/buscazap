@@ -1,13 +1,15 @@
 "use client";
 
 import {
+  adminCreatePremiumPixWhatsAppAction,
   adminDeleteAdvertisementAction,
   adminRegisterPremiumBoostAction,
   moderateAdvertisementAction,
 } from "@/actions/admin-actions";
+import { AdminPixWhatsAppButton } from "@/features/admin/components/admin-pix-whatsapp-button";
 import { MANUAL_PAYMENT_METHODS } from "@/config/manual-payment";
 import { ADMIN_AD_STATUS_OPTIONS } from "@/config/admin";
-import { PRICING } from "@/config/pricing";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -107,6 +109,13 @@ export function AdminAdvertisementActions({
           Registrar premium
         </Button>
       </form>
+
+      <AdminPixWhatsAppButton
+        action={adminCreatePremiumPixWhatsAppAction}
+        hiddenFields={{ advertisementId }}
+        label={`Pix premium ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)} + WhatsApp`}
+        confirmMessage={`Gerar Pix do destaque premium (${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}) para "${title}" e abrir o WhatsApp com o copia e cola?`}
+      />
     </div>
   );
 }

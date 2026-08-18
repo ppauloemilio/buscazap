@@ -89,10 +89,14 @@ async function getProviderPaymentProfile(providerId: string) {
   };
 }
 
-export async function createSubscriptionPayment(providerId: string) {
+export async function createSubscriptionPayment(
+  providerId: string,
+  options?: { readonly bypassRenewalWindow?: boolean }
+) {
   const provider = await getProviderPaymentProfile(providerId);
 
   if (
+    !options?.bypassRenewalWindow &&
     hasActiveSubscription(provider.subscriptionExpiresAt) &&
     !canRenewSubscription(provider.subscriptionExpiresAt)
   ) {
