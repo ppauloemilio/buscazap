@@ -13,8 +13,9 @@ function isNextProductionBuild() {
 }
 
 /**
- * Runtime serverless: 1 conexão por instância (PgBouncer poola no Neon).
+ * Runtime serverless: poucas conexões por instância (PgBouncer poola no Neon).
  * Build (`next build`): limite maior — várias páginas estáticas competem pelo pool.
+ * pool_timeout alto evita P2024 em cold start do Neon.
  */
 function databaseUrlWithPoolSettings(): string | undefined {
   const url = process.env.DATABASE_URL;
@@ -27,11 +28,11 @@ function databaseUrlWithPoolSettings(): string | undefined {
 
     if (isNextProductionBuild()) {
       parsed.searchParams.set("connection_limit", "5");
-      if (!parsed.searchParams.has("pool_timeout")) {
-        parsed.searchParams.set("pool_timeout", "20");
-      }
-    } else if (!parsed.searchParams.has("connection_limit")) {
-      parsed.searchParams.set("connection_limit", "1");
+      parsed.searchParams.set("pool_timeout", "30");
+    } else {
+      // Defaults de runtime (sobrescreve connection_limit=1 legado no env).
+      parsed.searchParams.set("connection_limit", "3");
+      parsed.searchParams.set("pool_timeout", "20");
     }
 
     return parsed.toString();

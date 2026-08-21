@@ -106,6 +106,7 @@ export async function findPublicAdvertisements(
   filters: SearchFilters & {
     readonly premium?: boolean;
     readonly sort?: string;
+    readonly take?: number;
   } = { query: "" }
 ) {
   markDataFetchDynamic();
@@ -164,6 +165,7 @@ export async function findPublicAdvertisements(
       },
     },
     orderBy: { createdAt: "desc" },
+    ...(typeof filters.take === "number" ? { take: filters.take } : {}),
   });
 
   let results = await enrichWithPublicHref(
@@ -546,21 +548,30 @@ export async function getPopularAdvertisements() {
   );
 }
 
+const HOMEPAGE_AD_LIMIT = 24;
+/** Busca um pouco a mais para misturar premium/populares antes do corte. */
+const HOMEPAGE_AD_FETCH = 60;
+
 /** Home feed: Premium → mais populares → mais recentes (sem duplicar). */
 export async function getHomepageAdvertisements() {
-  const advertisements = await findPublicAdvertisements({ query: "" });
-
-  return [...advertisements].sort((a, b) => {
-    if (a.isPremium !== b.isPremium) {
-      return a.isPremium ? -1 : 1;
-    }
-
-    if (b.reviewCount !== a.reviewCount) {
-      return b.reviewCount - a.reviewCount;
-    }
-
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  const advertisements = await findPublicAdvertisements({
+    query: "",
+    take: HOMEPAGE_AD_FETCH,
   });
+
+  return [...advertisements]
+    .sort((a, b) => {
+      if (a.isPremium !== b.isPremium) {
+        return a.isPremium ? -1 : 1;
+      }
+
+      if (b.reviewCount !== a.reviewCount) {
+        return b.reviewCount - a.reviewCount;
+      }
+
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    })
+    .slice(0, HOMEPAGE_AD_LIMIT);
 }
 
 export async function getCategoryNameBySlug(slug: string) {

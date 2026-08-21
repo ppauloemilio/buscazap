@@ -6,7 +6,10 @@ import {
   listCityNamesForSearch,
   listNeighborhoodsByCityForSearch,
 } from "@/application/services/catalog-service";
-import { getHomepageSettings } from "@/application/services/homepage-settings-service";
+import {
+  DEFAULT_HOMEPAGE_SETTINGS,
+  getHomepageSettings,
+} from "@/application/services/homepage-settings-service";
 import { prisma } from "@/lib/prisma";
 
 export interface DashboardData {
@@ -28,22 +31,22 @@ const EMPTY_STATS: DashboardStats = {
   totalCategories: 0,
 };
 
-export async function getDashboardData(options?: {
-  readonly includeStats?: boolean;
-}): Promise<DashboardData> {
-  const includeStats = options?.includeStats ?? false;
+const EMPTY_DASHBOARD: DashboardData = {
+  stats: EMPTY_STATS,
+  categories: [],
+  cityNames: [],
+  neighborhoodsByCity: [],
+  homeAdvertisements: [],
+  homepageSettings: DEFAULT_HOMEPAGE_SETTINGS,
+};
 
-  // Dois lotes em vez de 8 queries em paralelo (menos pressão no pool).
-  const [homeAdvertisements, homepageSettings, categories] = await Promise.all([
-    getHomepageAdvertisements(),
-    getHomepageSettings(),
-    getCategoriesWithCounts(),
-  ]);
-
-  const [cityNames, neighborhoodsByCity] = await Promise.all([
-    listCityNamesForSearch(),
-    listNeighborhoodsByCityForSearch(),
-  ]);
+async function loadDashboardData(includeStats: boolean): Promise<DashboardData> {
+  // Sequencial: com pool pequeno, Promise.all na home estourava P2024.
+  const homepageSettings = await getHomepageSettings();
+  const homeAdvertisements = await getHomepageAdvertisements();
+  const categories = await getCategoriesWithCounts();
+  const cityNames = await listCityNamesForSearch();
+  const neighborhoodsByCity = await listNeighborhoodsByCityForSearch();
 
   let stats = EMPTY_STATS;
 
@@ -72,4 +75,17 @@ export async function getDashboardData(options?: {
     homeAdvertisements,
     homepageSettings,
   };
+}
+
+export async function getDashboardData(options?: {
+  readonly includeStats?: boolean;
+}): Promise<DashboardData> {
+  const includeStats = options?.includeStats ?? false;
+
+  try {
+    return await loadDashboardData(includeStats);
+  } catch (error) {
+    console.error("[getDashboardData] falha ao carregar home:", error);
+    return EMPTY_DASHBOARD;
+  }
 }

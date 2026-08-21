@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { PRICING, PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import { ProviderStatus, UserRole } from "@/domain/enums";
@@ -8,7 +9,7 @@ type ProviderAccessProfile = {
   readonly subscriptionExpiresAt: Date | null;
 };
 
-export async function getCurrentProvider() {
+export const getCurrentProvider = cache(async () => {
   const cookieStore = await cookies();
   const providerId = cookieStore.get(PROVIDER_SESSION_COOKIE)?.value;
 
@@ -19,7 +20,7 @@ export async function getCurrentProvider() {
   return prisma.provider.findUnique({
     where: { id: providerId },
   });
-}
+});
 
 export async function requireCurrentProvider() {
   const provider = await getCurrentProvider();
