@@ -8,11 +8,9 @@ import { CityExplorer } from "@/features/dashboard/components/city-explorer";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 
 export default async function HomePage() {
-  const [data, provider] = await Promise.all([
-    getDashboardData(),
-    getCurrentProvider(),
-  ]);
+  const provider = await getCurrentProvider();
   const isAdmin = provider ? isAdminProvider(provider) : false;
+  const data = await getDashboardData({ includeStats: isAdmin });
   const { homepageSettings } = data;
 
   return (

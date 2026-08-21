@@ -2,7 +2,6 @@ import type { DashboardStats, Category, Advertisement } from "@/domain/entities"
 import type { HomepageSettings } from "@/application/services/homepage-settings-service";
 import { getHomepageAdvertisements } from "@/application/services/advertisement-service";
 import {
-  getCatalogStats,
   getCategoriesWithCounts,
   listCityNamesForSearch,
   listNeighborhoodsByCityForSearch,
@@ -22,34 +21,51 @@ export interface DashboardData {
   readonly homepageSettings: HomepageSettings;
 }
 
-export async function getDashboardData(): Promise<DashboardData> {
-  const [
-    homeAdvertisements,
-    homepageSettings,
-    catalogStats,
-    totalAdvertisements,
-    totalProviders,
-    categories,
-    cityNames,
-    neighborhoodsByCity,
-  ] = await Promise.all([
+const EMPTY_STATS: DashboardStats = {
+  totalAdvertisements: 0,
+  totalProviders: 0,
+  totalCities: 0,
+  totalCategories: 0,
+};
+
+export async function getDashboardData(options?: {
+  readonly includeStats?: boolean;
+}): Promise<DashboardData> {
+  const includeStats = options?.includeStats ?? false;
+
+  // Dois lotes em vez de 8 queries em paralelo (menos pressão no pool).
+  const [homeAdvertisements, homepageSettings, categories] = await Promise.all([
     getHomepageAdvertisements(),
     getHomepageSettings(),
-    getCatalogStats(),
-    prisma.advertisement.count(),
-    prisma.provider.count({ where: { role: "PROVIDER" } }),
     getCategoriesWithCounts(),
+  ]);
+
+  const [cityNames, neighborhoodsByCity] = await Promise.all([
     listCityNamesForSearch(),
     listNeighborhoodsByCityForSearch(),
   ]);
 
-  return {
-    stats: {
+  let stats = EMPTY_STATS;
+
+  if (includeStats) {
+    const [totalAdvertisements, totalProviders, totalCities, totalCategories] =
+      await Promise.all([
+        prisma.advertisement.count(),
+        prisma.provider.count({ where: { role: "PROVIDER" } }),
+        prisma.catalogCity.count({ where: { isActive: true } }),
+        prisma.catalogCategory.count({ where: { isActive: true } }),
+      ]);
+
+    stats = {
       totalAdvertisements,
       totalProviders,
-      totalCities: catalogStats.citiesCount,
-      totalCategories: catalogStats.categoriesCount,
-    },
+      totalCities,
+      totalCategories,
+    };
+  }
+
+  return {
+    stats,
     categories,
     cityNames,
     neighborhoodsByCity,
