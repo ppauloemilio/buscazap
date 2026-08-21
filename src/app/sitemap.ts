@@ -1,8 +1,10 @@
 import type { MetadataRoute } from "next";
-import { resolveCategorySlugByName } from "@/application/services/slug-service";
 import { prisma } from "@/lib/prisma";
 import { publicListingAdvertisementWhere } from "@/lib/public-advertisement-visibility";
 import { getSiteUrl } from "@/lib/site-url";
+import { slugify } from "@/lib/slug";
+
+export const dynamic = "force-dynamic";
 
 const STATIC_PATHS = [
   "",
@@ -28,31 +30,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: path === "" ? 1 : 0.7,
   }));
 
-  const advertisements = await prisma.advertisement.findMany({
-    where: {
-      slug: { not: null },
-      ...publicListingAdvertisementWhere(now),
-    },
-    select: {
-      slug: true,
-      category: true,
-      updatedAt: true,
-    },
-    take: 5000,
-  });
+  const [advertisements, categories] = await Promise.all([
+    prisma.advertisement.findMany({
+      where: {
+        slug: { not: null },
+        ...publicListingAdvertisementWhere(now),
+      },
+      select: {
+        slug: true,
+        category: true,
+        updatedAt: true,
+      },
+      take: 5000,
+    }),
+    prisma.catalogCategory.findMany({
+      where: { isActive: true },
+      select: { name: true, slug: true, updatedAt: true },
+    }),
+  ]);
 
-  const categoryNames = [...new Set(advertisements.map((ad) => ad.category))];
-  const categorySlugs = new Map<string, string>();
-  await Promise.all(
-    categoryNames.map(async (name) => {
-      categorySlugs.set(name, await resolveCategorySlugByName(name));
-    })
+  const categorySlugs = new Map(
+    categories.map((category) => [category.name, category.slug])
   );
-
-  const categories = await prisma.catalogCategory.findMany({
-    where: { isActive: true },
-    select: { slug: true, updatedAt: true },
-  });
 
   const categoryEntries: MetadataRoute.Sitemap = categories.map((category) => ({
     url: `${base}/buscar?categoria=${encodeURIComponent(category.slug)}`,
@@ -64,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const adEntries: MetadataRoute.Sitemap = advertisements
     .filter((ad) => Boolean(ad.slug))
     .map((ad) => ({
-      url: `${base}/${categorySlugs.get(ad.category) ?? "geral"}/${ad.slug}`,
+      url: `${base}/${categorySlugs.get(ad.category) ?? (slugify(ad.category) || "geral")}/${ad.slug}`,
       lastModified: ad.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.9,
