@@ -11,7 +11,9 @@ export async function searchAdvertisements(
   filters: SearchFilters & {
     readonly premium?: boolean;
     readonly sort?: string;
-    readonly knownCategorySlugs?: ReadonlyMap<string, string>;
+    readonly knownCategorySlugs?:
+      | ReadonlyMap<string, string>
+      | Readonly<Record<string, string>>;
   }
 ): Promise<readonly Advertisement[]> {
   return findPublicAdvertisements(filters);

@@ -12,7 +12,8 @@ export type PublicSearchCatalog = {
     readonly city: string;
     readonly neighborhoods: readonly string[];
   }>;
-  readonly categorySlugByName: ReadonlyMap<string, string>;
+  /** Record serializa no unstable_cache (Map quebra após cache). */
+  readonly categorySlugByName: Readonly<Record<string, string>>;
 };
 
 async function loadPublicSearchCatalog(): Promise<PublicSearchCatalog> {
@@ -57,9 +58,7 @@ async function loadPublicSearchCatalog(): Promise<PublicSearchCatalog> {
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
   const cityNames = Array.from(
-    new Set(
-      cityGrouped.map((item) => item.city.trim()).filter(Boolean)
-    )
+    new Set(cityGrouped.map((item) => item.city.trim()).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b, "pt-BR"));
 
   const byCity = new Map<string, Set<string>>();
@@ -81,9 +80,10 @@ async function loadPublicSearchCatalog(): Promise<PublicSearchCatalog> {
     }))
     .sort((a, b) => a.city.localeCompare(b.city, "pt-BR"));
 
-  const categorySlugByName = new Map(
-    catalogCategories.map((category) => [category.name, category.slug])
-  );
+  const categorySlugByName: Record<string, string> = {};
+  for (const category of catalogCategories) {
+    categorySlugByName[category.name] = category.slug;
+  }
 
   return {
     categories,
@@ -95,9 +95,15 @@ async function loadPublicSearchCatalog(): Promise<PublicSearchCatalog> {
 
 export const getPublicSearchCatalog = unstable_cache(
   loadPublicSearchCatalog,
-  ["public-search-catalog"],
+  ["public-search-catalog-v2"],
   { revalidate: CATALOG_REVALIDATE_SECONDS }
 );
+
+export function categorySlugMap(
+  catalog: PublicSearchCatalog
+): ReadonlyMap<string, string> {
+  return new Map(Object.entries(catalog.categorySlugByName));
+}
 
 export function neighborhoodNamesFromCatalog(
   catalog: PublicSearchCatalog,

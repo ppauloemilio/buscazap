@@ -7,7 +7,7 @@ import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { mapAdvertisementToEntity } from "@/infrastructure/mappers/advertisement-mapper";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { markDataFetchDynamic } from "@/lib/db";
-import { getPublicSearchCatalog } from "@/lib/public-search-catalog";
+import { getPublicSearchCatalog, categorySlugMap } from "@/lib/public-search-catalog";
 import { prisma } from "@/lib/prisma";
 import { publicListingAdvertisementWhere } from "@/lib/public-advertisement-visibility";
 import { isPremiumActive } from "@/lib/provider-session";
@@ -48,13 +48,31 @@ function normalizeSearchText(value: string): string {
     .replace(/\p{M}/gu, "");
 }
 
+function toCategorySlugMap(
+  slugByName?:
+    | ReadonlyMap<string, string>
+    | Readonly<Record<string, string>>
+): Map<string, string> {
+  if (!slugByName) {
+    return new Map();
+  }
+
+  if (slugByName instanceof Map) {
+    return new Map(slugByName);
+  }
+
+  return new Map(Object.entries(slugByName));
+}
+
 async function enrichWithPublicHref<
   T extends { id: string; title: string; category: string; slug?: string },
 >(
   ads: readonly T[],
   options?: {
     readonly persistMissingSlug?: boolean;
-    readonly knownCategorySlugs?: ReadonlyMap<string, string>;
+    readonly knownCategorySlugs?:
+      | ReadonlyMap<string, string>
+      | Readonly<Record<string, string>>;
   }
 ): Promise<Array<T & { slug: string; publicHref: string }>> {
   if (ads.length === 0) {
@@ -62,11 +80,7 @@ async function enrichWithPublicHref<
   }
 
   const persistMissingSlug = options?.persistMissingSlug ?? false;
-  const categorySlugs = new Map<string, string>(
-    options?.knownCategorySlugs
-      ? [...options.knownCategorySlugs.entries()]
-      : []
-  );
+  const categorySlugs = toCategorySlugMap(options?.knownCategorySlugs);
 
   const missingCategoryNames = [
     ...new Set(ads.map((ad) => ad.category)),
@@ -126,7 +140,9 @@ export async function findPublicAdvertisements(
     readonly nonPremiumOnly?: boolean;
     readonly sort?: string;
     readonly take?: number;
-    readonly knownCategorySlugs?: ReadonlyMap<string, string>;
+    readonly knownCategorySlugs?:
+      | ReadonlyMap<string, string>
+      | Readonly<Record<string, string>>;
   } = { query: "" }
 ) {
   markDataFetchDynamic();
@@ -603,7 +619,8 @@ export async function getHomepageAdvertisements(
   knownCategorySlugs?: ReadonlyMap<string, string>
 ) {
   const categorySlugs =
-    knownCategorySlugs ?? (await getPublicSearchCatalog()).categorySlugByName;
+    knownCategorySlugs ??
+    categorySlugMap(await getPublicSearchCatalog());
 
   const [premiumAds, regularAds] = await Promise.all([
     findPublicAdvertisements({

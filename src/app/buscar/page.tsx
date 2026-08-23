@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { searchAdvertisements } from "@/application/services/search-service";
 import {
   categoryNameFromCatalog,
+  categorySlugMap,
   getPublicSearchCatalog,
   neighborhoodNamesFromCatalog,
 } from "@/lib/public-search-catalog";
@@ -44,7 +45,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         category: params.category,
         premium: params.premium === "true",
         sort: params.sort,
-        knownCategorySlugs: catalog.categorySlugByName,
+        knownCategorySlugs: categorySlugMap(catalog),
       })
     ),
   ]);

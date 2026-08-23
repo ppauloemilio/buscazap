@@ -5,7 +5,7 @@ import {
   DEFAULT_HOMEPAGE_SETTINGS,
   getHomepageSettings,
 } from "@/application/services/homepage-settings-service";
-import { getPublicSearchCatalog } from "@/lib/public-search-catalog";
+import { getPublicSearchCatalog, categorySlugMap } from "@/lib/public-search-catalog";
 import { prisma } from "@/lib/prisma";
 
 export interface DashboardData {
@@ -43,7 +43,7 @@ async function loadDashboardData(includeStats: boolean): Promise<DashboardData> 
     getHomepageSettings(),
     catalogPromise,
     catalogPromise.then((catalog) =>
-      getHomepageAdvertisements(catalog.categorySlugByName)
+      getHomepageAdvertisements(categorySlugMap(catalog))
     ),
   ]);
 
