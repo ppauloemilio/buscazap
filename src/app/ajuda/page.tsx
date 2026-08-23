@@ -26,7 +26,7 @@ const FAQ_ITEMS = [
   {
     question: "Como denuncio um anúncio?",
     answer:
-      "Acesse a página de denúncia e informe o link ou ID do anúncio com o motivo da reclamação.",
+      "Use a página de denúncia para reportar problemas com o anúncio na plataforma (informação falsa, conteúdo inadequado, suspeita de fraude). Para reclamações sobre o serviço, cobrança ou contrato com o anunciante, contate o anunciante diretamente ou os órgãos de defesa do consumidor (Procon, Consumidor.gov.br).",
   },
 ] as const;
 

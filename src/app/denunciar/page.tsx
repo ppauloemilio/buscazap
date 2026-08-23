@@ -44,6 +44,39 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
             </p>
           )}
 
+          <div className="mb-6 space-y-2 rounded-lg border border-muted bg-muted/30 p-4 text-sm text-muted-foreground">
+            <p>
+              <strong className="text-foreground">Use esta denúncia para problemas com o
+              anúncio no BuscaZapp</strong> — informação falsa ou enganosa, conteúdo
+              inadequado, suspeita de fraude ou violação das políticas da plataforma.
+            </p>
+            <p>
+              <strong className="text-foreground">Problemas com o serviço, cobrança ou
+              contrato</strong> com o anunciante (preço, cancelamento, qualidade do
+              serviço) devem ser tratados{" "}
+              <strong className="text-foreground">diretamente com o anunciante</strong> ou
+              pelos órgãos de defesa do consumidor (
+              <a
+                href="https://www.procon.sp.gov.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-whatsapp hover:underline"
+              >
+                Procon
+              </a>
+              ,{" "}
+              <a
+                href="https://www.consumidor.gov.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-whatsapp hover:underline"
+              >
+                Consumidor.gov.br
+              </a>
+              ). O BuscaZapp não participa dessas negociações.
+            </p>
+          </div>
+
           <form action={submitReportAction} className="space-y-4">
             <div>
               <label htmlFor="advertisementRef" className="mb-1.5 block text-sm font-medium">
@@ -63,7 +96,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
               <Input
                 id="reason"
                 name="reason"
-                placeholder="Ex: Anúncio falso, conteúdo abusivo..."
+                placeholder="Ex: Informação falsa no anúncio, conteúdo abusivo..."
                 required
               />
             </div>
@@ -76,7 +109,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                 name="details"
                 rows={4}
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                placeholder="Descreva o que aconteceu..."
+                placeholder="Descreva o problema com o anúncio (não com o serviço do anunciante)..."
               />
             </div>
             <Button type="submit" className="w-full">
