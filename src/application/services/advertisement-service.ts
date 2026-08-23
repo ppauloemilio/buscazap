@@ -7,6 +7,7 @@ import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { mapAdvertisementToEntity } from "@/infrastructure/mappers/advertisement-mapper";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { markDataFetchDynamic } from "@/lib/db";
+import { getPublicSearchCatalog } from "@/lib/public-search-catalog";
 import { prisma } from "@/lib/prisma";
 import { publicListingAdvertisementWhere } from "@/lib/public-advertisement-visibility";
 import { isPremiumActive } from "@/lib/provider-session";
@@ -14,7 +15,10 @@ import { slugify } from "@/lib/slug";
 import {
   ensureUniqueAdvertisementSlug,
   resolveCategorySlugByName,
+  resolveCategorySlugsByNames,
 } from "@/application/services/slug-service";
+
+const PUBLIC_SEARCH_MAX_RESULTS = 300;
 
 export function getAdSlotLimitMessage(): string {
   return (
@@ -68,17 +72,35 @@ async function enrichWithPublicHref<
     ...new Set(ads.map((ad) => ad.category)),
   ].filter((name) => !categorySlugs.has(name));
 
-  await Promise.all(
-    missingCategoryNames.map(async (name) => {
-      categorySlugs.set(name, await resolveCategorySlugByName(name));
-    })
-  );
+  if (missingCategoryNames.length > 0) {
+    const resolved = await resolveCategorySlugsByNames(missingCategoryNames);
+    for (const [name, slug] of resolved.entries()) {
+      categorySlugs.set(name, slug);
+    }
+  }
+
+  if (!persistMissingSlug) {
+    return ads.map((ad) => {
+      const slug = ad.slug?.trim() || "";
+      const categorySlug =
+        categorySlugs.get(ad.category) ?? slugify(ad.category);
+      const publicHref = slug
+        ? `/${categorySlug}/${slug}`
+        : `/anuncio/${ad.id}`;
+
+      return {
+        ...ad,
+        slug: slug || ad.id,
+        publicHref,
+      };
+    });
+  }
 
   return Promise.all(
     ads.map(async (ad) => {
       let slug = ad.slug?.trim() || "";
 
-      if (!slug && persistMissingSlug) {
+      if (!slug) {
         slug = await ensureUniqueAdvertisementSlug(ad.title, ad.id);
         await prisma.advertisement
           .update({ where: { id: ad.id }, data: { slug } })
@@ -87,15 +109,11 @@ async function enrichWithPublicHref<
 
       const categorySlug =
         categorySlugs.get(ad.category) ?? slugify(ad.category);
-
-      // Sem slug persistido: usa rota por ID (redireciona para SEO quando existir).
-      const publicHref = slug
-        ? `/${categorySlug}/${slug}`
-        : `/anuncio/${ad.id}`;
+      const publicHref = `/${categorySlug}/${slug}`;
 
       return {
         ...ad,
-        slug: slug || ad.id,
+        slug,
         publicHref,
       };
     })
@@ -108,6 +126,7 @@ export async function findPublicAdvertisements(
     readonly nonPremiumOnly?: boolean;
     readonly sort?: string;
     readonly take?: number;
+    readonly knownCategorySlugs?: ReadonlyMap<string, string>;
   } = { query: "" }
 ) {
   markDataFetchDynamic();
@@ -129,6 +148,10 @@ export async function findPublicAdvertisements(
   const neighborhoodFilter = filters.neighborhood?.trim();
   const queryFilter = filters.query?.trim();
   const now = new Date();
+  const take =
+    typeof filters.take === "number"
+      ? filters.take
+      : PUBLIC_SEARCH_MAX_RESULTS;
 
   const advertisements = await prisma.advertisement.findMany({
     where: {
@@ -177,7 +200,7 @@ export async function findPublicAdvertisements(
       filters.sort === "recent"
         ? { createdAt: "desc" }
         : [{ reviewCount: "desc" }, { createdAt: "desc" }],
-    ...(typeof filters.take === "number" ? { take: filters.take } : {}),
+    take,
   });
 
   let results = await enrichWithPublicHref(
@@ -187,9 +210,10 @@ export async function findPublicAdvertisements(
     {
       persistMissingSlug: false,
       knownCategorySlugs:
-        categoryName && categoryFilter
+        filters.knownCategorySlugs ??
+        (categoryName && categoryFilter
           ? new Map([[categoryName, categoryFilter]])
-          : undefined,
+          : undefined),
     }
   );
 
@@ -575,31 +599,41 @@ function sortHomepageAdvertisements<
 }
 
 /** Home: todos os premium ativos primeiro, depois não-premium até o limite. */
-export async function getHomepageAdvertisements() {
-  const premiumAds = sortHomepageAdvertisements(
-    await findPublicAdvertisements({
+export async function getHomepageAdvertisements(
+  knownCategorySlugs?: ReadonlyMap<string, string>
+) {
+  const categorySlugs =
+    knownCategorySlugs ?? (await getPublicSearchCatalog()).categorySlugByName;
+
+  const [premiumAds, regularAds] = await Promise.all([
+    findPublicAdvertisements({
       query: "",
       premium: true,
       sort: "popular",
-    })
-  );
-
-  const regularLimit = Math.max(0, HOMEPAGE_AD_LIMIT - premiumAds.length);
-
-  if (regularLimit === 0) {
-    return premiumAds;
-  }
-
-  const regularAds = sortHomepageAdvertisements(
-    await findPublicAdvertisements({
+      knownCategorySlugs: categorySlugs,
+    }),
+    findPublicAdvertisements({
       query: "",
       nonPremiumOnly: true,
       sort: "popular",
-      take: regularLimit,
-    })
+      take: HOMEPAGE_AD_LIMIT,
+      knownCategorySlugs: categorySlugs,
+    }),
+  ]);
+
+  const sortedPremium = sortHomepageAdvertisements(premiumAds);
+  const regularLimit = Math.max(0, HOMEPAGE_AD_LIMIT - sortedPremium.length);
+
+  if (regularLimit === 0) {
+    return sortedPremium;
+  }
+
+  const sortedRegular = sortHomepageAdvertisements(regularAds).slice(
+    0,
+    regularLimit
   );
 
-  return [...premiumAds, ...regularAds];
+  return [...sortedPremium, ...sortedRegular];
 }
 
 export async function getCategoryNameBySlug(slug: string) {

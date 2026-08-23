@@ -2,14 +2,10 @@ import type { DashboardStats, Category, Advertisement } from "@/domain/entities"
 import type { HomepageSettings } from "@/application/services/homepage-settings-service";
 import { getHomepageAdvertisements } from "@/application/services/advertisement-service";
 import {
-  getCategoriesWithCounts,
-  listCityNamesForSearch,
-  listNeighborhoodsByCityForSearch,
-} from "@/application/services/catalog-service";
-import {
   DEFAULT_HOMEPAGE_SETTINGS,
   getHomepageSettings,
 } from "@/application/services/homepage-settings-service";
+import { getPublicSearchCatalog } from "@/lib/public-search-catalog";
 import { prisma } from "@/lib/prisma";
 
 export interface DashboardData {
@@ -41,12 +37,15 @@ const EMPTY_DASHBOARD: DashboardData = {
 };
 
 async function loadDashboardData(includeStats: boolean): Promise<DashboardData> {
-  // Sequencial: com pool pequeno, Promise.all na home estourava P2024.
-  const homepageSettings = await getHomepageSettings();
-  const homeAdvertisements = await getHomepageAdvertisements();
-  const categories = await getCategoriesWithCounts();
-  const cityNames = await listCityNamesForSearch();
-  const neighborhoodsByCity = await listNeighborhoodsByCityForSearch();
+  const catalogPromise = getPublicSearchCatalog();
+
+  const [homepageSettings, catalog, homeAdvertisements] = await Promise.all([
+    getHomepageSettings(),
+    catalogPromise,
+    catalogPromise.then((catalog) =>
+      getHomepageAdvertisements(catalog.categorySlugByName)
+    ),
+  ]);
 
   let stats = EMPTY_STATS;
 
@@ -69,9 +68,9 @@ async function loadDashboardData(includeStats: boolean): Promise<DashboardData> 
 
   return {
     stats,
-    categories,
-    cityNames,
-    neighborhoodsByCity,
+    categories: catalog.categories,
+    cityNames: catalog.cityNames,
+    neighborhoodsByCity: catalog.neighborhoodsByCity,
     homeAdvertisements,
     homepageSettings,
   };

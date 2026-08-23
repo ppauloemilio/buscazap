@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { searchAdvertisements } from "@/application/services/search-service";
 import {
-  getCategoryNameBySlug,
-  searchAdvertisements,
-} from "@/application/services/search-service";
-import {
-  getCategoriesWithCounts,
-  listCityNamesForSearch,
-  listNeighborhoodNamesForSearch,
-} from "@/application/services/catalog-service";
+  categoryNameFromCatalog,
+  getPublicSearchCatalog,
+  neighborhoodNamesFromCatalog,
+} from "@/lib/public-search-catalog";
 import { PageHeader } from "@/components/layout/page-header";
 import { AdvertisementCard } from "@/features/dashboard/components/advertisement-card";
 import { SearchFilterSummary } from "@/features/search/components/search-filter-summary";
@@ -36,16 +33,10 @@ export const metadata: Metadata = {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
-  const [categoryName, cityNames, neighborhoods, categories, results] =
-    await Promise.all([
-      params.category
-        ? getCategoryNameBySlug(params.category).then(
-            (name) => name ?? params.category
-          )
-        : Promise.resolve(undefined),
-      listCityNamesForSearch(),
-      listNeighborhoodNamesForSearch(params.city),
-      getCategoriesWithCounts(),
+
+  const [catalog, results] = await Promise.all([
+    getPublicSearchCatalog(),
+    getPublicSearchCatalog().then((catalog) =>
       searchAdvertisements({
         query: params.q ?? "",
         city: params.city,
@@ -53,8 +44,18 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         category: params.category,
         premium: params.premium === "true",
         sort: params.sort,
-      }),
-    ]);
+        knownCategorySlugs: catalog.categorySlugByName,
+      })
+    ),
+  ]);
+
+  const categoryName = params.category
+    ? categoryNameFromCatalog(catalog, params.category) ?? params.category
+    : undefined;
+
+  const cityNames = catalog.cityNames;
+  const neighborhoods = neighborhoodNamesFromCatalog(catalog, params.city);
+  const categories = catalog.categories;
 
   const filterParams = {
     query: params.q,

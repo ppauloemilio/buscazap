@@ -44,6 +44,35 @@ export async function resolveCategorySlugByName(
   return slugify(categoryName) || "geral";
 }
 
+/** Uma query para todos os slugs de categoria (evita N round-trips no enrich). */
+export async function resolveCategorySlugsByNames(
+  categoryNames: readonly string[]
+): Promise<Map<string, string>> {
+  const uniqueNames = [...new Set(categoryNames.filter(Boolean))];
+  const slugByName = new Map<string, string>();
+
+  if (uniqueNames.length === 0) {
+    return slugByName;
+  }
+
+  const categories = await prisma.catalogCategory.findMany({
+    where: { isActive: true, name: { in: uniqueNames } },
+    select: { name: true, slug: true },
+  });
+
+  for (const category of categories) {
+    slugByName.set(category.name, category.slug);
+  }
+
+  for (const name of uniqueNames) {
+    if (!slugByName.has(name)) {
+      slugByName.set(name, slugify(name) || "geral");
+    }
+  }
+
+  return slugByName;
+}
+
 export async function buildAdvertisementHref(input: {
   readonly id: string;
   readonly title: string;
