@@ -105,6 +105,7 @@ async function enrichWithPublicHref<
 export async function findPublicAdvertisements(
   filters: SearchFilters & {
     readonly premium?: boolean;
+    readonly nonPremiumOnly?: boolean;
     readonly sort?: string;
     readonly take?: number;
   } = { query: "" }
@@ -148,6 +149,14 @@ export async function findPublicAdvertisements(
           }
         : {}),
       ...(filters.premium ? { premiumExpiresAt: { gt: now } } : {}),
+      ...(filters.nonPremiumOnly
+        ? {
+            OR: [
+              { premiumExpiresAt: null },
+              { premiumExpiresAt: { lte: now } },
+            ],
+          }
+        : {}),
       ...(queryFilter
         ? {
             OR: [
@@ -164,7 +173,10 @@ export async function findPublicAdvertisements(
         take: 1,
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy:
+      filters.sort === "recent"
+        ? { createdAt: "desc" }
+        : [{ reviewCount: "desc" }, { createdAt: "desc" }],
     ...(typeof filters.take === "number" ? { take: filters.take } : {}),
   });
 
@@ -549,29 +561,45 @@ export async function getPopularAdvertisements() {
 }
 
 const HOMEPAGE_AD_LIMIT = 24;
-/** Busca um pouco a mais para misturar premium/populares antes do corte. */
-const HOMEPAGE_AD_FETCH = 60;
 
-/** Home feed: Premium → mais populares → mais recentes (sem duplicar). */
-export async function getHomepageAdvertisements() {
-  const advertisements = await findPublicAdvertisements({
-    query: "",
-    take: HOMEPAGE_AD_FETCH,
+function sortHomepageAdvertisements<
+  T extends { reviewCount: number; createdAt: string },
+>(ads: readonly T[]): T[] {
+  return [...ads].sort((a, b) => {
+    if (b.reviewCount !== a.reviewCount) {
+      return b.reviewCount - a.reviewCount;
+    }
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+}
 
-  return [...advertisements]
-    .sort((a, b) => {
-      if (a.isPremium !== b.isPremium) {
-        return a.isPremium ? -1 : 1;
-      }
-
-      if (b.reviewCount !== a.reviewCount) {
-        return b.reviewCount - a.reviewCount;
-      }
-
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+/** Home: todos os premium ativos primeiro, depois não-premium até o limite. */
+export async function getHomepageAdvertisements() {
+  const premiumAds = sortHomepageAdvertisements(
+    await findPublicAdvertisements({
+      query: "",
+      premium: true,
+      sort: "popular",
     })
-    .slice(0, HOMEPAGE_AD_LIMIT);
+  );
+
+  const regularLimit = Math.max(0, HOMEPAGE_AD_LIMIT - premiumAds.length);
+
+  if (regularLimit === 0) {
+    return premiumAds;
+  }
+
+  const regularAds = sortHomepageAdvertisements(
+    await findPublicAdvertisements({
+      query: "",
+      nonPremiumOnly: true,
+      sort: "popular",
+      take: regularLimit,
+    })
+  );
+
+  return [...premiumAds, ...regularAds];
 }
 
 export async function getCategoryNameBySlug(slug: string) {
