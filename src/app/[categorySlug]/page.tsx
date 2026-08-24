@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
-import {
-  getActiveSeoCityBySlug,
-} from "@/application/services/city-seo-service";
+import { getActiveSeoCityBySlug } from "@/application/services/city-seo-service";
 import {
   buildCityMetadata,
   CityLandingPage,
@@ -11,28 +9,28 @@ import { isReservedTopLevelSegment } from "@/lib/slug";
 export const dynamic = "force-dynamic";
 
 interface CitySeoPageProps {
-  readonly params: Promise<{ readonly citySlug: string }>;
+  readonly params: Promise<{ readonly categorySlug: string }>;
 }
 
 export async function generateMetadata({ params }: CitySeoPageProps) {
-  const { citySlug } = await params;
-  const city = await getActiveSeoCityBySlug(citySlug);
+  const { categorySlug } = await params;
+  const city = await getActiveSeoCityBySlug(categorySlug);
 
   if (!city) {
-    return { title: "Cidade não encontrada" };
+    return { title: "Página não encontrada" };
   }
 
   return buildCityMetadata(city);
 }
 
 export default async function CitySeoPage({ params }: CitySeoPageProps) {
-  const { citySlug } = await params;
+  const { categorySlug } = await params;
 
-  if (isReservedTopLevelSegment(citySlug)) {
+  if (isReservedTopLevelSegment(categorySlug)) {
     notFound();
   }
 
-  const city = await getActiveSeoCityBySlug(citySlug);
+  const city = await getActiveSeoCityBySlug(categorySlug);
   if (!city) {
     notFound();
   }
