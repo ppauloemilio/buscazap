@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MapPin, ArrowRight } from "lucide-react";
+import { cityNameToSlug, buildCitySeoPath } from "@/application/services/city-seo-service";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 
 interface CityExplorerProps {
@@ -32,7 +33,7 @@ export function CityExplorer({ cities = POPULAR_CITIES }: CityExplorerProps) {
           {cities.map((city) => (
             <Link
               key={city}
-              href={`/buscar?city=${encodeURIComponent(city)}`}
+              href={buildCitySeoPath(cityNameToSlug(city))}
               className="inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-whatsapp hover:bg-whatsapp/5"
             >
               <MapPin className="h-4 w-4 text-whatsapp" />

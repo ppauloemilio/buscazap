@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAdvertisementByCategoryAndSlug } from "@/application/services/search-service";
+import { resolveCategoryCityLanding } from "@/application/services/city-seo-service";
 import { AdvertisementDetailView } from "@/features/dashboard/components/advertisement-detail-view";
+import {
+  buildCategoryCityMetadata,
+  CategoryCityLandingPage,
+} from "@/features/cities/category-city-landing";
 import { isReservedTopLevelSegment } from "@/lib/slug";
 
 interface SeoAdvertisementPageProps {
@@ -18,6 +23,11 @@ export async function generateMetadata({
   params,
 }: SeoAdvertisementPageProps): Promise<Metadata> {
   const { categorySlug, adSlug } = await params;
+
+  const categoryCity = await resolveCategoryCityLanding(categorySlug, adSlug);
+  if (categoryCity) {
+    return buildCategoryCityMetadata(categoryCity);
+  }
 
   if (isReservedTopLevelSegment(categorySlug)) {
     return { title: "Página não encontrada" };
@@ -53,6 +63,11 @@ export default async function SeoAdvertisementPage({
 }: SeoAdvertisementPageProps) {
   const { categorySlug, adSlug } = await params;
   const { from } = await searchParams;
+
+  const categoryCity = await resolveCategoryCityLanding(categorySlug, adSlug);
+  if (categoryCity) {
+    return <CategoryCityLandingPage {...categoryCity} />;
+  }
 
   if (isReservedTopLevelSegment(categorySlug)) {
     notFound();

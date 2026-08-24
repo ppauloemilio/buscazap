@@ -16,11 +16,9 @@ export function slugify(value: string): string {
 export const RESERVED_TOP_LEVEL_SEGMENTS = new Set([
   "admin",
   "ajuda",
-  "ananindeua",
   "anunciar",
   "anuncio",
   "api",
-  "belem",
   "buscar",
   "cadastro",
   "categorias",
