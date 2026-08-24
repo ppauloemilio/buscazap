@@ -10,6 +10,7 @@ import {
   User,
   Gift,
   Sparkles,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ const NAV_ITEMS: ReadonlyArray<{
   { href: "/painel/perfil", label: "Meu perfil", icon: User },
   { href: "/painel/assinatura", label: "Assinatura", icon: CreditCard },
   { href: "/painel/anuncios", label: "Meus anúncios", icon: Megaphone },
+  { href: "/painel/estatisticas", label: "Estatísticas", icon: BarChart3 },
   { href: "/painel/indicacoes", label: "Indicações", icon: Gift },
   { href: "/painel/kit", label: "Kit divulgação", icon: Sparkles },
   { href: "/painel/pagamentos", label: "Pagamentos", icon: Receipt },

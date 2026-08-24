@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CreditCard, Crown, Megaphone } from "lucide-react";
+import { CreditCard, Crown, Megaphone, Eye, MousePointerClick } from "lucide-react";
 import { findProviderAdvertisements } from "@/application/services/advertisement-service";
+import { getProviderAnalyticsReport } from "@/application/services/analytics-service";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
@@ -13,9 +14,10 @@ export default async function PanelPage() {
   const provider = await getCurrentProvider();
   if (!provider) redirect("/entrar");
 
-  const [subscription, advertisements] = await Promise.all([
+  const [subscription, advertisements, stats] = await Promise.all([
     getSubscriptionStatus(provider.id),
     findProviderAdvertisements(provider.id),
+    getProviderAnalyticsReport(provider.id, 30),
   ]);
 
   const premiumCount = advertisements.filter((ad) => ad.premiumActive).length;
@@ -23,7 +25,7 @@ export default async function PanelPage() {
 
   return (
     <PanelLayout>
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="p-3 pb-1">
             <CardTitle className="text-xs font-medium text-muted-foreground">
@@ -56,6 +58,34 @@ export default async function PanelPage() {
             <p className="text-xl font-bold">{premiumCount}</p>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              <Eye className="h-3 w-3" />
+              Visitas (30d)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <p className="text-xl font-bold">{stats.totals.adViews}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              <MousePointerClick className="h-3 w-3" />
+              WhatsApp (30d)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <p className="text-xl font-bold">{stats.totals.whatsappClicks}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-2">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/painel/estatisticas">Ver estatísticas detalhadas</Link>
+        </Button>
       </div>
 
       <div className="mt-3 grid gap-2 md:grid-cols-2">

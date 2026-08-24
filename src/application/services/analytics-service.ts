@@ -62,6 +62,160 @@ export interface AdminAnalyticsReport {
   }[];
 }
 
+export interface ProviderAnalyticsReport {
+  readonly days: number;
+  readonly since: Date;
+  readonly totals: {
+    readonly adViews: number;
+    readonly whatsappClicks: number;
+  };
+  readonly daily: readonly {
+    readonly date: string;
+    readonly adViews: number;
+    readonly whatsappClicks: number;
+  }[];
+  readonly advertisements: readonly {
+    readonly advertisementId: string;
+    readonly title: string;
+    readonly category: string;
+    readonly city: string;
+    readonly adViews: number;
+    readonly whatsappClicks: number;
+  }[];
+}
+
+export async function getProviderAnalyticsReport(
+  providerId: string,
+  days: number
+): Promise<ProviderAnalyticsReport> {
+  markDataFetchDynamic();
+
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  since.setHours(0, 0, 0, 0);
+
+  const advertisements = await prisma.advertisement.findMany({
+    where: { providerId },
+    select: { id: true, title: true, category: true, city: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const emptyDaily = [...Array(days)].map((_, offset) => {
+    const day = new Date(since);
+    day.setDate(since.getDate() + offset);
+    return { date: formatDayKey(day), adViews: 0, whatsappClicks: 0 };
+  });
+
+  if (advertisements.length === 0) {
+    return {
+      days,
+      since,
+      totals: { adViews: 0, whatsappClicks: 0 },
+      daily: emptyDaily,
+      advertisements: [],
+    };
+  }
+
+  const adIds = advertisements.map((ad) => ad.id);
+
+  const [events, adViewsGrouped, whatsappGrouped] = await Promise.all([
+    prisma.analyticsEvent.findMany({
+      where: {
+        advertisementId: { in: adIds },
+        type: {
+          in: [
+            ANALYTICS_EVENT_TYPE.AD_VIEW,
+            ANALYTICS_EVENT_TYPE.WHATSAPP_CLICK,
+          ],
+        },
+        createdAt: { gte: since },
+      },
+      select: { type: true, createdAt: true },
+    }),
+    prisma.analyticsEvent.groupBy({
+      by: ["advertisementId"],
+      where: {
+        type: ANALYTICS_EVENT_TYPE.AD_VIEW,
+        advertisementId: { in: adIds },
+        createdAt: { gte: since },
+      },
+      _count: { id: true },
+    }),
+    prisma.analyticsEvent.groupBy({
+      by: ["advertisementId"],
+      where: {
+        type: ANALYTICS_EVENT_TYPE.WHATSAPP_CLICK,
+        advertisementId: { in: adIds },
+        createdAt: { gte: since },
+      },
+      _count: { id: true },
+    }),
+  ]);
+
+  const totals = { adViews: 0, whatsappClicks: 0 };
+  const dailyMap = new Map<
+    string,
+    { adViews: number; whatsappClicks: number }
+  >();
+
+  for (let offset = 0; offset < days; offset += 1) {
+    const day = new Date(since);
+    day.setDate(since.getDate() + offset);
+    dailyMap.set(formatDayKey(day), { adViews: 0, whatsappClicks: 0 });
+  }
+
+  for (const event of events) {
+    if (event.type === ANALYTICS_EVENT_TYPE.AD_VIEW) totals.adViews += 1;
+    if (event.type === ANALYTICS_EVENT_TYPE.WHATSAPP_CLICK) {
+      totals.whatsappClicks += 1;
+    }
+
+    const dayKey = formatDayKey(event.createdAt);
+    const bucket = dailyMap.get(dayKey);
+    if (!bucket) continue;
+
+    if (event.type === ANALYTICS_EVENT_TYPE.AD_VIEW) bucket.adViews += 1;
+    if (event.type === ANALYTICS_EVENT_TYPE.WHATSAPP_CLICK) {
+      bucket.whatsappClicks += 1;
+    }
+  }
+
+  const adViewCounts = new Map(
+    adViewsGrouped
+      .filter((row) => row.advertisementId)
+      .map((row) => [row.advertisementId!, row._count.id])
+  );
+  const whatsappCounts = new Map(
+    whatsappGrouped
+      .filter((row) => row.advertisementId)
+      .map((row) => [row.advertisementId!, row._count.id])
+  );
+
+  const adsWithStats = advertisements
+    .map((ad) => ({
+      advertisementId: ad.id,
+      title: ad.title,
+      category: ad.category,
+      city: ad.city,
+      adViews: adViewCounts.get(ad.id) ?? 0,
+      whatsappClicks: whatsappCounts.get(ad.id) ?? 0,
+    }))
+    .sort(
+      (a, b) =>
+        b.adViews + b.whatsappClicks - (a.adViews + a.whatsappClicks)
+    );
+
+  return {
+    days,
+    since,
+    totals,
+    daily: [...dailyMap.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, counts]) => ({ date, ...counts })),
+    advertisements: adsWithStats,
+  };
+}
+
 export async function getAdminAnalyticsReport(
   days: number
 ): Promise<AdminAnalyticsReport> {
