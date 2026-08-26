@@ -26,11 +26,23 @@ export default async function HomePage() {
       />
       {homepageSettings.showUrgentSearches && <UrgentSearches />}
       {isAdmin && <StatsSection stats={data.stats} />}
-      <AdvertisementSection
-        title="Anúncios"
-        advertisements={data.homeAdvertisements}
-        viewAllHref="/buscar"
-      />
+      {data.homePremiumAdvertisements.length > 0 && (
+        <AdvertisementSection
+          variant="premium"
+          title="Destaques Premium"
+          description="Anunciantes em destaque — contato direto pelo WhatsApp"
+          advertisements={data.homePremiumAdvertisements}
+          viewAllHref="/buscar?premium=true"
+          emphasizePremium
+        />
+      )}
+      {data.homeRegularAdvertisements.length > 0 && (
+        <AdvertisementSection
+          title="Anúncios"
+          advertisements={data.homeRegularAdvertisements}
+          viewAllHref="/buscar"
+        />
+      )}
       {homepageSettings.showPopularCategories && (
         <CategoryGrid categories={data.categories} />
       )}

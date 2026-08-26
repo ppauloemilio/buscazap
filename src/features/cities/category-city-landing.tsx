@@ -10,7 +10,7 @@ import {
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
 import { searchAdvertisements } from "@/application/services/search-service";
 import { CategoryIcon } from "@/components/category/category-icon";
-import { AdvertisementCard } from "@/features/dashboard/components/advertisement-card";
+import { AdvertisementListings } from "@/features/dashboard/components/advertisement-listings";
 import { Button } from "@/components/ui/button";
 import { getSiteUrl } from "@/lib/site-url";
 import { buildSearchHref } from "@/shared/utils/search-preferences";
@@ -155,15 +155,20 @@ export async function CategoryCityLandingPage({
             .
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-            {featured.map((ad) => (
-              <AdvertisementCard
-                key={ad.id}
-                advertisement={ad}
-                returnTo={pagePath}
-              />
-            ))}
-          </div>
+          <AdvertisementListings
+            advertisements={featured}
+            regularTitle={`${category.name} em ${city.name}`}
+            viewAllHref={buildSearchHref({
+              city: city.name,
+              category: category.slug,
+            })}
+            premiumViewAllHref={buildSearchHref({
+              city: city.name,
+              category: category.slug,
+              premium: true,
+            })}
+            returnTo={pagePath}
+          />
         )}
 
         {siblingCategories.length > 0 && (

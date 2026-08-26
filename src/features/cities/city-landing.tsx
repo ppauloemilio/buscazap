@@ -10,7 +10,7 @@ import {
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
 import { searchAdvertisements } from "@/application/services/search-service";
 import { CategoryIcon } from "@/components/category/category-icon";
-import { AdvertisementCard } from "@/features/dashboard/components/advertisement-card";
+import { AdvertisementListings } from "@/features/dashboard/components/advertisement-listings";
 import { Button } from "@/components/ui/button";
 import { URGENT_SEARCHES } from "@/config/quick-searches";
 import { getSiteUrl } from "@/lib/site-url";
@@ -45,7 +45,7 @@ export async function CityLandingPage({ city }: { readonly city: SeoCity }) {
     listActiveSeoCities(),
   ]);
 
-  const featured = results.slice(0, 8);
+  const featured = results.slice(0, 24);
   const topCategories = categories.filter((item) => item.count > 0).slice(0, 8);
   const pagePath = buildCitySeoPath(city.slug);
 
@@ -135,16 +135,6 @@ export async function CityLandingPage({ city }: { readonly city: SeoCity }) {
           </div>
         </div>
 
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Anúncios em {city.name}</h2>
-          <Link
-            href={buildSearchHref({ city: city.name })}
-            className="text-sm text-whatsapp hover:underline"
-          >
-            Ver todos
-          </Link>
-        </div>
-
         {featured.length === 0 ? (
           <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">
             Ainda não há anúncios em {city.name}. Seja o primeiro a{" "}
@@ -154,15 +144,16 @@ export async function CityLandingPage({ city }: { readonly city: SeoCity }) {
             .
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-            {featured.map((ad) => (
-              <AdvertisementCard
-                key={ad.id}
-                advertisement={ad}
-                returnTo={pagePath}
-              />
-            ))}
-          </div>
+          <AdvertisementListings
+            advertisements={featured}
+            regularTitle={`Anúncios em ${city.name}`}
+            viewAllHref={buildSearchHref({ city: city.name })}
+            premiumViewAllHref={buildSearchHref({
+              city: city.name,
+              premium: true,
+            })}
+            returnTo={pagePath}
+          />
         )}
 
         {otherCities.length > 1 && (

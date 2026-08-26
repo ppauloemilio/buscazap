@@ -16,7 +16,8 @@ export interface DashboardData {
     readonly city: string;
     readonly neighborhoods: readonly string[];
   }>;
-  readonly homeAdvertisements: readonly Advertisement[];
+  readonly homePremiumAdvertisements: readonly Advertisement[];
+  readonly homeRegularAdvertisements: readonly Advertisement[];
   readonly homepageSettings: HomepageSettings;
 }
 
@@ -32,14 +33,15 @@ const EMPTY_DASHBOARD: DashboardData = {
   categories: [],
   cityNames: [],
   neighborhoodsByCity: [],
-  homeAdvertisements: [],
+  homePremiumAdvertisements: [],
+  homeRegularAdvertisements: [],
   homepageSettings: DEFAULT_HOMEPAGE_SETTINGS,
 };
 
 async function loadDashboardData(includeStats: boolean): Promise<DashboardData> {
   const catalogPromise = getPublicSearchCatalog();
 
-  const [homepageSettings, catalog, homeAdvertisements] = await Promise.all([
+  const [homepageSettings, catalog, homepageAdvertisements] = await Promise.all([
     getHomepageSettings(),
     catalogPromise,
     catalogPromise.then((catalog) =>
@@ -71,7 +73,8 @@ async function loadDashboardData(includeStats: boolean): Promise<DashboardData> 
     categories: catalog.categories,
     cityNames: catalog.cityNames,
     neighborhoodsByCity: catalog.neighborhoodsByCity,
-    homeAdvertisements,
+    homePremiumAdvertisements: homepageAdvertisements.premium,
+    homeRegularAdvertisements: homepageAdvertisements.regular,
     homepageSettings,
   };
 }

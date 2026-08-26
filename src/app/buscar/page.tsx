@@ -9,7 +9,7 @@ import {
   neighborhoodNamesFromCatalog,
 } from "@/lib/public-search-catalog";
 import { PageHeader } from "@/components/layout/page-header";
-import { AdvertisementCard } from "@/features/dashboard/components/advertisement-card";
+import { AdvertisementListings } from "@/features/dashboard/components/advertisement-listings";
 import { SearchFilterSummary } from "@/features/search/components/search-filter-summary";
 import { SearchForm } from "@/features/search/components/search-form";
 import { buildEmptySearchTitle } from "@/features/search/utils/search-filter-summary";
@@ -102,15 +102,20 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <SearchFilterSummary filters={filterParams} count={results.length} />
 
         {results.length > 0 ? (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-            {results.map((ad) => (
-              <AdvertisementCard
-                key={ad.id}
-                advertisement={ad}
-                returnTo={searchReturnPath}
-              />
-            ))}
-          </div>
+          <AdvertisementListings
+            advertisements={results}
+            regularTitle="Resultados"
+            premiumOnly={params.premium === "true"}
+            premiumViewAllHref={buildSearchHref({
+              query: params.q,
+              city: params.city,
+              neighborhood: params.neighborhood,
+              category: params.category,
+              sort: params.sort,
+              premium: true,
+            })}
+            returnTo={searchReturnPath}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center rounded-xl border bg-card px-6 py-12 text-center">
             <Search className="mb-4 h-12 w-12 text-muted-foreground" />

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Star, MapPin, MessageCircle, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdvertisementCover } from "@/components/advertisement/advertisement-cover";
@@ -21,11 +22,13 @@ import { buildAdvertisementHref } from "@/shared/utils/search-preferences";
 interface AdvertisementCardProps {
   readonly advertisement: Advertisement;
   readonly returnTo?: string;
+  readonly emphasizePremium?: boolean;
 }
 
 export function AdvertisementCard({
   advertisement,
   returnTo,
+  emphasizePremium = false,
 }: AdvertisementCardProps) {
   const primaryLabel = advertisement.whatsappLabel?.trim() || "WhatsApp";
   const whatsappLink = buildWhatsAppLink(
@@ -54,8 +57,17 @@ export function AdvertisementCard({
     returnTo,
   });
 
+  const showPremiumEmphasis =
+    emphasizePremium && advertisement.isPremium;
+
   return (
-    <Card className="group overflow-hidden transition-shadow hover:shadow-md">
+    <Card
+      className={cn(
+        "group overflow-hidden transition-shadow hover:shadow-md",
+        showPremiumEmphasis &&
+          "ring-2 ring-amber-400/70 shadow-sm hover:shadow-lg dark:ring-amber-500/50"
+      )}
+    >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <AdvertisementCover
           title={advertisement.title}

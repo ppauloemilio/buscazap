@@ -1,5 +1,5 @@
 import type { AdvertisementType, ServiceArea } from "@/domain/enums";
-import type { SearchFilters } from "@/domain/entities";
+import type { Advertisement, SearchFilters } from "@/domain/entities";
 import { AdvertisementStatus } from "@/domain/enums";
 import { getCategoryBySlug } from "@/application/services/catalog-service";
 import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
@@ -614,10 +614,15 @@ function sortHomepageAdvertisements<
   });
 }
 
-/** Home: todos os premium ativos primeiro, depois não-premium até o limite. */
+export interface HomepageAdvertisements {
+  readonly premium: readonly Advertisement[];
+  readonly regular: readonly Advertisement[];
+}
+
+/** Home: premium ativos em seção própria; regulares até completar o limite da grade. */
 export async function getHomepageAdvertisements(
   knownCategorySlugs?: ReadonlyMap<string, string>
-) {
+): Promise<HomepageAdvertisements> {
   const categorySlugs =
     knownCategorySlugs ??
     categorySlugMap(await getPublicSearchCatalog());
@@ -638,19 +643,11 @@ export async function getHomepageAdvertisements(
     }),
   ]);
 
-  const sortedPremium = sortHomepageAdvertisements(premiumAds);
-  const regularLimit = Math.max(0, HOMEPAGE_AD_LIMIT - sortedPremium.length);
+  const premium = sortHomepageAdvertisements(premiumAds);
+  const regularLimit = Math.max(0, HOMEPAGE_AD_LIMIT - premium.length);
+  const regular = sortHomepageAdvertisements(regularAds).slice(0, regularLimit);
 
-  if (regularLimit === 0) {
-    return sortedPremium;
-  }
-
-  const sortedRegular = sortHomepageAdvertisements(regularAds).slice(
-    0,
-    regularLimit
-  );
-
-  return [...sortedPremium, ...sortedRegular];
+  return { premium, regular };
 }
 
 export async function getCategoryNameBySlug(slug: string) {
