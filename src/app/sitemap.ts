@@ -21,6 +21,7 @@ const STATIC_PATHS = [
   "/cadastro",
   "/entrar",
   "/ajuda",
+  "/quem-somos",
   "/privacidade",
   "/termos",
 ] as const;

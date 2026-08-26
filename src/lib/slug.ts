@@ -33,6 +33,7 @@ export const RESERVED_TOP_LEVEL_SEGMENTS = new Set([
   "parceiro",
   "parceiros",
   "privacidade",
+  "quem-somos",
   "redefinir-senha",
   "relatorios",
   "termos",

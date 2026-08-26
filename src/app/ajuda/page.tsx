@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { HelpCircle, MessageCircle, ShieldAlert } from "lucide-react";
+import { HelpCircle, MessageCircle, ShieldAlert, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 
 export const metadata: Metadata = {
@@ -38,7 +38,14 @@ export default function HelpPage() {
         description="Respostas para as dúvidas mais comuns"
       />
       <section className="container mx-auto max-w-3xl px-4 py-10">
-        <div className="mb-8 grid gap-4 sm:grid-cols-2">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Link
+            href="/quem-somos"
+            className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:border-whatsapp/50"
+          >
+            <Users className="h-5 w-5 text-whatsapp" />
+            <span className="text-sm font-medium">Quem somos</span>
+          </Link>
           <Link
             href="/como-funciona"
             className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:border-whatsapp/50"

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/layout/brand-logo";
 
 const SUPPORT_LINKS = [
+  { label: "Quem somos", href: "/quem-somos" },
   { label: "Central de ajuda", href: "/ajuda" },
   { label: "Denunciar anúncio", href: "/denunciar" },
   { label: "Termos de uso", href: "/termos" },
