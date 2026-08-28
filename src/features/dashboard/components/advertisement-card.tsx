@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Star, MapPin, MessageCircle, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +19,10 @@ import {
   formatRating,
   getAdvertisementTypeLabel,
 } from "@/shared/utils/format";
-import { buildAdvertisementHref } from "@/shared/utils/search-preferences";
+import {
+  buildAdvertisementHref,
+  rememberReturnPath,
+} from "@/shared/utils/search-preferences";
 
 interface AdvertisementCardProps {
   readonly advertisement: Advertisement;
@@ -54,8 +59,11 @@ export function AdvertisementCard({
   const detailHref = buildAdvertisementHref({
     publicHref: advertisement.publicHref,
     id: advertisement.id,
-    returnTo,
   });
+
+  function handleOpenDetail() {
+    rememberReturnPath(returnTo);
+  }
 
   const showPremiumEmphasis =
     emphasizePremium && advertisement.isPremium;
@@ -112,7 +120,7 @@ export function AdvertisementCard({
           )}
         </div>
 
-        <Link href={detailHref}>
+        <Link href={detailHref} onClick={handleOpenDetail}>
           <h3 className="line-clamp-1 text-sm font-semibold text-foreground transition-colors hover:text-whatsapp">
             {advertisement.title}
           </h3>
@@ -179,7 +187,9 @@ export function AdvertisementCard({
             className="h-8 px-2 text-[11px]"
             asChild
           >
-            <Link href={detailHref}>Ver</Link>
+            <Link href={detailHref} onClick={handleOpenDetail}>
+              Ver
+            </Link>
           </Button>
         </div>
       </CardContent>

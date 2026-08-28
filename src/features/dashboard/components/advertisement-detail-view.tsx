@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Star, MapPin, MessageCircle, Crown, ArrowLeft, Clock, Zap } from "lucide-react";
+import { Star, MapPin, MessageCircle, Crown, Clock, Zap } from "lucide-react";
 import { listAdvertisementReviews } from "@/application/services/review-service";
 import { AdvertisementCover } from "@/components/advertisement/advertisement-cover";
 import {
@@ -12,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FavoriteButton } from "@/features/favorites/favorite-button";
+import { AdvertisementBackLink } from "@/features/dashboard/components/advertisement-back-link";
 import { AdvertisementShareActions } from "@/features/dashboard/components/advertisement-share-actions";
 import { ReviewForm } from "@/features/dashboard/components/review-form";
 import { StickyWhatsAppCta } from "@/features/dashboard/components/sticky-whatsapp-cta";
@@ -27,16 +27,12 @@ import {
   getAdvertisementTypeLabel,
 } from "@/shared/utils/format";
 
-import { resolveReturnPath } from "@/shared/utils/search-preferences";
-
 interface AdvertisementDetailViewProps {
   readonly advertisement: Advertisement;
-  readonly returnTo?: string;
 }
 
 export async function AdvertisementDetailView({
   advertisement,
-  returnTo,
 }: AdvertisementDetailViewProps) {
   const reviews = await listAdvertisementReviews(advertisement.id);
 
@@ -66,7 +62,6 @@ export async function AdvertisementDetailView({
   });
   const serviceAreaLabel = getServiceAreaLabel(advertisement.serviceArea);
   const hasReviews = advertisement.reviewCount > 0;
-  const backHref = resolveReturnPath(returnTo);
   const sharePath =
     advertisement.publicHref?.trim() || `/anuncio/${advertisement.id}`;
   const shareUrl = buildAbsoluteUrl(sharePath);
@@ -75,13 +70,7 @@ export async function AdvertisementDetailView({
     <section className="container mx-auto px-4 py-6 pb-24 md:pb-8">
       <TrackAdView advertisementId={advertisement.id} />
       <div className="mb-4 flex items-center justify-between gap-2">
-        <Link
-          href={backHref}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Link>
+        <AdvertisementBackLink />
         <FavoriteButton advertisementId={advertisement.id} size="sm" />
       </div>
 

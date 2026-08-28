@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getAdvertisementByCategoryAndSlug } from "@/application/services/search-service";
 import { resolveCategoryCityLanding } from "@/application/services/city-seo-service";
 import { AdvertisementDetailView } from "@/features/dashboard/components/advertisement-detail-view";
@@ -64,6 +64,11 @@ export default async function SeoAdvertisementPage({
   const { categorySlug, adSlug } = await params;
   const { from } = await searchParams;
 
+  // Remove ?from= da URL pública (SEO) — o Voltar usa sessionStorage.
+  if (from) {
+    permanentRedirect(`/${categorySlug}/${adSlug}`);
+  }
+
   const categoryCity = await resolveCategoryCityLanding(categorySlug, adSlug);
   if (categoryCity) {
     return <CategoryCityLandingPage {...categoryCity} />;
@@ -82,7 +87,5 @@ export default async function SeoAdvertisementPage({
     notFound();
   }
 
-  return (
-    <AdvertisementDetailView advertisement={advertisement} returnTo={from} />
-  );
+  return <AdvertisementDetailView advertisement={advertisement} />;
 }

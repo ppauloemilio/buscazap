@@ -1,4 +1,5 @@
 const PREFERRED_CITY_KEY = "buscazapp_preferred_city";
+const RETURN_PATH_KEY = "buscazapp_return_path";
 
 export function getPreferredCity(): string {
   if (typeof window === "undefined") return "";
@@ -69,17 +70,39 @@ export function resolveReturnPath(
   return fallback;
 }
 
+/** Guarda de onde o usuário veio (botão Voltar), sem poluir a URL pública. */
+export function rememberReturnPath(path: string | undefined): void {
+  if (typeof window === "undefined") return;
+  if (!path || !isSafeInternalReturnPath(path)) return;
+
+  try {
+    sessionStorage.setItem(RETURN_PATH_KEY, path);
+  } catch {
+    // Ignore storage failures (private mode, quota, etc).
+  }
+}
+
+export function consumeReturnPath(fallback = "/buscar"): string {
+  if (typeof window === "undefined") return fallback;
+
+  try {
+    const stored = sessionStorage.getItem(RETURN_PATH_KEY)?.trim();
+    if (stored && isSafeInternalReturnPath(stored)) {
+      return stored;
+    }
+  } catch {
+    // Ignore storage failures.
+  }
+
+  return fallback;
+}
+
+/** URL canônica do anúncio — sem query params (SEO). */
 export function buildAdvertisementHref(input: {
   readonly publicHref?: string | null;
   readonly id: string;
+  /** @deprecated Mantido por compatibilidade; não entra mais na URL. */
   readonly returnTo?: string;
 }): string {
-  const base = input.publicHref ?? `/anuncio/${input.id}`;
-
-  if (!input.returnTo || !isSafeInternalReturnPath(input.returnTo)) {
-    return base;
-  }
-
-  const separator = base.includes("?") ? "&" : "?";
-  return `${base}${separator}from=${encodeURIComponent(input.returnTo)}`;
+  return input.publicHref ?? `/anuncio/${input.id}`;
 }
