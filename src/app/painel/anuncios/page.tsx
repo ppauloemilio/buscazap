@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Crown, ImageIcon } from "lucide-react";
+import { Crown, Pencil } from "lucide-react";
 import { findProviderAdvertisements, providerHasAdSlotAvailable } from "@/application/services/advertisement-service";
 import { syncReferralPremiumCredits } from "@/application/services/referral-service";
 import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
@@ -87,8 +87,8 @@ export default async function ProviderAdsPage({
 
       {params.boosted === "1" && (
         <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
-          Destaque premium ativado com sucesso. Use &quot;Editar fotos&quot; para adicionar
-          até 5 imagens na galeria.
+          Destaque premium ativado com sucesso. Use &quot;Editar&quot; para
+          atualizar os dados e adicionar até 5 imagens na galeria.
         </div>
       )}
 
@@ -129,14 +129,12 @@ export default async function ProviderAdsPage({
                     <Button variant="outline" size="sm" asChild>
                       <Link href={ad.publicHref ?? `/anuncio/${ad.id}`}>Ver</Link>
                     </Button>
-                    {ad.premiumActive && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/painel/anuncios/${ad.id}/editar`}>
-                          <ImageIcon className="h-4 w-4" />
-                          Editar fotos
-                        </Link>
-                      </Button>
-                    )}
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/painel/anuncios/${ad.id}/editar`}>
+                        <Pencil className="h-4 w-4" />
+                        Editar
+                      </Link>
+                    </Button>
                     {!ad.premiumActive && subscriptionActive && (
                       <BoostAdvertisementForm
                         advertisementId={ad.id}

@@ -12,6 +12,11 @@ import { prisma } from "@/lib/prisma";
 import { publicListingAdvertisementWhere } from "@/lib/public-advertisement-visibility";
 import { isPremiumActive } from "@/lib/provider-session";
 import { slugify } from "@/lib/slug";
+import { normalizeWhatsAppIdentity } from "@/lib/whatsapp";
+import {
+  registerCategorySuggestion,
+  resolveAdvertisementCategoryFromCatalog,
+} from "@/application/services/category-matching-service";
 import {
   ensureUniqueAdvertisementSlug,
   resolveCategorySlugByName,
@@ -490,6 +495,70 @@ export async function findProviderAdvertisementForEdit(
       url: resolveAdvertisementImageUrl(image.url),
     })),
   };
+}
+
+export async function updateProviderAdvertisement(input: {
+  readonly providerId: string;
+  readonly advertisementId: string;
+  readonly title: string;
+  readonly description: string;
+  readonly type: AdvertisementType;
+  readonly category: string;
+  readonly customCategory?: string;
+  readonly city: string;
+  readonly state: string;
+  readonly neighborhood?: string;
+  readonly serviceArea?: ServiceArea;
+  readonly whatsappNumber: string;
+  readonly whatsappLabel?: string;
+  readonly secondaryWhatsappNumber?: string;
+  readonly secondaryWhatsappLabel?: string;
+}) {
+  const existing = await prisma.advertisement.findFirst({
+    where: { id: input.advertisementId, providerId: input.providerId },
+    select: { id: true, title: true, slug: true },
+  });
+
+  if (!existing) {
+    throw new Error("Anúncio não encontrado");
+  }
+
+  const whatsappNumber =
+    normalizeWhatsAppIdentity(input.whatsappNumber) ?? input.whatsappNumber;
+
+  const categoryResolution = await resolveAdvertisementCategoryFromCatalog({
+    category: input.category,
+    customCategory: input.customCategory,
+  });
+
+  if (categoryResolution.isCustomCategory) {
+    await registerCategorySuggestion(categoryResolution.categoryName);
+  }
+
+  const slug =
+    existing.title === input.title && existing.slug
+      ? existing.slug
+      : await ensureUniqueAdvertisementSlug(input.title, input.advertisementId);
+
+  return prisma.advertisement.update({
+    where: { id: input.advertisementId },
+    data: {
+      title: input.title,
+      description: input.description,
+      type: input.type,
+      category: categoryResolution.categoryName,
+      isCustomCategory: categoryResolution.isCustomCategory,
+      city: input.city,
+      state: input.state,
+      neighborhood: input.neighborhood || null,
+      serviceArea: input.serviceArea,
+      whatsappNumber,
+      whatsappLabel: input.whatsappLabel || null,
+      secondaryWhatsappNumber: input.secondaryWhatsappNumber || null,
+      secondaryWhatsappLabel: input.secondaryWhatsappLabel || null,
+      slug,
+    },
+  });
 }
 
 export async function createAdvertisement(input: {

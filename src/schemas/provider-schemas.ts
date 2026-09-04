@@ -462,6 +462,9 @@ export const adminUpdateAdvertisementSchema = z
     );
   });
 
+/** Mesmo formato do admin — edição pelo anunciante. */
+export const updateAdvertisementSchema = adminUpdateAdvertisementSchema;
+
 export function resolveAdvertisementCategory(input: {
   readonly category: string;
   readonly customCategory?: string;

@@ -32,12 +32,14 @@ import {
   createAdvertisementSchema,
   loginProviderSchema,
   registerProviderSchema,
+  updateAdvertisementSchema,
   updateProviderPasswordSchema,
   updateProviderProfileSchema,
 } from "@/schemas/provider-schemas";
 import {
   createAdvertisement,
   deleteProviderAdvertisement,
+  updateProviderAdvertisement,
 } from "@/application/services/advertisement-service";
 import { getCatalogLocationError } from "@/application/services/catalog-location";
 import {
@@ -439,6 +441,86 @@ export async function createAdvertisementAction(formData: FormData) {
   }
 
   redirect("/painel/anuncios");
+}
+
+export async function updateAdvertisementAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+
+  const advertisementIdRaw = formData.get("advertisementId");
+  const advertisementId =
+    typeof advertisementIdRaw === "string" ? advertisementIdRaw : "";
+  const redirectBase = advertisementId
+    ? `/painel/anuncios/${advertisementId}/editar`
+    : "/painel/anuncios";
+
+  const owned = await prisma.advertisement.findFirst({
+    where: { id: advertisementId, providerId: provider.id },
+    select: { id: true },
+  });
+
+  if (!owned) {
+    redirect("/painel/anuncios");
+  }
+
+  const parsed = updateAdvertisementSchema.safeParse({
+    advertisementId,
+    title: formData.get("title"),
+    description: formData.get("description"),
+    type: formData.get("type"),
+    category: formData.get("category"),
+    customCategory: formData.get("customCategory"),
+    city: formData.get("city"),
+    state: formData.get("state"),
+    neighborhood: formData.get("neighborhood") || undefined,
+    serviceArea: formData.get("serviceArea"),
+    whatsappNumber: formData.get("whatsappNumber"),
+    whatsappLabel: formData.get("whatsappLabel") || undefined,
+    secondaryWhatsappNumber: formData.get("secondaryWhatsappNumber") || undefined,
+    secondaryWhatsappLabel: formData.get("secondaryWhatsappLabel") || undefined,
+  });
+
+  if (!parsed.success) {
+    redirect(
+      `${redirectBase}?error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Dados inválidos")}`
+    );
+  }
+
+  const locationError = await getCatalogLocationError(
+    parsed.data.city,
+    parsed.data.state
+  );
+  if (locationError) {
+    redirect(`${redirectBase}?error=${encodeURIComponent(locationError)}`);
+  }
+
+  try {
+    await updateProviderAdvertisement({
+      providerId: provider.id,
+      advertisementId: parsed.data.advertisementId,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      type: parsed.data.type,
+      category: parsed.data.category,
+      customCategory: parsed.data.customCategory,
+      city: parsed.data.city,
+      state: parsed.data.state,
+      neighborhood: parsed.data.neighborhood,
+      serviceArea: parsed.data.serviceArea,
+      whatsappNumber: parsed.data.whatsappNumber,
+      whatsappLabel: parsed.data.whatsappLabel,
+      secondaryWhatsappNumber: parsed.data.secondaryWhatsappNumber,
+      secondaryWhatsappLabel: parsed.data.secondaryWhatsappLabel,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível atualizar o anúncio";
+    redirect(`${redirectBase}?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidateAdvertisementPaths(advertisementId);
+  redirect(`${redirectBase}?saved=1`);
 }
 
 export async function updateAdvertisementImagesAction(formData: FormData) {
