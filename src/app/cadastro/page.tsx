@@ -5,7 +5,6 @@ import { registerProviderAction } from "@/actions/provider-actions";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PRICING } from "@/config/pricing";
 
 export const metadata: Metadata = {
   title: "Cadastro de anunciante",
@@ -26,7 +25,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
       <PageHeader
         compact
         title="Criar conta de anunciante"
-        description={`Cadastre-se com ${PRICING.LAUNCH_TRIAL_DAYS} dias grátis para publicar na sua cidade`}
+        description="Cadastre-se e assine para publicar anúncios na sua cidade"
       />
       <section className="container mx-auto max-w-md px-4 py-5">
         <div className="rounded-xl border bg-card p-4">

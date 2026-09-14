@@ -8,7 +8,7 @@ import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PRICING } from "@/config/pricing";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 
 export default async function PanelPage() {
   const provider = await getCurrentProvider();
@@ -92,7 +92,9 @@ export default async function PanelPage() {
         <Card>
           <CardContent className="p-3">
             <CreditCard className="mb-2 h-6 w-6 text-whatsapp" />
-            <h3 className="text-sm font-semibold">Assinatura R$ 10/mês</h3>
+            <h3 className="text-sm font-semibold">
+              Assinatura {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês
+            </h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Necessária para publicar anúncios na plataforma.
             </p>

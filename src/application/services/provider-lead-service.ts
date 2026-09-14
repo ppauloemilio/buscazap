@@ -7,7 +7,6 @@ import {
 } from "@/application/services/category-matching-service";
 import { generateUniqueReferralCode } from "@/application/services/referral-service";
 import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
-import { PRICING } from "@/config/pricing";
 import {
   AdvertisementType,
   ProviderLeadStatus,
@@ -33,12 +32,6 @@ function parseServiceArea(value: string): ServiceArea {
     return value as ServiceArea;
   }
   return ServiceArea.CITY_WIDE;
-}
-
-function buildTrialExpiresAt(from = new Date()): Date {
-  const expiresAt = new Date(from);
-  expiresAt.setDate(expiresAt.getDate() + PRICING.LAUNCH_TRIAL_DAYS);
-  return expiresAt;
 }
 
 export async function createProviderLead(
@@ -262,18 +255,9 @@ export async function publishProviderLeadAsAdmin(input: {
     }
 
     if (!canProviderPublish(provider)) {
-      provider = await prisma.provider.update({
-        where: { id: provider.id },
-        data: { subscriptionExpiresAt: buildTrialExpiresAt() },
-        select: {
-          id: true,
-          name: true,
-          whatsapp: true,
-          role: true,
-          status: true,
-          subscriptionExpiresAt: true,
-        },
-      });
+      throw new Error(
+        "Anunciante sem assinatura ativa. Registre a assinatura (ou trial manual no admin) antes de publicar o lead."
+      );
     }
   } else {
     temporaryPassword = generateTemporaryPassword();
@@ -291,7 +275,6 @@ export async function publishProviderLeadAsAdmin(input: {
         state: lead.state,
         neighborhood: lead.neighborhood ?? null,
         referralCode,
-        subscriptionExpiresAt: buildTrialExpiresAt(),
       },
       select: {
         id: true,
@@ -306,7 +289,9 @@ export async function publishProviderLeadAsAdmin(input: {
   }
 
   if (!hasActiveSubscription(provider.subscriptionExpiresAt)) {
-    throw new Error("Não foi possível liberar o trial do anunciante");
+    throw new Error(
+      "Anunciante sem assinatura ativa. Registre a assinatura (ou trial manual no admin) antes de publicar o lead."
+    );
   }
 
   const categoryResolution = await resolveAdvertisementCategoryFromCatalog({

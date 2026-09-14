@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import bcrypt from "bcryptjs";
-import { PROVIDER_SESSION_COOKIE, PRICING } from "@/config/pricing";
+import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import {
   createPremiumBoostPayment,
   createSubscriptionPayment,
@@ -153,8 +153,6 @@ export async function registerProviderAction(formData: FormData) {
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   const referralCode = await generateUniqueReferralCode();
-  const trialExpiresAt = new Date();
-  trialExpiresAt.setDate(trialExpiresAt.getDate() + PRICING.LAUNCH_TRIAL_DAYS);
 
   const { referralCode: _ignoredCode, password: _password, ...accountData } =
     parsed.data;
@@ -166,7 +164,6 @@ export async function registerProviderAction(formData: FormData) {
       passwordHash,
       role: "PROVIDER",
       referralCode,
-      subscriptionExpiresAt: trialExpiresAt,
     },
   });
 
@@ -182,7 +179,7 @@ export async function registerProviderAction(formData: FormData) {
     path: "/",
   });
 
-  redirect("/painel");
+  redirect("/painel/assinatura");
 }
 
 export async function redeemReferralPremiumAction(formData: FormData) {

@@ -1,5 +1,5 @@
 export const PRICING = {
-  SUBSCRIPTION_AMOUNT: 10,
+  SUBSCRIPTION_AMOUNT: 9.99,
   /** Anúncios inclusos na mensalidade básica (por conta). */
   ADS_INCLUDED_PER_SUBSCRIPTION: 1,
   /** 2º WhatsApp no mesmo anúncio (máx. 2 contatos). */
@@ -19,6 +19,10 @@ export const PRICING = {
   REFERRAL_PUBLISHED_ADS_PER_CREDIT: 5,
   /** @deprecated Use REFERRAL_PUBLISHED_ADS_PER_CREDIT */
   REFERRALS_PER_PREMIUM_CREDIT: 5,
+  /**
+   * Trial manual (admin). Cadastro público não recebe mais período grátis.
+   * Contas que já têm subscriptionExpiresAt no banco continuam até a data.
+   */
   LAUNCH_TRIAL_DAYS: 30,
   PAYMENT_EXPIRATION_MINUTES: 30,
   PIX_KEY: "buscazapp@pagamentos.com.br",

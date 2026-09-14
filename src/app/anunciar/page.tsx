@@ -4,17 +4,17 @@ import { Megaphone, CheckCircle } from "lucide-react";
 import { getCurrentProvider } from "@/lib/provider-session";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { PRICING } from "@/config/pricing";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 
 export const metadata: Metadata = {
   title: "Anunciar",
 };
 
 const BENEFITS = [
-  "1º mês grátis para anunciar (depois R$ 10/mês via PIX)",
+  `Assinatura ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês via PIX para publicar`,
   "Disponível nas cidades ativas do catálogo (todo o Brasil)",
   "Contato direto via WhatsApp",
-  "Destaque premium: R$ 5,00/30 dias (ou 15 dias via indicação)",
+  `Destaque premium: ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias (ou ${PRICING.REFERRAL_PREMIUM_DAYS} dias via indicação)`,
 ] as const;
 
 export default async function AdvertisePage() {

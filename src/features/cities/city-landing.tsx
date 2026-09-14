@@ -96,7 +96,7 @@ export async function CityLandingPage({ city }: { readonly city: SeoCity }) {
             <Button variant="outline" size="sm" asChild>
               <Link href="/anunciar">
                 <Megaphone className="h-4 w-4" />
-                Anuncie grátis
+                Anuncie aqui
               </Link>
             </Button>
           </div>

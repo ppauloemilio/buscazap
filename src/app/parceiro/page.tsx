@@ -48,8 +48,8 @@ const BENEFITS = [
   },
   {
     icon: Sparkles,
-    title: "Pré-cadastro grátis",
-    text: "Sem senha agora. O 1º mês é cortesia.",
+    title: "Pré-cadastro rápido",
+    text: "Sem senha agora. Depois assine para publicar seu anúncio.",
   },
 ] as const;
 
@@ -261,7 +261,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                 </div>
 
                 <Button type="submit" variant="whatsapp" className="w-full">
-                  Garantir minha vaga grátis
+                  Garantir minha vaga
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground">

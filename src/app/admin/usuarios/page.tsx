@@ -295,10 +295,9 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                   type="checkbox"
                   name="grantTrial"
                   value="true"
-                  defaultChecked
                   className="rounded border"
                 />
-                Trial de {PRICING.LAUNCH_TRIAL_DAYS} dias
+                Trial de {PRICING.LAUNCH_TRIAL_DAYS} dias (opcional)
               </label>
             </div>
             <div className="flex items-end">
