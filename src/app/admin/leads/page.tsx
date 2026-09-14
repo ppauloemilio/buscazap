@@ -64,15 +64,15 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
     <AdminLayout>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Leads (pré-cadastro)</h2>
+          <h2 className="text-lg font-semibold">Leads (interesse em anunciar)</h2>
           <p className="text-xs text-muted-foreground">
-            Interessados que preencheram{" "}
+            Interessados que preencheram o formulário em{" "}
             <Link href="/parceiro" className="underline" target="_blank">
               /parceiro
-            </Link>{" "}
-            (também /parceiros). Você pode <strong>editar</strong> os dados do lead
-            e, antes de publicar, escolher o <strong>tipo</strong> e a{" "}
-            <strong>categoria</strong> do anúncio.
+            </Link>
+            . Você pode <strong>editar</strong> os dados do lead e, antes de
+            publicar, escolher o <strong>tipo</strong> e a{" "}
+            <strong>categoria</strong> do anúncio (assinatura ativa necessária).
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">

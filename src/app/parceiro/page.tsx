@@ -2,15 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   CheckCircle,
+  CreditCard,
+  Eye,
   MapPin,
+  Megaphone,
   MessageCircle,
-  Rocket,
+  Search,
   Sparkles,
+  Zap,
 } from "lucide-react";
 import { submitProviderLeadAction } from "@/actions/provider-lead-actions";
-import {
-  listActiveCatalogLocationOptions,
-} from "@/application/services/catalog-location";
+import { listActiveCatalogLocationOptions } from "@/application/services/catalog-location";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { ImageFileInput } from "@/components/advertisement/image-file-input";
 import { BrandLogo } from "@/components/layout/brand-logo";
@@ -19,13 +21,14 @@ import { ServiceAreaField } from "@/features/panel/components/service-area-field
 import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { ServiceArea } from "@/domain/enums";
 import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
 
 export const metadata: Metadata = {
-  title: "Pré-lançamento para anunciantes",
+  title: "Anuncie no BuscaZapp",
   description:
-    "Cadastre seu WhatsApp no BuscaZapp e anuncie na sua cidade. Garanta sua vaga entre os primeiros.",
+    "Coloque seu negócio na frente de quem busca serviços na sua cidade. Contato direto no WhatsApp. Assinatura a partir de R$ 9,99/mês.",
 };
 
 interface PartnerPageProps {
@@ -37,25 +40,49 @@ interface PartnerPageProps {
 
 const BENEFITS = [
   {
-    icon: Rocket,
-    title: "Saia na frente",
-    text: "Garanta sua vaga entre os primeiros da região antes da abertura para clientes.",
+    icon: MessageCircle,
+    title: "Cliente no seu WhatsApp",
+    text: "Quem te encontra fala direto com você. Sem intermediário, sem comissão por mensagem.",
   },
   {
-    icon: MessageCircle,
-    title: "WhatsApp direto",
-    text: "O cliente te encontra e fala com você no WhatsApp — sem app extra.",
+    icon: MapPin,
+    title: "Visibilidade na sua cidade",
+    text: "Apareça nas buscas locais e nas páginas da sua região — onde o cliente realmente está.",
+  },
+  {
+    icon: Eye,
+    title: "Simples de manter",
+    text: "Publique, edite e acompanhe. Sem app complicado: o contato acontece no WhatsApp que você já usa.",
   },
   {
     icon: Sparkles,
-    title: "Pré-cadastro rápido",
-    text: "Sem senha agora. Depois assine para publicar seu anúncio.",
+    title: "Destaque opcional",
+    text: `Quer mais destaque? Premium por ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias, com prioridade e mais fotos.`,
+  },
+] as const;
+
+const STEPS = [
+  {
+    icon: Megaphone,
+    title: "1. Crie sua conta",
+    text: "Cadastro rápido com WhatsApp. Em poucos minutos você já está no painel.",
+  },
+  {
+    icon: CreditCard,
+    title: "2. Assine via PIX",
+    text: `${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês para publicar. Pagamento simples e liberação após a confirmação.`,
+  },
+  {
+    icon: Zap,
+    title: "3. Receba contatos",
+    text: "Seu anúncio aparece nas buscas. O cliente chama e você fecha o negócio.",
   },
 ] as const;
 
 export default async function PartnerLeadPage({ searchParams }: PartnerPageProps) {
   const params = await searchParams;
   const locationOptions = await listActiveCatalogLocationOptions();
+  const priceLabel = formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[hsl(150_25%_97%)]">
@@ -72,50 +99,56 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
         className="pointer-events-none absolute -right-16 bottom-40 h-72 w-72 rounded-full bg-emerald-200/30 blur-3xl"
       />
 
-      {/* Hero */}
-      <section className="relative px-4 pb-10 pt-10 md:pb-14 md:pt-14">
+      <section className="relative px-4 pb-8 pt-10 md:pb-12 md:pt-14">
         <div className="container mx-auto flex max-w-2xl flex-col items-center text-center">
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
-            <BrandLogo iconSize={48} textClassName="text-2xl md:text-3xl" linked={false} />
-          </div>
+          <BrandLogo iconSize={48} textClassName="text-2xl md:text-3xl" linked={false} />
 
-          <p className="mt-4 animate-in fade-in slide-in-from-bottom-2 text-xs font-semibold uppercase tracking-[0.18em] text-whatsapp duration-700 [animation-delay:80ms] [animation-fill-mode:both]">
-            Pré-lançamento · cidades ativas no catálogo
+          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-whatsapp">
+            Para empresas e profissionais
           </p>
 
-          <h1 className="mt-3 max-w-xl animate-in fade-in slide-in-from-bottom-3 text-3xl font-bold tracking-tight text-foreground duration-700 [animation-delay:140ms] [animation-fill-mode:both] md:text-4xl">
-            O BuscaZapp está chegando.
+          <h1 className="mt-3 max-w-xl text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            Seu cliente já procura no celular.
             <span className="mt-1 block text-whatsapp">
-              Cadastre seu WhatsApp hoje.
+              Faça ele te encontrar no WhatsApp.
             </span>
           </h1>
 
-          <p className="mt-4 max-w-lg animate-in fade-in slide-in-from-bottom-3 text-base text-muted-foreground duration-700 [animation-delay:200ms] [animation-fill-mode:both] md:text-lg">
-            Garanta sua vaga entre os primeiros da região — de graça — antes do
-            lançamento oficial para os clientes.
+          <p className="mt-4 max-w-lg text-base text-muted-foreground md:text-lg">
+            O BuscaZapp coloca seu negócio na frente de quem busca serviços na
+            sua cidade — com contato direto, sem app extra e sem complicação.
           </p>
 
           {params.sent !== "1" && (
-            <div className="mt-7 animate-in fade-in zoom-in-95 duration-700 [animation-delay:280ms] [animation-fill-mode:both]">
+            <div className="mt-7 flex w-full max-w-md flex-col items-stretch gap-2.5 sm:flex-row sm:justify-center">
               <Button variant="whatsapp" size="lg" className="px-8 text-base" asChild>
-                <a href="#cadastro">Garantir minha vaga</a>
+                <Link href="/cadastro">Começar por {priceLabel}/mês</Link>
               </Button>
-              <p className="mt-2.5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5 text-whatsapp" />
-                Só pedimos o essencial · sem senha agora
-              </p>
+              <Button variant="outline" size="lg" className="px-6 text-base" asChild>
+                <a href="#interesse">Prefiro que falem comigo</a>
+              </Button>
             </div>
           )}
+
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <Search className="h-3.5 w-3.5 text-whatsapp" />
+            Assinatura {priceLabel}/mês · 1 anúncio incluso · PIX
+          </p>
         </div>
       </section>
 
-      {/* Benefits */}
       <section className="relative px-4 pb-10">
-        <div className="container mx-auto max-w-2xl">
-          <ul className="grid gap-5 sm:grid-cols-3">
+        <div className="container mx-auto max-w-3xl">
+          <h2 className="mb-5 text-center text-lg font-bold text-foreground md:text-xl">
+            Por que anunciar no BuscaZapp?
+          </h2>
+          <ul className="grid gap-4 sm:grid-cols-2">
             {BENEFITS.map((benefit) => (
-              <li key={benefit.title} className="text-center sm:text-left">
-                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-whatsapp/10 sm:mx-0">
+              <li
+                key={benefit.title}
+                className="rounded-xl border border-whatsapp/10 bg-card/80 p-4 shadow-sm"
+              >
+                <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-whatsapp/10">
                   <benefit.icon className="h-4 w-4 text-whatsapp" />
                 </div>
                 <p className="text-sm font-semibold text-foreground">{benefit.title}</p>
@@ -128,17 +161,86 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
         </div>
       </section>
 
-      {/* Form */}
-      <section id="cadastro" className="relative scroll-mt-6 px-4 pb-14">
+      <section className="relative px-4 pb-10">
+        <div className="container mx-auto max-w-3xl">
+          <h2 className="mb-5 text-center text-lg font-bold text-foreground md:text-xl">
+            Como funciona
+          </h2>
+          <ol className="grid gap-4 sm:grid-cols-3">
+            {STEPS.map((step) => (
+              <li key={step.title} className="text-center sm:text-left">
+                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-whatsapp/10 sm:mx-0">
+                  <step.icon className="h-4 w-4 text-whatsapp" />
+                </div>
+                <p className="text-sm font-semibold text-foreground">{step.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  {step.text}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="relative px-4 pb-10">
+        <div className="container mx-auto max-w-xl">
+          <div className="rounded-2xl border border-whatsapp/20 bg-card/95 p-5 text-center shadow-sm md:p-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-whatsapp">
+              Plano anunciante
+            </p>
+            <p className="mt-2 text-3xl font-bold text-foreground">
+              {priceLabel}
+              <span className="text-base font-normal text-muted-foreground">/mês</span>
+            </p>
+            <ul className="mx-auto mt-4 max-w-sm space-y-2 text-left text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+                1 anúncio incluso na mensalidade
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+                Contato direto no WhatsApp (até 2 números no anúncio)
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+                Pagamento via PIX · cancele quando quiser (ao fim do período)
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+                Destaque premium opcional:{" "}
+                {formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias
+              </li>
+            </ul>
+            {params.sent !== "1" && (
+              <Button
+                variant="whatsapp"
+                size="lg"
+                className="mt-5 w-full sm:w-auto sm:px-10"
+                asChild
+              >
+                <Link href="/cadastro">Criar conta e assinar</Link>
+              </Button>
+            )}
+            <p className="mt-2 text-xs text-muted-foreground">
+              Já tem conta?{" "}
+              <Link href="/entrar" className="font-medium text-whatsapp hover:underline">
+                Entrar no painel
+              </Link>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="interesse" className="relative scroll-mt-6 px-4 pb-14">
         <div className="container mx-auto max-w-xl">
           <div className="rounded-2xl border border-whatsapp/15 bg-card/95 p-4 shadow-sm backdrop-blur-sm md:p-6">
             <div className="mb-4 text-center sm:text-left">
               <h2 className="text-xl font-bold tracking-tight text-foreground">
-                Pré-cadastro de anunciante
+                Prefere falar com a gente primeiro?
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Preencha abaixo. Em breve falamos no WhatsApp para publicar seu
-                anúncio.
+                Deixe seus dados. Entramos em contato no WhatsApp para tirar
+                dúvidas e te ajudar a publicar.
               </p>
             </div>
 
@@ -146,12 +248,17 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
               <div className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
                 <p className="flex items-start gap-2 font-medium">
                   <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                  Vaga reservada! Recebemos seus dados.
+                  Recebemos seu interesse!
                 </p>
                 <p className="mt-1 pl-6 text-whatsapp/90">
-                  Em breve falamos com você no WhatsApp para finalizar e
-                  publicar.
+                  Em breve falamos com você no WhatsApp para seguir com o
+                  cadastro e a assinatura.
                 </p>
+                <div className="mt-3 pl-6">
+                  <Button variant="whatsapp" size="sm" asChild>
+                    <Link href="/cadastro">Ou criar conta agora</Link>
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -217,7 +324,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
 
                 <div>
                   <label htmlFor="adTitle" className="mb-1 block text-sm font-medium">
-                    Nome do anúncio
+                    Nome do anúncio / negócio
                   </label>
                   <Input
                     id="adTitle"
@@ -234,7 +341,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                     htmlFor="description"
                     className="mb-1 block text-sm font-medium"
                   >
-                    Descrição do anúncio
+                    Descrição do que você oferece
                   </label>
                   <p className="mb-2 text-xs text-muted-foreground">
                     Use Negrito, Itálico e Lista abaixo para formatar o texto.
@@ -243,7 +350,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                     required
                     minLength={20}
                     rows={7}
-                    placeholder="Conte o que você oferece, horários, o que inclui..."
+                    placeholder="Conte o que você oferece, horários, diferenciais..."
                   />
                 </div>
 
@@ -261,7 +368,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                 </div>
 
                 <Button type="submit" variant="whatsapp" className="w-full">
-                  Garantir minha vaga
+                  Quero anunciar — falem comigo
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground">
@@ -276,20 +383,25 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                   >
                     Privacidade
                   </Link>
-                  . Publicamos seu anúncio após confirmarmos no WhatsApp.
+                  . A publicação acontece após a assinatura (
+                  {priceLabel}/mês).
+                </p>
+
+                <p className="text-center text-xs text-muted-foreground">
+                  Prefere fazer sozinho?{" "}
+                  <Link
+                    href="/cadastro"
+                    className="font-medium text-whatsapp hover:underline"
+                  >
+                    Criar conta e pagar o PIX
+                  </Link>
                 </p>
               </form>
-            )}
-
-            {params.sent === "1" && (
-              <p className="text-center text-xs text-muted-foreground">
-                Pode fechar esta página. Entraremos em contato pelo WhatsApp.
-              </p>
             )}
           </div>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            BuscaZapp · WhatsApp da sua região, sem complicação
+            BuscaZapp · encontre local, fale direto, resolva rápido
           </p>
         </div>
       </section>

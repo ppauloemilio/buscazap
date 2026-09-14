@@ -74,10 +74,10 @@ export default async function AdvertisePage() {
             ) : (
               <>
                 <Button variant="whatsapp" asChild>
-                  <Link href="/parceiro">Pré-cadastro rápido</Link>
+                  <Link href="/parceiro">Quero anunciar</Link>
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link href="/cadastro">Criar conta completa</Link>
+                  <Link href="/cadastro">Criar conta</Link>
                 </Button>
                 <Button variant="outline" asChild>
                   <Link href="/entrar">Já tenho conta</Link>
