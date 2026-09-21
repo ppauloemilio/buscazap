@@ -1021,8 +1021,9 @@ export async function listAdminAdvertisements(filters?: {
 
   return advertisements.map((ad) => {
     const subscriptionExpiresAt = ad.provider.subscriptionExpiresAt;
+    const subscriptionActive = hasActiveSubscription(subscriptionExpiresAt);
     const subscriptionExpired =
-      subscriptionExpiresAt !== null && subscriptionExpiresAt <= now;
+      subscriptionExpiresAt !== null && !subscriptionActive;
 
     return {
       id: ad.id,
@@ -1041,6 +1042,7 @@ export async function listAdminAdvertisements(filters?: {
         email: ad.provider.email,
         whatsapp: ad.provider.whatsapp,
       },
+      subscriptionActive,
       subscriptionExpired,
       subscriptionExpiresAt,
       createdAt: ad.createdAt,

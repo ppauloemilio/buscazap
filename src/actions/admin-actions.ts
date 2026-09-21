@@ -294,15 +294,40 @@ export async function updateHomepageSettingsAction(formData: FormData) {
   redirect("/admin/home?saved=1");
 }
 
+function resolveAdminSubscriptionReturnPath(returnTo: FormDataEntryValue | null) {
+  if (
+    typeof returnTo !== "string" ||
+    !returnTo.startsWith("/admin/") ||
+    returnTo.includes("//")
+  ) {
+    return "/admin/usuarios";
+  }
+
+  return returnTo;
+}
+
+function appendAdminQueryParams(
+  path: string,
+  params: Record<string, string>
+): string {
+  const url = new URL(path, "http://local");
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value);
+  }
+
+  return `${url.pathname}${url.search}`;
+}
+
 export async function adminRegisterSubscriptionAction(formData: FormData) {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/entrar");
 
   const providerId = formData.get("providerId");
   const notesRaw = formData.get("notes");
+  const returnPath = resolveAdminSubscriptionReturnPath(formData.get("returnTo"));
 
   if (typeof providerId !== "string" || !providerId) {
-    redirect("/admin/usuarios");
+    redirect(returnPath);
   }
 
   try {
@@ -323,16 +348,26 @@ export async function adminRegisterSubscriptionAction(formData: FormData) {
       error instanceof Error
         ? error.message
         : "Não foi possível registrar a assinatura";
-    redirect(`/admin/usuarios?error=${encodeURIComponent(message)}`);
+    redirect(
+      appendAdminQueryParams(returnPath, {
+        error: message,
+      })
+    );
   }
 
   revalidatePath("/admin/usuarios");
+  revalidatePath("/admin/anuncios");
   revalidatePath("/admin/pagamentos");
   revalidatePath("/admin");
   revalidatePath("/painel");
   revalidatePath("/painel/assinatura");
 
-  redirect("/admin/usuarios?saved=1&manual=subscription");
+  redirect(
+    appendAdminQueryParams(returnPath, {
+      saved: "1",
+      manual: "subscription",
+    })
+  );
 }
 
 export async function adminRegisterPremiumBoostAction(formData: FormData) {

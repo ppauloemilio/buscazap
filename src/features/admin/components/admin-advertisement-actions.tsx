@@ -2,8 +2,10 @@
 
 import {
   adminCreatePremiumPixWhatsAppAction,
+  adminCreateSubscriptionPixWhatsAppAction,
   adminDeleteAdvertisementAction,
   adminRegisterPremiumBoostAction,
+  adminRegisterSubscriptionAction,
   moderateAdvertisementAction,
 } from "@/actions/admin-actions";
 import { AdminPixWhatsAppButton } from "@/features/admin/components/admin-pix-whatsapp-button";
@@ -15,21 +17,45 @@ import { Input } from "@/components/ui/input";
 
 interface AdminAdvertisementActionsProps {
   readonly advertisementId: string;
+  readonly providerId: string;
+  readonly providerName: string;
   readonly currentStatus: string;
   readonly title: string;
   readonly premiumActive: boolean;
+  readonly subscriptionActive: boolean;
+  readonly returnTo?: string;
 }
 
 export function AdminAdvertisementActions({
   advertisementId,
+  providerId,
+  providerName,
   currentStatus,
   title,
   premiumActive,
+  subscriptionActive,
+  returnTo = "/admin/anuncios",
 }: AdminAdvertisementActionsProps) {
   function handleDelete(event: React.FormEvent<HTMLFormElement>) {
     const message = premiumActive
       ? `Excluir "${title}"? Este anúncio possui destaque premium pago ativo.`
       : `Excluir o anúncio "${title}"?`;
+
+    if (!window.confirm(message)) {
+      event.preventDefault();
+    }
+  }
+
+  function handleManualSubscription(event: React.FormEvent<HTMLFormElement>) {
+    const form = event.currentTarget;
+    const method = new FormData(form).get("method");
+    const methodLabel =
+      MANUAL_PAYMENT_METHODS.find((item) => item.value === method)?.label ??
+      "manual";
+
+    const message = subscriptionActive
+      ? `Registrar +${PRICING.SUBSCRIPTION_DAYS} dias de assinatura para "${providerName}" (${methodLabel})? O prazo será acumulado a partir da data atual de validade.`
+      : `Registrar assinatura de ${PRICING.SUBSCRIPTION_DAYS} dias para "${providerName}" (${methodLabel})? Use para pagamento em dinheiro ou permuta.`;
 
     if (!window.confirm(message)) {
       event.preventDefault();
@@ -80,6 +106,43 @@ export function AdminAdvertisementActions({
           </Button>
         </form>
       </div>
+
+      <form
+        action={adminRegisterSubscriptionAction}
+        onSubmit={handleManualSubscription}
+        className="flex flex-col gap-1.5 rounded-lg border border-dashed p-2 sm:flex-row sm:items-center"
+      >
+        <input type="hidden" name="providerId" value={providerId} />
+        <input type="hidden" name="returnTo" value={returnTo} />
+        <select
+          name="method"
+          defaultValue="CASH"
+          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          aria-label="Forma de pagamento da assinatura"
+        >
+          {MANUAL_PAYMENT_METHODS.map((method) => (
+            <option key={method.value} value={method.value}>
+              {method.label}
+            </option>
+          ))}
+        </select>
+        <Input
+          name="notes"
+          placeholder="Obs. (opcional)"
+          className="h-9 sm:max-w-[180px]"
+          maxLength={200}
+        />
+        <Button type="submit" size="sm" variant="whatsapp">
+          Registrar assinatura
+        </Button>
+      </form>
+
+      <AdminPixWhatsAppButton
+        action={adminCreateSubscriptionPixWhatsAppAction}
+        hiddenFields={{ providerId }}
+        label={`Pix assinatura ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)} + WhatsApp`}
+        confirmMessage={`Gerar Pix da assinatura (${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}) para "${providerName}" e abrir o WhatsApp com o copia e cola?`}
+      />
 
       <form
         action={adminRegisterPremiumBoostAction}

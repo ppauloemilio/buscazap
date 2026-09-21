@@ -91,7 +91,7 @@ export default async function AdminAdvertisementsPage({
         <h2 className="text-xl font-semibold">Anúncios</h2>
         <p className="text-sm text-muted-foreground">
           {isExpiredSubscriptionFilter
-            ? "Anúncios cujo anunciante está com a assinatura vencida. Use o botão de renovação para avisar no WhatsApp."
+            ? "Anúncios cujo anunciante está com a assinatura vencida. Renove a assinatura ou avise no WhatsApp."
             : "Filtre por categoria, publicação, cidade e status."}
         </p>
       </div>
@@ -112,7 +112,9 @@ export default async function AdminAdvertisementsPage({
         <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
           {params.manual === "premium"
             ? "Destaque premium registrado com sucesso (dinheiro/permuta)."
-            : "Status do anúncio atualizado."}
+            : params.manual === "subscription"
+              ? "Assinatura registrada com sucesso (dinheiro/permuta)."
+              : "Status do anúncio atualizado."}
         </p>
       )}
       {params.deleted === "1" && (
@@ -252,9 +254,17 @@ export default async function AdminAdvertisementsPage({
 
                   <AdminAdvertisementActions
                     advertisementId={ad.id}
+                    providerId={ad.provider.id}
+                    providerName={ad.provider.name}
                     currentStatus={ad.status}
                     title={ad.title}
                     premiumActive={ad.premiumActive}
+                    subscriptionActive={ad.subscriptionActive}
+                    returnTo={
+                      isExpiredSubscriptionFilter
+                        ? "/admin/anuncios?subscription=expired"
+                        : "/admin/anuncios"
+                    }
                   />
                 </CardContent>
               </Card>
