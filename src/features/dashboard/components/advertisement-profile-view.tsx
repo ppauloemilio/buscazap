@@ -158,9 +158,20 @@ export function AdvertisementProfileView({
               </div>
             ) : null}
             <div className="min-w-0">
-            <h1 className="text-xl font-bold md:text-2xl">
-              {advertisement.title}
-            </h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold md:text-2xl">
+                {advertisement.title}
+              </h1>
+              {advertisement.subscriptionActive && (
+                <Badge
+                  variant="outline"
+                  className="gap-1 border-emerald-300 bg-emerald-50 text-emerald-800"
+                >
+                  <CheckCircle2 className="h-3 w-3" />
+                  Verificado
+                </Badge>
+              )}
+            </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {advertisement.category}
             </p>
@@ -391,17 +402,11 @@ export function AdvertisementProfileView({
                 </div>
                 {open === true && (
                   <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
-                    Aberto agora
+                    Aberto
                   </Badge>
                 )}
-                {advertisement.subscriptionActive && (
-                  <Badge
-                    variant="outline"
-                    className="gap-1 border-emerald-300 text-emerald-800"
-                  >
-                    <CheckCircle2 className="h-3 w-3" />
-                    Verificado
-                  </Badge>
+                {open === false && (
+                  <Badge variant="secondary">Fechado</Badge>
                 )}
               </div>
               {hoursList.length === 0 ? (
