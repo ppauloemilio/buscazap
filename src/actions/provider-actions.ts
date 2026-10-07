@@ -907,7 +907,23 @@ export async function saveAdvertisementProductAction(formData: FormData) {
     redirectToAdEdit(advertisementId, { error: "Produto inválido" });
   }
 
+  const imageFile = formData.get("image");
+  let imageUrl: string | null | undefined;
+
   try {
+    if (imageFile instanceof File && imageFile.size > 0) {
+      const validationError = validateImageFile(imageFile, "Imagem do produto");
+      if (validationError) {
+        redirectToAdEdit(advertisementId, { error: validationError });
+      }
+      const { uploadAdvertisementImage } = await import("@/lib/image-upload");
+      imageUrl = await uploadAdvertisementImage(
+        imageFile,
+        advertisementId,
+        `product-${Date.now()}`
+      );
+    }
+
     const { upsertAdvertisementProduct } = await import(
       "@/application/services/advertisement-catalog-items-service"
     );
@@ -916,8 +932,10 @@ export async function saveAdvertisementProductAction(formData: FormData) {
       advertisementId,
       title,
       price,
+      imageUrl,
     });
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     const message =
       error instanceof Error ? error.message : "Não foi possível salvar o produto";
     redirectToAdEdit(advertisementId, { error: message });
@@ -974,7 +992,23 @@ export async function saveAdvertisementServiceAction(formData: FormData) {
     redirectToAdEdit(advertisementId, { error: "Serviço inválido" });
   }
 
+  const imageFile = formData.get("image");
+  let imageUrl: string | null | undefined;
+
   try {
+    if (imageFile instanceof File && imageFile.size > 0) {
+      const validationError = validateImageFile(imageFile, "Imagem do serviço");
+      if (validationError) {
+        redirectToAdEdit(advertisementId, { error: validationError });
+      }
+      const { uploadAdvertisementImage } = await import("@/lib/image-upload");
+      imageUrl = await uploadAdvertisementImage(
+        imageFile,
+        advertisementId,
+        `service-${Date.now()}`
+      );
+    }
+
     const { upsertAdvertisementService } = await import(
       "@/application/services/advertisement-catalog-items-service"
     );
@@ -985,8 +1019,10 @@ export async function saveAdvertisementServiceAction(formData: FormData) {
       description,
       priceFrom:
         priceFrom !== null && !Number.isNaN(priceFrom) ? priceFrom : null,
+      imageUrl,
     });
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     const message =
       error instanceof Error ? error.message : "Não foi possível salvar o serviço";
     redirectToAdEdit(advertisementId, { error: message });

@@ -222,8 +222,8 @@ export default async function EditAdvertisementPage({
           <p className="text-xs text-muted-foreground">
             {newProfile
               ? advertisement.premiumActive
-                ? `Capa + logo + até ${PRICING.PREMIUM_MAX_GALLERY} fotos na galeria (premium).`
-                : `Capa + logo + até ${PRICING.PAID_MAX_GALLERY} fotos na galeria. Premium libera ${PRICING.PREMIUM_MAX_GALLERY}.`
+                ? `1) Capa · 2) Logo · 3) Galeria até ${PRICING.PREMIUM_MAX_GALLERY} fotos (premium ativo).`
+                : `1) Capa · 2) Logo · 3) Galeria até ${PRICING.PAID_MAX_GALLERY} fotos (incluídas no plano pago). Premium sobe para ${PRICING.PREMIUM_MAX_GALLERY}.`
               : "Altere a capa e a galeria premium (até 5 fotos extras)."}
           </p>
           <AdvertisementImagesEditor
@@ -240,7 +240,7 @@ export default async function EditAdvertisementPage({
                   : PRICING.PAID_MAX_GALLERY
                 : undefined
             }
-            forceGalleryEdit={newProfile ? paidActive : false}
+            forceGalleryEdit={newProfile ? paidActive : advertisement.premiumActive}
             showLogoField={newProfile}
           />
         </div>

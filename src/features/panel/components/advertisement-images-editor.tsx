@@ -278,38 +278,40 @@ export function AdvertisementImagesEditor({
         )}
 
         {canEditGallery && (
-          <div className="rounded-lg border border-dashed p-3">
+          <div className="rounded-lg border-2 border-whatsapp/40 border-dashed bg-whatsapp/5 p-3">
             <div className="mb-1 flex items-center justify-between gap-2">
               <label
                 htmlFor="galleryImages"
-                className="block text-sm font-medium"
+                className="block text-sm font-semibold"
               >
-                Adicionar fotos à galeria
+                Galeria do anúncio ({galleryImages.length}/{galleryLimit})
               </label>
-              <span className="text-xs text-muted-foreground">
-                {galleryImages.length}/{galleryLimit}
-                {premiumActive ? " · premium" : ""}
+              <span className="text-xs font-medium text-whatsapp">
+                {premiumActive
+                  ? "Premium · até 5"
+                  : `Plano pago · até ${PRICING.PAID_MAX_GALLERY}`}
               </span>
             </div>
             <p className="mb-2 text-xs text-muted-foreground">
               {premiumActive
-                ? `Até ${galleryLimit} fotos com destaque premium.`
-                : `Até ${galleryLimit} fotos no plano pago. Premium libera ${PRICING.PREMIUM_MAX_GALLERY}.`}
+                ? `Com destaque premium você pode enviar até ${galleryLimit} fotos na galeria.`
+                : `Todo anunciante pago pode enviar até ${PRICING.PAID_MAX_GALLERY} fotos na galeria (além da capa e do logo). Com premium, o limite sobe para ${PRICING.PREMIUM_MAX_GALLERY}.`}
             </p>
             {remainingGallerySlots > 0 ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-md border bg-background p-2">
                 <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <ImageFileInput
                   id="galleryImages"
                   name="galleryImages"
-                  label="Foto da galeria"
+                  label="Fotos da galeria"
                   multiple
-                  hint={`Até ${remainingGallerySlots} foto(s). Máx. ${formatMaxImageSizeLabel()} cada.`}
+                  hint={`Selecione até ${remainingGallerySlots} foto(s). Máx. ${formatMaxImageSizeLabel()} cada.`}
                 />
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Limite de {galleryLimit} fotos atingido.
+                Limite de {galleryLimit} fotos atingido. Remova uma para
+                adicionar outra.
               </p>
             )}
           </div>

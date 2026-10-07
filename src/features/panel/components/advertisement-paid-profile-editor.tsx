@@ -9,15 +9,22 @@ import {
   saveAdvertisementServiceAction,
   updateAdvertisementProfileExtrasAction,
 } from "@/actions/provider-actions";
+import { AdvertisementImage } from "@/components/advertisement/advertisement-image";
+import {
+  ImageFileInput,
+  validateFormImageInputs,
+} from "@/components/advertisement/image-file-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PRICING, formatPriceBRL } from "@/config/pricing";
 import { getWeekdayLabels } from "@/shared/utils/business-hours";
+import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
 
 interface ProductItem {
   readonly id: string;
   readonly title: string;
   readonly price: number;
+  readonly imageUrl?: string;
 }
 
 interface ServiceItem {
@@ -25,6 +32,7 @@ interface ServiceItem {
   readonly title: string;
   readonly description: string;
   readonly priceFrom?: number;
+  readonly imageUrl?: string;
 }
 
 interface AdvertisementPaidProfileEditorProps {
@@ -76,6 +84,21 @@ export function AdvertisementPaidProfileEditor({
         setError(err instanceof Error ? err.message : "Erro ao salvar");
       }
     });
+  }
+
+  function handleCatalogSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+    action: (formData: FormData) => Promise<void>
+  ) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const validationError = validateFormImageInputs(form);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    runAction(action, new FormData(form));
+    form.reset();
   }
 
   return (
@@ -172,15 +195,31 @@ export function AdvertisementPaidProfileEditor({
         <h4 className="text-sm font-semibold">
           Produtos ({products.length}/{PRICING.PAID_MAX_PRODUCTS})
         </h4>
-        <ul className="space-y-1 text-sm">
+        <p className="text-xs text-muted-foreground">
+          Até {PRICING.PAID_MAX_PRODUCTS} produtos, cada um com foto, nome e preço.
+        </p>
+        <ul className="space-y-2 text-sm">
           {products.map((product) => (
             <li
               key={product.id}
               className="flex items-center justify-between gap-2 rounded-md border px-2 py-1.5"
             >
-              <span>
-                {product.title} — {formatPriceBRL(product.price)}
-              </span>
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded border bg-muted">
+                  {product.imageUrl ? (
+                    <AdvertisementImage
+                      src={product.imageUrl}
+                      alt={product.title}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  ) : null}
+                </div>
+                <span className="truncate">
+                  {product.title} — {formatPriceBRL(product.price)}
+                </span>
+              </div>
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -201,15 +240,11 @@ export function AdvertisementPaidProfileEditor({
         </ul>
         {products.length < PRICING.PAID_MAX_PRODUCTS && (
           <form
-            className="grid gap-2 rounded-lg border border-dashed p-2 sm:grid-cols-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              runAction(
-                saveAdvertisementProductAction,
-                new FormData(event.currentTarget)
-              );
-              event.currentTarget.reset();
-            }}
+            encType="multipart/form-data"
+            className="space-y-2 rounded-lg border border-dashed p-3"
+            onSubmit={(event) =>
+              handleCatalogSubmit(event, saveAdvertisementProductAction)
+            }
           >
             <input type="hidden" name="advertisementId" value={advertisementId} />
             <Input name="title" placeholder="Nome do produto" required />
@@ -221,8 +256,16 @@ export function AdvertisementPaidProfileEditor({
               placeholder="Preço"
               required
             />
+            <div className="rounded-md border bg-muted/20 p-2">
+              <ImageFileInput
+                id="productImage"
+                name="image"
+                label="Foto do produto"
+                hint={`Opcional. JPG, PNG ou WebP. Máx. ${formatMaxImageSizeLabel()}.`}
+              />
+            </div>
             <Button type="submit" size="sm" disabled={isPending}>
-              Adicionar
+              Adicionar produto
             </Button>
           </form>
         )}
@@ -232,18 +275,35 @@ export function AdvertisementPaidProfileEditor({
         <h4 className="text-sm font-semibold">
           Serviços ({services.length}/{PRICING.PAID_MAX_SERVICES})
         </h4>
-        <ul className="space-y-1 text-sm">
+        <p className="text-xs text-muted-foreground">
+          Até {PRICING.PAID_MAX_SERVICES} serviços, cada um com foto, nome,
+          descrição e preço.
+        </p>
+        <ul className="space-y-2 text-sm">
           {services.map((service) => (
             <li
               key={service.id}
               className="flex items-center justify-between gap-2 rounded-md border px-2 py-1.5"
             >
-              <span>
-                {service.title}
-                {typeof service.priceFrom === "number"
-                  ? ` — a partir de ${formatPriceBRL(service.priceFrom)}`
-                  : ""}
-              </span>
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded border bg-muted">
+                  {service.imageUrl ? (
+                    <AdvertisementImage
+                      src={service.imageUrl}
+                      alt={service.title}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  ) : null}
+                </div>
+                <span className="truncate">
+                  {service.title}
+                  {typeof service.priceFrom === "number"
+                    ? ` — a partir de ${formatPriceBRL(service.priceFrom)}`
+                    : ""}
+                </span>
+              </div>
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -264,31 +324,33 @@ export function AdvertisementPaidProfileEditor({
         </ul>
         {services.length < PRICING.PAID_MAX_SERVICES && (
           <form
-            className="space-y-2 rounded-lg border border-dashed p-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              runAction(
-                saveAdvertisementServiceAction,
-                new FormData(event.currentTarget)
-              );
-              event.currentTarget.reset();
-            }}
+            encType="multipart/form-data"
+            className="space-y-2 rounded-lg border border-dashed p-3"
+            onSubmit={(event) =>
+              handleCatalogSubmit(event, saveAdvertisementServiceAction)
+            }
           >
             <input type="hidden" name="advertisementId" value={advertisementId} />
             <Input name="title" placeholder="Nome do serviço" required />
             <Input name="description" placeholder="Descrição curta" required />
-            <div className="flex gap-2">
-              <Input
-                name="priceFrom"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="A partir de R$"
+            <Input
+              name="priceFrom"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="A partir de R$"
+            />
+            <div className="rounded-md border bg-muted/20 p-2">
+              <ImageFileInput
+                id="serviceImage"
+                name="image"
+                label="Foto do serviço"
+                hint={`Opcional. JPG, PNG ou WebP. Máx. ${formatMaxImageSizeLabel()}.`}
               />
-              <Button type="submit" size="sm" disabled={isPending}>
-                Adicionar
-              </Button>
             </div>
+            <Button type="submit" size="sm" disabled={isPending}>
+              Adicionar serviço
+            </Button>
           </form>
         )}
       </div>
