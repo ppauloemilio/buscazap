@@ -138,7 +138,7 @@ export function AdvertisementProfileCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-1">
+        <div className="flex min-h-[18px] flex-wrap gap-1">
           {advertisement.subscriptionActive && (
             <Badge
               variant="outline"
@@ -171,15 +171,20 @@ export function AdvertisementProfileCard({
           <span className="line-clamp-1">{locationLabel}</span>
         </div>
 
-        {hasReviews && (
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-            <span className="font-medium text-foreground">
-              {formatRating(advertisement.rating)}
-            </span>
-            <span>({advertisement.reviewCount})</span>
-          </div>
-        )}
+        {/* Reserva altura fixa para alinhar botões entre cards com/sem avaliação */}
+        <div className="flex min-h-[14px] items-center gap-1 text-[10px] text-muted-foreground">
+          {hasReviews ? (
+            <>
+              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+              <span className="font-medium text-foreground">
+                {formatRating(advertisement.rating)}
+              </span>
+              <span>({advertisement.reviewCount})</span>
+            </>
+          ) : (
+            <span className="invisible">0.0 (0)</span>
+          )}
+        </div>
 
         <div className="mt-auto flex min-w-0 items-center gap-1.5 pt-1">
           <Button
