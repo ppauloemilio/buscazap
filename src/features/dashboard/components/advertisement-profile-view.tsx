@@ -65,6 +65,7 @@ export function AdvertisementProfileView({
   reviews,
 }: AdvertisementProfileViewProps) {
   const [tab, setTab] = useState<ProfileTab>("descricao");
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const isFree = advertisement.plan === "free";
 
   const message = `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZapp e gostaria de mais informações.`;
@@ -171,10 +172,13 @@ export function AdvertisementProfileView({
                   Verificado
                 </Badge>
               )}
+              <Badge
+                variant="secondary"
+                className="border border-border bg-muted text-muted-foreground"
+              >
+                {advertisement.category}
+              </Badge>
             </div>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {advertisement.category}
-            </p>
             {hasReviews && (
               <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
@@ -183,11 +187,6 @@ export function AdvertisementProfileView({
                 </span>
                 <span>({advertisement.reviewCount})</span>
               </div>
-            )}
-            {advertisement.description && (
-              <p className="mt-1 line-clamp-2 max-w-xl text-sm text-muted-foreground">
-                {advertisement.description.replace(/<[^>]+>/g, " ").trim()}
-              </p>
             )}
             </div>
           </div>
@@ -205,21 +204,58 @@ export function AdvertisementProfileView({
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-5">
             {gallery.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="flex flex-wrap gap-2">
                 {gallery.map((url) => (
-                  <div
+                  <button
                     key={url}
-                    className="relative aspect-square overflow-hidden rounded-lg border bg-muted"
+                    type="button"
+                    onClick={() => setLightboxUrl(url)}
+                    className="relative h-20 w-20 overflow-hidden rounded-md border bg-muted transition hover:opacity-90 sm:h-24 sm:w-24"
+                    aria-label="Ampliar foto da galeria"
                   >
                     <Image
                       src={url}
                       alt={advertisement.title}
                       fill
                       className="object-cover"
-                      sizes="(max-width:640px) 50vw, 160px"
+                      sizes="96px"
                     />
-                  </div>
+                  </button>
                 ))}
+              </div>
+            )}
+
+            {lightboxUrl && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Foto ampliada"
+                onClick={() => setLightboxUrl(null)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setLightboxUrl(null);
+                }}
+              >
+                <button
+                  type="button"
+                  className="absolute right-4 top-4 rounded-md bg-white/90 px-3 py-1.5 text-sm font-medium text-foreground"
+                  onClick={() => setLightboxUrl(null)}
+                >
+                  Fechar
+                </button>
+                <div
+                  className="relative h-[min(80vh,720px)] w-full max-w-3xl"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <Image
+                    src={lightboxUrl}
+                    alt={advertisement.title}
+                    fill
+                    className="object-contain"
+                    sizes="(max-width:768px) 100vw, 768px"
+                    priority
+                  />
+                </div>
               </div>
             )}
 
