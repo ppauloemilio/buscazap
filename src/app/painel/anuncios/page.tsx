@@ -3,7 +3,11 @@ import { redirect } from "next/navigation";
 import { Crown, Pencil } from "lucide-react";
 import { findProviderAdvertisements, providerHasAdSlotAvailable } from "@/application/services/advertisement-service";
 import { syncReferralPremiumCredits } from "@/application/services/referral-service";
-import { getCurrentProvider, canProviderPublish, isAdminProvider } from "@/lib/provider-session";
+import {
+  getCurrentProvider,
+  canProviderUsePaidFeatures,
+  isAdminProvider,
+} from "@/lib/provider-session";
 import { buildAbsoluteUrl } from "@/lib/site-url";
 import { AdvertisementShareActions } from "@/features/dashboard/components/advertisement-share-actions";
 import { BoostAdvertisementForm } from "@/features/panel/components/boost-advertisement-form";
@@ -29,7 +33,7 @@ export default async function ProviderAdsPage({
   if (!provider) redirect("/entrar");
 
   const params = await searchParams;
-  const subscriptionActive = canProviderPublish(provider);
+  const subscriptionActive = canProviderUsePaidFeatures(provider);
   const isAdmin = isAdminProvider(provider);
   const [advertisements, hasAdSlot, referralCredits] = await Promise.all([
     findProviderAdvertisements(provider.id),

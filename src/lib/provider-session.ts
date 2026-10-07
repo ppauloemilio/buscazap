@@ -1,10 +1,11 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { PRICING, PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import { ProviderStatus, UserRole } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
 
-type ProviderAccessProfile = {
+export type ProviderAccessProfile = {
   readonly role: string;
   readonly subscriptionExpiresAt: Date | null;
 };
@@ -59,10 +60,19 @@ export function canRenewSubscription(
 }
 
 export function canProviderPublish(provider: ProviderAccessProfile): boolean {
+  // Freemium: listagem básica liberada sem assinatura.
+  if (isNewAdProfileEnabled()) {
+    return true;
+  }
+
   return isAdminProvider(provider) || hasActiveSubscription(provider.subscriptionExpiresAt);
 }
 
 export function canProviderUsePaidFeatures(provider: ProviderAccessProfile): boolean {
+  if (isNewAdProfileEnabled()) {
+    return isAdminProvider(provider) || hasActiveSubscription(provider.subscriptionExpiresAt);
+  }
+
   return canProviderPublish(provider);
 }
 

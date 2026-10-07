@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { PRICING } from "@/config/pricing";
 import { prisma } from "@/lib/prisma";
 import {
@@ -98,6 +99,23 @@ export async function activateSubscription(
 
 export async function expireSubscriptions() {
   const now = new Date();
+
+  // Freemium: anúncio vencido continua público como listagem básica.
+  // Dados pagos permanecem no banco e voltam ao renovar.
+  if (isNewAdProfileEnabled()) {
+    const restored = await prisma.advertisement.updateMany({
+      where: {
+        status: "INACTIVE",
+        provider: {
+          role: { not: "ADMIN" },
+          status: { not: "BLOCKED" },
+        },
+      },
+      data: { status: "APPROVED" },
+    });
+
+    return restored.count;
+  }
 
   const result = await prisma.advertisement.updateMany({
     where: {

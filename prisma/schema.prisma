@@ -66,6 +66,11 @@ model Advertisement {
   state            String
   neighborhood     String?
   serviceArea      String         @default("CITY_WIDE")
+  streetAddress             String?
+  instagram                 String?
+  website                   String?
+  /** JSON: { "0": "08:00-18:00", ... } domingo=0 .. sábado=6; null = fechado */
+  businessHoursJson         String?
   whatsappNumber   String
   whatsappLabel             String?
   secondaryWhatsappNumber   String?
@@ -78,6 +83,8 @@ model Advertisement {
   updatedAt        DateTime              @updatedAt
   premiumBoosts    PremiumBoost[]
   images           AdvertisementImage[]
+  products         AdvertisementProduct[]
+  services         AdvertisementService[]
   reviews          Review[]
   analyticsEvents  AnalyticsEvent[]
 
@@ -85,6 +92,35 @@ model Advertisement {
   @@index([status, city])
   @@index([status, createdAt])
   @@index([providerId])
+}
+
+model AdvertisementProduct {
+  id              String        @id @default(cuid())
+  advertisementId String
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+  title           String
+  price           Float
+  imageUrl        String?
+  sortOrder       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([advertisementId, sortOrder])
+}
+
+model AdvertisementService {
+  id              String        @id @default(cuid())
+  advertisementId String
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  priceFrom       Float?
+  imageUrl        String?
+  sortOrder       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([advertisementId, sortOrder])
 }
 
 model AnalyticsEvent {

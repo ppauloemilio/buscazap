@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
-import { getCurrentProvider, canProviderPublish, isAdminProvider, isProviderBlocked } from "@/lib/provider-session";
+import {
+  getCurrentProvider,
+  canProviderUsePaidFeatures,
+  isAdminProvider,
+  isProviderBlocked,
+} from "@/lib/provider-session";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { PanelNav } from "@/features/panel/components/panel-nav";
 import { SubscriptionReminderBanner } from "@/features/panel/components/subscription-reminder-banner";
@@ -17,7 +22,7 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const subscriptionActive = canProviderPublish(provider);
+  const subscriptionActive = canProviderUsePaidFeatures(provider);
   const isAdmin = isAdminProvider(provider);
   const subscription = await getSubscriptionStatus(provider.id);
 

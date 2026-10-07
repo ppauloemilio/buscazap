@@ -6,9 +6,12 @@ import { findProviderAdvertisementForEdit } from "@/application/services/adverti
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
 import { listActiveCatalogLocationOptions } from "@/application/services/catalog-location";
 import { ADVERTISEMENT_TYPE_OPTIONS } from "@/config/advertisement-form";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { AdvertisementImagesEditor } from "@/features/panel/components/advertisement-images-editor";
+import { AdvertisementPaidProfileEditor } from "@/features/panel/components/advertisement-paid-profile-editor";
 import { LocationFields } from "@/features/panel/components/location-fields";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
@@ -16,7 +19,10 @@ import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-con
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdvertisementType } from "@/domain/enums";
-import { getCurrentProvider } from "@/lib/provider-session";
+import {
+  canProviderUsePaidFeatures,
+  getCurrentProvider,
+} from "@/lib/provider-session";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 
 interface EditAdvertisementPageProps {
@@ -52,6 +58,12 @@ export default async function EditAdvertisementPage({
   )
     ? advertisement.type
     : AdvertisementType.SERVICE;
+
+  const newProfile = isNewAdProfileEnabled();
+  const paidActive = canProviderUsePaidFeatures(provider);
+  const canEditPhotos = newProfile
+    ? paidActive
+    : advertisement.premiumActive;
 
   return (
     <PanelLayout>
@@ -202,27 +214,73 @@ export default async function EditAdvertisementPage({
         </div>
       </form>
 
-      {advertisement.premiumActive ? (
+      {canEditPhotos ? (
         <div className="max-w-xl space-y-2 border-t pt-4">
           <h3 className="text-base font-semibold">Fotos</h3>
           <p className="text-xs text-muted-foreground">
-            Altere a capa e a galeria premium (até 5 fotos extras).
+            {newProfile
+              ? advertisement.premiumActive
+                ? `Plano pago: até ${PRICING.PAID_MAX_IMAGES} fotos. Premium: até ${PRICING.PREMIUM_MAX_IMAGES}.`
+                : `Plano pago: até ${PRICING.PAID_MAX_IMAGES} fotos. Ative o premium para fotos extras.`
+              : "Altere a capa e a galeria premium (até 5 fotos extras)."}
           </p>
           <AdvertisementImagesEditor
             advertisementId={advertisement.id}
             title={advertisement.title}
             coverImage={advertisement.coverImage}
             galleryImages={advertisement.galleryImages}
-            premiumActive={advertisement.premiumActive}
+            premiumActive={
+              newProfile ? paidActive : advertisement.premiumActive
+            }
+            forceGalleryEdit={newProfile && paidActive}
           />
         </div>
       ) : (
         <div className="max-w-xl rounded-lg border bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
-          Para alterar a foto de capa e adicionar galeria, ative o{" "}
-          <Link href="/painel/anuncios" className="font-medium text-whatsapp hover:underline">
-            destaque premium
-          </Link>
-          .
+          {newProfile ? (
+            <>
+              Assine por {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês para
+              fotos, produtos, serviços e perfil completo.{" "}
+              <Link
+                href="/painel/assinatura"
+                className="font-medium text-whatsapp hover:underline"
+              >
+                Ir para assinatura
+              </Link>
+              .
+            </>
+          ) : (
+            <>
+              Para alterar a foto de capa e adicionar galeria, ative o{" "}
+              <Link
+                href="/painel/anuncios"
+                className="font-medium text-whatsapp hover:underline"
+              >
+                destaque premium
+              </Link>
+              .
+            </>
+          )}
+        </div>
+      )}
+
+      {newProfile && paidActive && (
+        <AdvertisementPaidProfileEditor
+          advertisementId={advertisement.id}
+          streetAddress={advertisement.streetAddress}
+          instagram={advertisement.instagram}
+          website={advertisement.website}
+          businessHoursJson={advertisement.businessHoursJson}
+          products={advertisement.editProducts}
+          services={advertisement.editServices}
+        />
+      )}
+
+      {newProfile && !paidActive && (
+        <div className="mt-4 max-w-xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+          Seu anúncio está na listagem básica (grátis). Os dados do perfil
+          completo ficam pausados e voltam automaticamente ao renovar a
+          assinatura.
         </div>
       )}
     </PanelLayout>

@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AdvertisementCover } from "@/components/advertisement/advertisement-cover";
 import { TrackedWhatsAppLink } from "@/components/analytics/analytics-trackers";
 import { FavoriteButton } from "@/features/favorites/favorite-button";
+import { AdvertisementProfileCard } from "@/features/dashboard/components/advertisement-profile-card";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import {
   formatAdvertisementLocation,
   getServiceAreaLabel,
@@ -35,6 +37,16 @@ export function AdvertisementCard({
   returnTo,
   emphasizePremium = false,
 }: AdvertisementCardProps) {
+  if (isNewAdProfileEnabled()) {
+    return (
+      <AdvertisementProfileCard
+        advertisement={advertisement}
+        returnTo={returnTo}
+        emphasizePremium={emphasizePremium}
+      />
+    );
+  }
+
   const primaryLabel = advertisement.whatsappLabel?.trim() || "WhatsApp";
   const whatsappLink = buildWhatsAppLink(
     advertisement.whatsappNumber,

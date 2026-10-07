@@ -18,6 +18,21 @@ export interface Location {
   readonly neighborhood?: string;
 }
 
+export interface AdvertisementProductItem {
+  readonly id: string;
+  readonly title: string;
+  readonly price: number;
+  readonly imageUrl?: string;
+}
+
+export interface AdvertisementServiceItem {
+  readonly id: string;
+  readonly title: string;
+  readonly description: string;
+  readonly priceFrom?: number;
+  readonly imageUrl?: string;
+}
+
 export interface Advertisement {
   readonly id: string;
   readonly title: string;
@@ -27,6 +42,10 @@ export interface Advertisement {
   readonly category: string;
   readonly location: Location;
   readonly serviceArea: ServiceArea;
+  readonly streetAddress?: string;
+  readonly instagram?: string;
+  readonly website?: string;
+  readonly businessHoursJson?: string;
   readonly rating: number;
   readonly reviewCount: number;
   readonly imageUrl?: string;
@@ -39,6 +58,11 @@ export interface Advertisement {
   readonly publicHref?: string;
   readonly isPremium: boolean;
   readonly premiumExpiresAt?: string;
+  /** Plano público exibido (freemium). Ausente = legado/pago. */
+  readonly plan?: "free" | "paid";
+  readonly subscriptionActive?: boolean;
+  readonly products?: readonly AdvertisementProductItem[];
+  readonly services?: readonly AdvertisementServiceItem[];
   readonly providerId?: string;
   readonly providerName?: string;
   readonly providerBio?: string;

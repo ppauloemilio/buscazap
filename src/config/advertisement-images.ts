@@ -1,3 +1,5 @@
+import { PRICING } from "@/config/pricing";
+
 export const ADVERTISEMENT_IMAGE_KIND = {
   COVER: "COVER",
   GALLERY: "GALLERY",
@@ -8,10 +10,24 @@ export const ADVERTISEMENT_IMAGE_LIMITS = {
   maxFileSizeBytes: 4 * 1024 * 1024,
   /** Soma máxima de todos os arquivos em um único envio. */
   maxRequestBytes: 4 * 1024 * 1024,
+  /** Galeria extra (legado / compat). Preferir getMaxAdvertisementImages. */
   maxGalleryImages: 5,
   allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"] as const,
   allowedExtensions: [".jpg", ".jpeg", ".png", ".webp"] as const,
 } as const;
+
+export function getMaxAdvertisementImages(input: {
+  readonly paidActive: boolean;
+  readonly premiumActive: boolean;
+}): number {
+  if (!input.paidActive) {
+    return 0;
+  }
+
+  return input.premiumActive
+    ? PRICING.PREMIUM_MAX_IMAGES
+    : PRICING.PAID_MAX_IMAGES;
+}
 
 export function isAllowedImageMimeType(mimeType: string): boolean {
   return ADVERTISEMENT_IMAGE_LIMITS.allowedMimeTypes.includes(

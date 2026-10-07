@@ -1,5 +1,13 @@
 export const PRICING = {
   SUBSCRIPTION_AMOUNT: 9.99,
+  /** Fotos no plano pago (capa + galeria). Premium pode exceder. */
+  PAID_MAX_IMAGES: 4,
+  /** Fotos totais com destaque premium ativo. */
+  PREMIUM_MAX_IMAGES: 10,
+  /** Produtos cadastráveis no plano pago. */
+  PAID_MAX_PRODUCTS: 3,
+  /** Serviços cadastráveis no plano pago. */
+  PAID_MAX_SERVICES: 3,
   /** Anúncios inclusos na mensalidade básica (por conta). */
   ADS_INCLUDED_PER_SUBSCRIPTION: 1,
   /** 2º WhatsApp no mesmo anúncio (máx. 2 contatos). */

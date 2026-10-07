@@ -12,9 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FavoriteButton } from "@/features/favorites/favorite-button";
 import { AdvertisementBackLink } from "@/features/dashboard/components/advertisement-back-link";
+import { AdvertisementProfileView } from "@/features/dashboard/components/advertisement-profile-view";
 import { AdvertisementShareActions } from "@/features/dashboard/components/advertisement-share-actions";
 import { ReviewForm } from "@/features/dashboard/components/review-form";
 import { StickyWhatsAppCta } from "@/features/dashboard/components/sticky-whatsapp-cta";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import {
   formatAdvertisementLocation,
   getServiceAreaLabel,
@@ -35,6 +37,15 @@ export async function AdvertisementDetailView({
   advertisement,
 }: AdvertisementDetailViewProps) {
   const reviews = await listAdvertisementReviews(advertisement.id);
+
+  if (isNewAdProfileEnabled()) {
+    return (
+      <AdvertisementProfileView
+        advertisement={advertisement}
+        reviews={reviews}
+      />
+    );
+  }
 
   const message = `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZapp e gostaria de mais informações.`;
   const primaryLabel = advertisement.whatsappLabel?.trim() || "WhatsApp";

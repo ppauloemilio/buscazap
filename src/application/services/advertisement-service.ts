@@ -9,7 +9,10 @@ import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { markDataFetchDynamic } from "@/lib/db";
 import { getPublicSearchCatalog, categorySlugMap } from "@/lib/public-search-catalog";
 import { prisma } from "@/lib/prisma";
-import { publicListingAdvertisementWhere } from "@/lib/public-advertisement-visibility";
+import {
+  publicListingAdvertisementWhere,
+  resolvePublicAdPlan,
+} from "@/lib/public-advertisement-visibility";
 import { isPremiumActive } from "@/lib/provider-session";
 import { slugify } from "@/lib/slug";
 import { normalizeWhatsAppIdentity } from "@/lib/whatsapp";
@@ -24,6 +27,26 @@ import {
 } from "@/application/services/slug-service";
 
 const PUBLIC_SEARCH_MAX_RESULTS = 300;
+
+function mapListedAdvertisement(
+  ad: Parameters<typeof mapAdvertisementToEntity>[0] & {
+    readonly provider?: {
+      readonly role?: string;
+      readonly subscriptionExpiresAt?: Date | null;
+    };
+  }
+) {
+  if (!ad.provider) {
+    return mapAdvertisementToEntity(ad);
+  }
+
+  const { plan, subscriptionActive } = resolvePublicAdPlan({
+    role: ad.provider.role ?? "PROVIDER",
+    subscriptionExpiresAt: ad.provider.subscriptionExpiresAt ?? null,
+  });
+
+  return mapAdvertisementToEntity(ad, { plan, subscriptionActive });
+}
 
 export function getAdSlotLimitMessage(): string {
   return (
@@ -216,6 +239,12 @@ export async function findPublicAdvertisements(
         where: { kind: ADVERTISEMENT_IMAGE_KIND.COVER },
         take: 1,
       },
+      provider: {
+        select: {
+          role: true,
+          subscriptionExpiresAt: true,
+        },
+      },
     },
     orderBy:
       filters.sort === "recent"
@@ -226,7 +255,7 @@ export async function findPublicAdvertisements(
 
   let results = await enrichWithPublicHref(
     advertisements
-      .map(mapAdvertisementToEntity)
+      .map(mapListedAdvertisement)
       .filter((ad) => ad.status !== AdvertisementStatus.BLOCKED),
     {
       persistMissingSlug: false,
@@ -305,9 +334,13 @@ export async function findAdvertisementById(id: string) {
       images: {
         orderBy: { sortOrder: "asc" },
       },
+      products: { orderBy: { sortOrder: "asc" } },
+      services: { orderBy: { sortOrder: "asc" } },
       provider: {
         select: {
           status: true,
+          role: true,
+          subscriptionExpiresAt: true,
           name: true,
           bio: true,
           businessHours: true,
@@ -333,15 +366,25 @@ export async function findAdvertisementById(id: string) {
   }
 
   const categorySlug = await resolveCategorySlugByName(advertisement.category);
+  const mapped = mapListedAdvertisement(advertisement);
 
   return {
-    ...mapAdvertisementToEntity(advertisement),
+    ...mapped,
     slug,
     publicHref: `/${categorySlug}/${slug}`,
     providerName: advertisement.provider.name,
-    providerBio: advertisement.provider.bio ?? undefined,
-    providerBusinessHours: advertisement.provider.businessHours ?? undefined,
-    providerResponseHint: advertisement.provider.responseHint ?? undefined,
+    providerBio:
+      mapped.plan === "free"
+        ? undefined
+        : (advertisement.provider.bio ?? undefined),
+    providerBusinessHours:
+      mapped.plan === "free"
+        ? undefined
+        : (advertisement.provider.businessHours ?? undefined),
+    providerResponseHint:
+      mapped.plan === "free"
+        ? undefined
+        : (advertisement.provider.responseHint ?? undefined),
   };
 }
 
@@ -370,9 +413,13 @@ export async function findAdvertisementByCategoryAndSlug(
       images: {
         orderBy: { sortOrder: "asc" },
       },
+      products: { orderBy: { sortOrder: "asc" } },
+      services: { orderBy: { sortOrder: "asc" } },
       provider: {
         select: {
           status: true,
+          role: true,
+          subscriptionExpiresAt: true,
           name: true,
           bio: true,
           businessHours: true,
@@ -386,14 +433,25 @@ export async function findAdvertisementByCategoryAndSlug(
     return undefined;
   }
 
+  const mapped = mapListedAdvertisement(advertisement);
+
   return {
-    ...mapAdvertisementToEntity(advertisement),
+    ...mapped,
     slug: advertisement.slug ?? adSlug,
     publicHref: `/${category.slug}/${adSlug}`,
     providerName: advertisement.provider.name,
-    providerBio: advertisement.provider.bio ?? undefined,
-    providerBusinessHours: advertisement.provider.businessHours ?? undefined,
-    providerResponseHint: advertisement.provider.responseHint ?? undefined,
+    providerBio:
+      mapped.plan === "free"
+        ? undefined
+        : (advertisement.provider.bio ?? undefined),
+    providerBusinessHours:
+      mapped.plan === "free"
+        ? undefined
+        : (advertisement.provider.businessHours ?? undefined),
+    providerResponseHint:
+      mapped.plan === "free"
+        ? undefined
+        : (advertisement.provider.responseHint ?? undefined),
   };
 }
 
@@ -412,13 +470,19 @@ export async function findAdvertisementsByIds(ids: readonly string[]) {
         where: { kind: ADVERTISEMENT_IMAGE_KIND.COVER },
         take: 1,
       },
+      provider: {
+        select: {
+          role: true,
+          subscriptionExpiresAt: true,
+        },
+      },
     },
   });
 
   const order = new Map(ids.map((id, index) => [id, index]));
 
   const mapped = await enrichWithPublicHref(
-    advertisements.map(mapAdvertisementToEntity)
+    advertisements.map(mapListedAdvertisement)
   );
 
   return mapped.sort(
@@ -439,7 +503,7 @@ export async function findProviderAdvertisements(providerId: string) {
   });
 
   const mapped = await enrichWithPublicHref(
-    advertisements.map(mapAdvertisementToEntity),
+    advertisements.map((ad) => mapAdvertisementToEntity(ad)),
     { persistMissingSlug: false }
   );
 
@@ -467,6 +531,8 @@ export async function findProviderAdvertisementForEdit(
       images: {
         orderBy: { sortOrder: "asc" },
       },
+      products: { orderBy: { sortOrder: "asc" } },
+      services: { orderBy: { sortOrder: "asc" } },
     },
   });
 
@@ -481,8 +547,14 @@ export async function findProviderAdvertisementForEdit(
     (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.GALLERY
   );
 
+  const mapped = mapAdvertisementToEntity(advertisement, { plan: "paid" });
+
   return {
-    ...mapAdvertisementToEntity(advertisement),
+    ...mapped,
+    streetAddress: advertisement.streetAddress,
+    instagram: advertisement.instagram,
+    website: advertisement.website,
+    businessHoursJson: advertisement.businessHoursJson,
     premiumActive: isPremiumActive(advertisement.premiumExpiresAt),
     coverImage: cover
       ? {
@@ -494,6 +566,8 @@ export async function findProviderAdvertisementForEdit(
       id: image.id,
       url: resolveAdvertisementImageUrl(image.url),
     })),
+    editProducts: mapped.products ?? [],
+    editServices: mapped.services ?? [],
   };
 }
 

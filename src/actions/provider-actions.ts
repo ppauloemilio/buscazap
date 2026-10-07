@@ -5,14 +5,17 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import bcrypt from "bcryptjs";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
 import {
   createPremiumBoostPayment,
   createSubscriptionPayment,
 } from "@/application/services/payment-service";
 import { prisma } from "@/lib/prisma";
+import { canUsePaidAdFeatures } from "@/lib/provider-plan";
 import {
   canProviderPublish,
+  canProviderUsePaidFeatures,
   getCurrentProvider,
   isAdminProvider,
   isPremiumActive,
@@ -82,6 +85,18 @@ async function requireOwnedPremiumAdvertisement(
 
   if (!advertisement) {
     redirect("/painel/anuncios");
+  }
+
+  // Freemium: plano pago edita fotos (até 4); premium libera extras.
+  if (isNewAdProfileEnabled()) {
+    const provider = await prisma.provider.findUnique({
+      where: { id: providerId },
+      select: { role: true, subscriptionExpiresAt: true },
+    });
+    if (!provider || !canUsePaidAdFeatures(provider)) {
+      redirect(`/painel/anuncios/${advertisementId}/editar?error=${encodeURIComponent("Assine para gerenciar fotos do perfil")}`);
+    }
+    return advertisement;
   }
 
   if (!isPremiumActive(advertisement.premiumExpiresAt)) {
@@ -179,7 +194,10 @@ export async function registerProviderAction(formData: FormData) {
     path: "/",
   });
 
-  redirect("/painel/assinatura");
+  // Freemium: pode ir criar listagem básica; assinatura libera perfil completo.
+  redirect(
+    isNewAdProfileEnabled() ? "/painel/anuncios/novo" : "/painel/assinatura"
+  );
 }
 
 export async function redeemReferralPremiumAction(formData: FormData) {
@@ -781,4 +799,191 @@ export async function updateProviderPasswordAction(formData: FormData) {
   revalidatePath("/painel/perfil");
 
   redirect("/painel/perfil?passwordSaved=1");
+}
+
+function redirectToAdEdit(
+  advertisementId: string,
+  params?: { error?: string; saved?: string }
+): never {
+  const search = new URLSearchParams();
+  if (params?.error) search.set("error", params.error);
+  if (params?.saved) search.set("saved", params.saved);
+  const suffix = search.size > 0 ? `?${search.toString()}` : "";
+  redirect(`/painel/anuncios/${advertisementId}/editar${suffix}`);
+}
+
+export async function updateAdvertisementProfileExtrasAction(
+  formData: FormData
+) {
+  const provider = await requireCurrentProvider();
+  if (!canProviderUsePaidFeatures(provider)) {
+    redirect("/painel/assinatura");
+  }
+
+  const advertisementId = formData.get("advertisementId");
+  if (typeof advertisementId !== "string" || !advertisementId) {
+    redirect("/painel/anuncios");
+  }
+
+  const hours: Record<string, string | null> = {};
+  for (let day = 0; day < 7; day += 1) {
+    const raw = formData.get(`hours_${day}`);
+    const value = typeof raw === "string" ? raw.trim() : "";
+    hours[String(day)] = value || null;
+  }
+
+  try {
+    const { updateAdvertisementProfileExtras } = await import(
+      "@/application/services/advertisement-catalog-items-service"
+    );
+    await updateAdvertisementProfileExtras({
+      providerId: provider.id,
+      advertisementId,
+      streetAddress: String(formData.get("streetAddress") ?? "").trim() || null,
+      instagram: String(formData.get("instagram") ?? "").trim() || null,
+      website: String(formData.get("website") ?? "").trim() || null,
+      businessHoursJson: JSON.stringify(hours),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível salvar o perfil";
+    redirectToAdEdit(advertisementId, { error: message });
+  }
+
+  revalidateAdvertisementPaths(advertisementId);
+  redirectToAdEdit(advertisementId, { saved: "1" });
+}
+
+export async function saveAdvertisementProductAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const advertisementId = formData.get("advertisementId");
+  if (typeof advertisementId !== "string" || !advertisementId) {
+    redirect("/painel/anuncios");
+  }
+
+  const title = String(formData.get("title") ?? "").trim();
+  const price = Number(formData.get("price"));
+  if (!title || Number.isNaN(price) || price < 0) {
+    redirectToAdEdit(advertisementId, { error: "Produto inválido" });
+  }
+
+  try {
+    const { upsertAdvertisementProduct } = await import(
+      "@/application/services/advertisement-catalog-items-service"
+    );
+    await upsertAdvertisementProduct({
+      providerId: provider.id,
+      advertisementId,
+      title,
+      price,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível salvar o produto";
+    redirectToAdEdit(advertisementId, { error: message });
+  }
+
+  revalidateAdvertisementPaths(advertisementId);
+  redirectToAdEdit(advertisementId, { saved: "1" });
+}
+
+export async function deleteAdvertisementProductAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const advertisementId = formData.get("advertisementId");
+  const productId = formData.get("productId");
+  if (
+    typeof advertisementId !== "string" ||
+    !advertisementId ||
+    typeof productId !== "string" ||
+    !productId
+  ) {
+    redirect("/painel/anuncios");
+  }
+
+  try {
+    const { deleteAdvertisementProduct } = await import(
+      "@/application/services/advertisement-catalog-items-service"
+    );
+    await deleteAdvertisementProduct({
+      providerId: provider.id,
+      advertisementId,
+      productId,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível remover o produto";
+    redirectToAdEdit(advertisementId, { error: message });
+  }
+
+  revalidateAdvertisementPaths(advertisementId);
+  redirectToAdEdit(advertisementId, { saved: "1" });
+}
+
+export async function saveAdvertisementServiceAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const advertisementId = formData.get("advertisementId");
+  if (typeof advertisementId !== "string" || !advertisementId) {
+    redirect("/painel/anuncios");
+  }
+
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const priceRaw = String(formData.get("priceFrom") ?? "").trim();
+  const priceFrom = priceRaw ? Number(priceRaw) : null;
+  if (!title || !description) {
+    redirectToAdEdit(advertisementId, { error: "Serviço inválido" });
+  }
+
+  try {
+    const { upsertAdvertisementService } = await import(
+      "@/application/services/advertisement-catalog-items-service"
+    );
+    await upsertAdvertisementService({
+      providerId: provider.id,
+      advertisementId,
+      title,
+      description,
+      priceFrom:
+        priceFrom !== null && !Number.isNaN(priceFrom) ? priceFrom : null,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível salvar o serviço";
+    redirectToAdEdit(advertisementId, { error: message });
+  }
+
+  revalidateAdvertisementPaths(advertisementId);
+  redirectToAdEdit(advertisementId, { saved: "1" });
+}
+
+export async function deleteAdvertisementServiceAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const advertisementId = formData.get("advertisementId");
+  const serviceId = formData.get("serviceId");
+  if (
+    typeof advertisementId !== "string" ||
+    !advertisementId ||
+    typeof serviceId !== "string" ||
+    !serviceId
+  ) {
+    redirect("/painel/anuncios");
+  }
+
+  try {
+    const { deleteAdvertisementService } = await import(
+      "@/application/services/advertisement-catalog-items-service"
+    );
+    await deleteAdvertisementService({
+      providerId: provider.id,
+      advertisementId,
+      serviceId,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível remover o serviço";
+    redirectToAdEdit(advertisementId, { error: message });
+  }
+
+  revalidateAdvertisementPaths(advertisementId);
+  redirectToAdEdit(advertisementId, { saved: "1" });
 }

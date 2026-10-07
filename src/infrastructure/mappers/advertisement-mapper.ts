@@ -1,6 +1,8 @@
 import type {
   Advertisement as PrismaAdvertisement,
   AdvertisementImage as PrismaAdvertisementImage,
+  AdvertisementProduct as PrismaAdvertisementProduct,
+  AdvertisementService as PrismaAdvertisementService,
 } from "@prisma/client";
 import type { Advertisement } from "@/domain/entities";
 import {
@@ -14,6 +16,12 @@ import { isPremiumActive } from "@/lib/provider-session";
 
 type PrismaAdvertisementWithImages = PrismaAdvertisement & {
   readonly images?: readonly PrismaAdvertisementImage[];
+  readonly products?: readonly PrismaAdvertisementProduct[];
+  readonly services?: readonly PrismaAdvertisementService[];
+  readonly provider?: {
+    readonly subscriptionExpiresAt?: Date | null;
+    readonly role?: string;
+  };
 };
 
 function resolveCoverImageUrl(
@@ -41,15 +49,21 @@ function resolveGalleryImageUrls(
 }
 
 export function mapAdvertisementToEntity(
-  ad: PrismaAdvertisementWithImages
+  ad: PrismaAdvertisementWithImages,
+  options?: {
+    readonly plan?: "free" | "paid";
+    readonly subscriptionActive?: boolean;
+  }
 ): Advertisement {
   const premiumActive = isPremiumActive(ad.premiumExpiresAt);
   const coverImageUrl = resolveCoverImageUrl(ad.images);
+  const plan = options?.plan;
+  const showPaidExtras = plan !== "free";
 
   return {
     id: ad.id,
     title: ad.title,
-    description: ad.description,
+    description: showPaidExtras ? ad.description : "",
     type: ad.type as AdvertisementType,
     status: premiumActive
       ? AdvertisementStatus.PREMIUM
@@ -61,17 +75,63 @@ export function mapAdvertisementToEntity(
       neighborhood: ad.neighborhood ?? undefined,
     },
     serviceArea: (ad.serviceArea as ServiceArea) || ServiceArea.CITY_WIDE,
+    streetAddress: showPaidExtras
+      ? (ad.streetAddress ?? undefined)
+      : undefined,
+    instagram: showPaidExtras ? (ad.instagram ?? undefined) : undefined,
+    website: showPaidExtras ? (ad.website ?? undefined) : undefined,
+    businessHoursJson: showPaidExtras
+      ? (ad.businessHoursJson ?? undefined)
+      : undefined,
     rating: ad.rating,
     reviewCount: ad.reviewCount,
-    imageUrl: coverImageUrl ? resolveAdvertisementImageUrl(coverImageUrl) : undefined,
-    galleryImages: resolveGalleryImageUrls(ad.images).map(resolveAdvertisementImageUrl),
+    imageUrl:
+      showPaidExtras && coverImageUrl
+        ? resolveAdvertisementImageUrl(coverImageUrl)
+        : undefined,
+    galleryImages: showPaidExtras
+      ? resolveGalleryImageUrls(ad.images).map(resolveAdvertisementImageUrl)
+      : [],
     whatsappNumber: ad.whatsappNumber,
     whatsappLabel: ad.whatsappLabel ?? undefined,
-    secondaryWhatsappNumber: ad.secondaryWhatsappNumber ?? undefined,
-    secondaryWhatsappLabel: ad.secondaryWhatsappLabel ?? undefined,
+    secondaryWhatsappNumber: showPaidExtras
+      ? (ad.secondaryWhatsappNumber ?? undefined)
+      : undefined,
+    secondaryWhatsappLabel: showPaidExtras
+      ? (ad.secondaryWhatsappLabel ?? undefined)
+      : undefined,
     slug: ad.slug ?? undefined,
-    isPremium: premiumActive,
+    isPremium: showPaidExtras && premiumActive,
     premiumExpiresAt: ad.premiumExpiresAt?.toISOString(),
+    plan,
+    subscriptionActive: options?.subscriptionActive,
+    products: showPaidExtras
+      ? (ad.products ?? [])
+          .slice()
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((product) => ({
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            imageUrl: product.imageUrl
+              ? resolveAdvertisementImageUrl(product.imageUrl)
+              : undefined,
+          }))
+      : [],
+    services: showPaidExtras
+      ? (ad.services ?? [])
+          .slice()
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((service) => ({
+            id: service.id,
+            title: service.title,
+            description: service.description,
+            priceFrom: service.priceFrom ?? undefined,
+            imageUrl: service.imageUrl
+              ? resolveAdvertisementImageUrl(service.imageUrl)
+              : undefined,
+          }))
+      : [],
     providerId: ad.providerId,
     createdAt: ad.createdAt.toISOString(),
   };

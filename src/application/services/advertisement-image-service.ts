@@ -1,9 +1,12 @@
 import {
   ADVERTISEMENT_IMAGE_KIND,
   ADVERTISEMENT_IMAGE_LIMITS,
+  getMaxAdvertisementImages,
 } from "@/config/advertisement-images";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { uploadAdvertisementImage } from "@/lib/image-upload";
 import { prisma } from "@/lib/prisma";
+import { isPremiumActive } from "@/lib/provider-session";
 
 export async function saveAdvertisementImages(
   advertisementId: string,
@@ -64,6 +67,32 @@ export async function replaceAdvertisementCover(
   });
 }
 
+async function resolveGalleryMax(advertisementId: string): Promise<number> {
+  if (!isNewAdProfileEnabled()) {
+    return ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages;
+  }
+
+  const ad = await prisma.advertisement.findUnique({
+    where: { id: advertisementId },
+    select: {
+      premiumExpiresAt: true,
+      images: { select: { id: true, kind: true } },
+    },
+  });
+
+  const premiumActive = isPremiumActive(ad?.premiumExpiresAt ?? null);
+  const totalMax = getMaxAdvertisementImages({
+    paidActive: true,
+    premiumActive,
+  });
+  const coverCount =
+    ad?.images.filter((image) => image.kind === ADVERTISEMENT_IMAGE_KIND.COVER)
+      .length ?? 0;
+
+  // Galeria = total permitido menos a capa
+  return Math.max(0, totalMax - Math.max(coverCount, 1));
+}
+
 export async function addAdvertisementGalleryImages(
   advertisementId: string,
   galleryFiles: readonly File[]
@@ -73,13 +102,11 @@ export async function addAdvertisementGalleryImages(
   }
 
   const currentCount = await countGalleryImages(advertisementId);
-  const availableSlots =
-    ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages - currentCount;
+  const maxGallery = await resolveGalleryMax(advertisementId);
+  const availableSlots = maxGallery - currentCount;
 
   if (availableSlots <= 0) {
-    throw new Error(
-      `A galeria já possui o máximo de ${ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos`
-    );
+    throw new Error(`A galeria já possui o máximo de ${maxGallery} fotos`);
   }
 
   const galleryToSave = galleryFiles.slice(0, availableSlots);
