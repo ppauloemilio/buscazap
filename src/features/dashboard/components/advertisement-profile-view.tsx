@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Star,
   MapPin,
@@ -466,9 +467,9 @@ export function AdvertisementProfileView({
 
             <p className="text-right text-xs text-muted-foreground">
               Encontrou uma informação errada?{" "}
-              <a href="/denunciar" className="underline hover:text-foreground">
+              <Link href="/denunciar" className="underline hover:text-foreground">
                 Fale conosco
-              </a>
+              </Link>
               .
             </p>
           </aside>
