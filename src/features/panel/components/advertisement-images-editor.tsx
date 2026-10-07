@@ -288,14 +288,14 @@ export function AdvertisementImagesEditor({
               </label>
               <span className="text-xs font-medium text-whatsapp">
                 {premiumActive
-                  ? "Premium · até 5"
+                  ? `Premium · até ${PRICING.PREMIUM_MAX_GALLERY}`
                   : `Plano pago · até ${PRICING.PAID_MAX_GALLERY}`}
               </span>
             </div>
             <p className="mb-2 text-xs text-muted-foreground">
               {premiumActive
-                ? `Com destaque premium você pode enviar até ${galleryLimit} fotos na galeria.`
-                : `Todo anunciante pago pode enviar até ${PRICING.PAID_MAX_GALLERY} fotos na galeria (além da capa e do logo). Com premium, o limite sobe para ${PRICING.PREMIUM_MAX_GALLERY}.`}
+                ? `Premium ativo: ${PRICING.PAID_MAX_GALLERY} fotos do plano pago + ${PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} extras = até ${PRICING.PREMIUM_MAX_GALLERY} na galeria.`
+                : `Todo anunciante pago pode enviar até ${PRICING.PAID_MAX_GALLERY} fotos na galeria (além da capa e do logo). Com premium: +${PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} fotos (total ${PRICING.PREMIUM_MAX_GALLERY}).`}
             </p>
             {remainingGallerySlots > 0 ? (
               <div className="flex items-center gap-2 rounded-md border bg-background p-2">

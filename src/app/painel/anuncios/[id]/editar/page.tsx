@@ -83,8 +83,10 @@ export default async function EditAdvertisementPage({
 
       {query.boosted === "1" && (
         <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
-          Destaque premium ativado! Agora você pode adicionar até 5 fotos extras
-          na galeria abaixo.
+          Destaque premium ativado! Agora você pode adicionar até{" "}
+          {PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} fotos extras
+          na galeria (total {PRICING.PREMIUM_MAX_GALLERY}, além da capa e do
+          logo).
         </div>
       )}
 
@@ -222,9 +224,9 @@ export default async function EditAdvertisementPage({
           <p className="text-xs text-muted-foreground">
             {newProfile
               ? advertisement.premiumActive
-                ? `1) Capa · 2) Logo · 3) Galeria até ${PRICING.PREMIUM_MAX_GALLERY} fotos (premium ativo).`
-                : `1) Capa · 2) Logo · 3) Galeria até ${PRICING.PAID_MAX_GALLERY} fotos (incluídas no plano pago). Premium sobe para ${PRICING.PREMIUM_MAX_GALLERY}.`
-              : "Altere a capa e a galeria premium (até 5 fotos extras)."}
+                ? `1) Capa · 2) Logo · 3) Galeria até ${PRICING.PREMIUM_MAX_GALLERY} fotos (${PRICING.PAID_MAX_GALLERY} do plano + ${PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} premium).`
+                : `1) Capa · 2) Logo · 3) Galeria até ${PRICING.PAID_MAX_GALLERY} fotos (plano pago). Premium libera +${PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} (total ${PRICING.PREMIUM_MAX_GALLERY}).`
+              : `Altere a capa e a galeria premium (até ${PRICING.PREMIUM_MAX_GALLERY} fotos).`}
           </p>
           <AdvertisementImagesEditor
             advertisementId={advertisement.id}

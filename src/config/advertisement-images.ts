@@ -11,8 +11,8 @@ export const ADVERTISEMENT_IMAGE_LIMITS = {
   maxFileSizeBytes: 4 * 1024 * 1024,
   /** Soma máxima de todos os arquivos em um único envio. */
   maxRequestBytes: 4 * 1024 * 1024,
-  /** Galeria legado / compat. Preferir getMaxGalleryImages. */
-  maxGalleryImages: 5,
+  /** Máx. de arquivos por envio (batch). Preferir getMaxGalleryImages p/ teto do plano. */
+  maxGalleryImages: 9,
   allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"] as const,
   allowedExtensions: [".jpg", ".jpeg", ".png", ".webp"] as const,
 } as const;

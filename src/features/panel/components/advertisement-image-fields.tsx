@@ -1,6 +1,5 @@
 "use client";
 
-import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PRICING } from "@/config/pricing";
 import { ImageFileInput } from "@/components/advertisement/image-file-input";
 import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
@@ -33,9 +32,10 @@ export function AdvertisementImageFields() {
             {PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")} / 30 dias)
           </p>
           <p className="text-xs text-muted-foreground">
-            Badge premium, seção de destaques, prioridade na busca e até{" "}
-            {ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos extras na galeria — você
-            poderá adicioná-las após ativar o destaque premium.
+            Badge premium, seção de destaques, prioridade na busca e +
+            {PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} fotos na
+            galeria (total {PRICING.PREMIUM_MAX_GALLERY}, além da capa e do logo)
+            — você poderá adicioná-las após ativar o destaque premium.
           </p>
         </div>
       </label>

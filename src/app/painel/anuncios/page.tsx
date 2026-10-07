@@ -92,7 +92,9 @@ export default async function ProviderAdsPage({
       {params.boosted === "1" && (
         <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
           Destaque premium ativado com sucesso. Use &quot;Editar&quot; para
-          atualizar os dados e adicionar até 5 imagens na galeria.
+          atualizar os dados e adicionar até {PRICING.PREMIUM_MAX_GALLERY}{" "}
+          fotos na galeria ({PRICING.PAID_MAX_GALLERY} do plano +{" "}
+          {PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} premium).
         </div>
       )}
 

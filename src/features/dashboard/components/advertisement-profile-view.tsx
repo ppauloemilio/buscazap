@@ -25,7 +25,7 @@ import { AdvertisementBackLink } from "@/features/dashboard/components/advertise
 import { ReviewForm } from "@/features/dashboard/components/review-form";
 import { StickyWhatsAppCta } from "@/features/dashboard/components/sticky-whatsapp-cta";
 import { formatAdvertisementLocation } from "@/config/service-area";
-import { formatPriceBRL } from "@/config/pricing";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 import type { Advertisement } from "@/domain/entities";
 import {
   buildWhatsAppLink,
@@ -81,7 +81,9 @@ export function AdvertisementProfileView({
   // Galeria = fotos extras (sem repetir a capa do topo)
   const gallery = (advertisement.galleryImages ?? []).slice(
     0,
-    advertisement.isPremium ? 9 : 3
+    advertisement.isPremium
+      ? PRICING.PREMIUM_MAX_GALLERY
+      : PRICING.PAID_MAX_GALLERY
   );
   const hasReviews = advertisement.reviewCount > 0;
 
