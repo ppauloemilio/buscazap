@@ -10,8 +10,10 @@ interface AdvertisementSectionProps {
   readonly advertisements: readonly Advertisement[];
   readonly viewAllHref?: string;
   readonly returnTo?: string;
-  readonly variant?: "default" | "premium";
+  readonly variant?: "default" | "premium" | "free";
   readonly emphasizePremium?: boolean;
+  /** Grid mais denso para listagens básicas. */
+  readonly compact?: boolean;
 }
 
 export function AdvertisementSection({
@@ -22,12 +24,14 @@ export function AdvertisementSection({
   returnTo = "/",
   variant = "default",
   emphasizePremium = false,
+  compact = false,
 }: AdvertisementSectionProps) {
   if (advertisements.length === 0) {
     return null;
   }
 
   const isPremiumSection = variant === "premium";
+  const isFreeSection = variant === "free" || compact;
 
   return (
     <section className="py-4 md:py-5">
@@ -43,7 +47,8 @@ export function AdvertisementSection({
               <h2
                 className={cn(
                   "flex items-center gap-2 text-2xl font-bold text-foreground",
-                  isPremiumSection && "text-amber-950 dark:text-amber-100"
+                  isPremiumSection && "text-amber-950 dark:text-amber-100",
+                  isFreeSection && !isPremiumSection && "text-xl"
                 )}
               >
                 {isPremiumSection && (
@@ -78,7 +83,14 @@ export function AdvertisementSection({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          <div
+            className={cn(
+              "grid items-start gap-2",
+              isFreeSection
+                ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+                : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
+            )}
+          >
             {advertisements.map((ad) => (
               <AdvertisementCard
                 key={ad.id}

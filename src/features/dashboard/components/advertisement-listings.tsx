@@ -1,5 +1,9 @@
 import type { Advertisement } from "@/domain/entities";
-import { splitAdvertisementsByPremium } from "@/shared/utils/advertisement-listings";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import {
+  splitAdvertisementsByPlan,
+  splitAdvertisementsByPremium,
+} from "@/shared/utils/advertisement-listings";
 import { AdvertisementSection } from "./advertisement-section";
 
 interface AdvertisementListingsProps {
@@ -22,6 +26,10 @@ export function AdvertisementListings({
   premiumOnly = false,
 }: AdvertisementListingsProps) {
   const { premium, regular } = splitAdvertisementsByPremium(advertisements);
+  const freemium = isNewAdProfileEnabled();
+  const { paid, free } = freemium
+    ? splitAdvertisementsByPlan(regular)
+    : { paid: regular, free: [] as Advertisement[] };
 
   if (premiumOnly) {
     if (premium.length === 0) {
@@ -54,11 +62,22 @@ export function AdvertisementListings({
           emphasizePremium
         />
       )}
-      {regular.length > 0 && (
+      {paid.length > 0 && (
         <AdvertisementSection
           title={regularTitle}
           description={regularDescription}
-          advertisements={regular}
+          advertisements={paid}
+          viewAllHref={viewAllHref}
+          returnTo={returnTo}
+        />
+      )}
+      {free.length > 0 && (
+        <AdvertisementSection
+          variant="free"
+          compact
+          title="Listagens grátis"
+          description="Nome, categoria, bairro e WhatsApp"
+          advertisements={free}
           viewAllHref={viewAllHref}
           returnTo={returnTo}
         />

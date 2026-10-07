@@ -57,28 +57,33 @@ export function AdvertisementProfileCard({
 
   if (isFree) {
     return (
-      <article className="overflow-hidden rounded-xl border bg-card p-3 shadow-sm">
-        <div className="mb-2 flex items-start justify-between gap-2">
-          <div>
-            <h3 className="line-clamp-1 text-sm font-semibold">
+      <article className="h-fit self-start overflow-hidden rounded-lg border bg-card p-2.5 shadow-sm">
+        <div className="mb-1.5 flex items-start justify-between gap-1.5">
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-xs font-semibold leading-snug">
               {advertisement.title}
             </h3>
-            <p className="text-xs text-muted-foreground">
+            <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
               {advertisement.category}
             </p>
           </div>
           <FavoriteButton advertisementId={advertisement.id} />
         </div>
-        <div className="mb-3 flex items-center gap-1 text-xs text-muted-foreground">
-          <MapPin className="h-3 w-3 shrink-0" />
+        <div className="mb-2 flex items-center gap-1 text-[10px] text-muted-foreground">
+          <MapPin className="h-2.5 w-2.5 shrink-0" />
           <span className="line-clamp-1">{locationLabel}</span>
         </div>
-        <Button variant="whatsapp" size="sm" className="h-8 w-full text-xs" asChild>
+        <Button
+          variant="whatsapp"
+          size="sm"
+          className="h-7 w-full px-2 text-[11px]"
+          asChild
+        >
           <TrackedWhatsAppLink
             href={whatsappLink}
             advertisementId={advertisement.id}
           >
-            <MessageCircle className="h-3.5 w-3.5" />
+            <MessageCircle className="h-3 w-3" />
             WhatsApp
           </TrackedWhatsAppLink>
         </Button>
@@ -89,7 +94,7 @@ export function AdvertisementProfileCard({
   return (
     <article
       className={cn(
-        "overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md",
+        "h-full overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md",
         emphasizePremium &&
           advertisement.isPremium &&
           "ring-2 ring-amber-400/70"
