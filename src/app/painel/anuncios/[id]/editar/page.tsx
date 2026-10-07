@@ -83,10 +83,13 @@ export default async function EditAdvertisementPage({
 
       {query.boosted === "1" && (
         <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
-          Destaque premium ativado! Agora você pode adicionar até{" "}
-          {PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} fotos extras
-          na galeria (total {PRICING.PREMIUM_MAX_GALLERY}, além da capa e do
-          logo).
+          Destaque premium ativado! Adicione até {PRICING.PREMIUM_AD_GALLERY}{" "}
+          fotos extras neste anúncio. As {PRICING.PROVIDER_MAX_COMPANY_PHOTOS}{" "}
+          fotos da empresa ficam em{" "}
+          <Link href="/painel/perfil" className="underline">
+            Meu perfil
+          </Link>{" "}
+          (total {PRICING.PREMIUM_MAX_GALLERY} na página pública).
         </div>
       )}
 
@@ -219,14 +222,14 @@ export default async function EditAdvertisementPage({
       {canEditPhotos ? (
         <div className="max-w-xl space-y-2 border-t pt-4">
           <h3 className="text-base font-semibold">
-            {newProfile ? "Fotos do perfil" : "Fotos"}
+            {newProfile ? "Fotos do anúncio" : "Fotos"}
           </h3>
           <p className="text-xs text-muted-foreground">
             {newProfile
               ? advertisement.premiumActive
-                ? `1) Capa · 2) Logo · 3) Galeria até ${PRICING.PREMIUM_MAX_GALLERY} fotos (${PRICING.PAID_MAX_GALLERY} do plano + ${PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} premium).`
-                : `1) Capa · 2) Logo · 3) Galeria até ${PRICING.PAID_MAX_GALLERY} fotos (plano pago). Premium libera +${PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} (total ${PRICING.PREMIUM_MAX_GALLERY}).`
-              : `Altere a capa e a galeria premium (até ${PRICING.PREMIUM_MAX_GALLERY} fotos).`}
+                ? `1) Capa · 2) Logo · 3) Galeria premium até ${PRICING.PREMIUM_AD_GALLERY} fotos (+ ${PRICING.PROVIDER_MAX_COMPANY_PHOTOS} da empresa em Meu perfil = ${PRICING.PREMIUM_MAX_GALLERY} na página).`
+                : `1) Capa · 2) Logo. As ${PRICING.PROVIDER_MAX_COMPANY_PHOTOS} fotos da empresa ficam em Meu perfil. Premium libera +${PRICING.PREMIUM_AD_GALLERY} neste anúncio.`
+              : `Altere a capa e a galeria premium (até ${PRICING.PREMIUM_AD_GALLERY} fotos).`}
           </p>
           <AdvertisementImagesEditor
             advertisementId={advertisement.id}
@@ -238,11 +241,11 @@ export default async function EditAdvertisementPage({
             maxGallery={
               newProfile
                 ? advertisement.premiumActive
-                  ? PRICING.PREMIUM_MAX_GALLERY
-                  : PRICING.PAID_MAX_GALLERY
+                  ? PRICING.PREMIUM_AD_GALLERY
+                  : 0
                 : undefined
             }
-            forceGalleryEdit={newProfile ? paidActive : advertisement.premiumActive}
+            forceGalleryEdit={!newProfile && advertisement.premiumActive}
             showLogoField={newProfile}
           />
         </div>
@@ -251,7 +254,8 @@ export default async function EditAdvertisementPage({
           {newProfile ? (
             <>
               Assine por {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês para
-              capa, logo, galeria, produtos, serviços e perfil completo.{" "}
+              capa, logo, produtos, serviços e perfil completo. Fotos da
+              empresa: Meu perfil.{" "}
               <Link
                 href="/painel/assinatura"
                 className="font-medium text-whatsapp hover:underline"

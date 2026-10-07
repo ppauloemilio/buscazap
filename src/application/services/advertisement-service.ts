@@ -348,6 +348,10 @@ export async function findAdvertisementById(id: string) {
           bio: true,
           businessHours: true,
           responseHint: true,
+          companyImages: {
+            orderBy: { sortOrder: "asc" },
+            select: { url: true, sortOrder: true },
+          },
         },
       },
     },
@@ -427,6 +431,10 @@ export async function findAdvertisementByCategoryAndSlug(
           bio: true,
           businessHours: true,
           responseHint: true,
+          companyImages: {
+            orderBy: { sortOrder: "asc" },
+            select: { url: true, sortOrder: true },
+          },
         },
       },
     },

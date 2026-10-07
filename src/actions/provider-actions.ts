@@ -54,10 +54,15 @@ import {
   saveAdvertisementImages,
 } from "@/application/services/advertisement-image-service";
 import {
+  addProviderCompanyImages,
+  removeProviderCompanyImage,
+} from "@/application/services/provider-image-service";
+import {
   registerCategorySuggestion,
   resolveAdvertisementCategoryFromCatalog,
 } from "@/application/services/category-matching-service";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
+import { PRICING } from "@/config/pricing";
 import {
   parseImageFiles,
   validateImageFile,
@@ -549,7 +554,10 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
   }
 
   try {
-    await requireOwnedPremiumAdvertisement(provider.id, advertisementId);
+    const advertisement = await requireOwnedPremiumAdvertisement(
+      provider.id,
+      advertisementId
+    );
 
     const coverFile = formData.get("coverImage");
     const logoFile = formData.get("logoImage");
@@ -618,6 +626,15 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
     }
 
     if (hasGalleryFiles) {
+      if (
+        isNewAdProfileEnabled() &&
+        !isPremiumActive(advertisement.premiumExpiresAt)
+      ) {
+        redirectToEditImages(advertisementId, {
+          error:
+            "As fotos da empresa ficam em Meu perfil. A galeria do anúncio é só com destaque premium.",
+        });
+      }
       await addAdvertisementGalleryImages(advertisementId, galleryFiles);
     }
   } catch (error) {
@@ -741,8 +758,6 @@ export async function updateProviderProfileAction(formData: FormData) {
     city: formData.get("city"),
     neighborhood: formData.get("neighborhood"),
     bio: formData.get("bio"),
-    businessHours: formData.get("businessHours"),
-    responseHint: formData.get("responseHint"),
   });
 
   if (!parsed.success) {
@@ -786,8 +801,6 @@ export async function updateProviderProfileAction(formData: FormData) {
       city: parsed.data.city ?? null,
       neighborhood: parsed.data.neighborhood ?? null,
       bio: parsed.data.bio ?? null,
-      businessHours: parsed.data.businessHours ?? null,
-      responseHint: parsed.data.responseHint ?? null,
     },
   });
 
@@ -795,6 +808,103 @@ export async function updateProviderProfileAction(formData: FormData) {
   revalidatePath("/painel/perfil");
 
   redirect("/painel/perfil?saved=1");
+}
+
+function redirectToProfilePhotos(query: {
+  error?: string;
+  photosSaved?: string;
+} = {}): never {
+  const params = new URLSearchParams();
+  if (query.error) params.set("error", query.error);
+  if (query.photosSaved) params.set("photosSaved", query.photosSaved);
+  const suffix = params.size > 0 ? `?${params.toString()}` : "";
+  redirect(`/painel/perfil${suffix}`);
+}
+
+export async function updateProviderCompanyImagesAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+
+  if (!canProviderUsePaidFeatures(provider)) {
+    redirectToProfilePhotos({
+      error: "Assine para enviar fotos da empresa",
+    });
+  }
+
+  const galleryFiles = parseImageFiles(formData, "companyImages");
+
+  if (galleryFiles.length === 0) {
+    redirectToProfilePhotos({
+      error: "Selecione ao menos uma foto da empresa",
+    });
+  }
+
+  if (galleryFiles.length > PRICING.PROVIDER_MAX_COMPANY_PHOTOS) {
+    redirectToProfilePhotos({
+      error: `Envie no máximo ${PRICING.PROVIDER_MAX_COMPANY_PHOTOS} fotos por vez`,
+    });
+  }
+
+  for (const file of galleryFiles) {
+    const validationError = validateImageFile(file, "Foto da empresa");
+    if (validationError) {
+      redirectToProfilePhotos({ error: validationError });
+    }
+  }
+
+  const requestBytes = galleryFiles.reduce((sum, file) => sum + file.size, 0);
+  if (requestBytes > ADVERTISEMENT_IMAGE_LIMITS.maxRequestBytes) {
+    redirectToProfilePhotos({
+      error:
+        `O conjunto de fotos ultrapassa ${ADVERTISEMENT_IMAGE_LIMITS.maxRequestBytes / (1024 * 1024)} MB. ` +
+        "Envie menos fotos por vez ou reduza o tamanho das imagens.",
+    });
+  }
+
+  try {
+    await addProviderCompanyImages(provider.id, galleryFiles);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível salvar as fotos da empresa";
+    redirectToProfilePhotos({ error: message });
+  }
+
+  revalidatePath("/painel/perfil");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+  redirectToProfilePhotos({ photosSaved: "1" });
+}
+
+export async function removeProviderCompanyImageAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const imageId = formData.get("imageId");
+
+  if (typeof imageId !== "string" || !imageId) {
+    redirect("/painel/perfil");
+  }
+
+  if (!canProviderUsePaidFeatures(provider)) {
+    redirectToProfilePhotos({
+      error: "Assine para gerenciar fotos da empresa",
+    });
+  }
+
+  try {
+    await removeProviderCompanyImage(provider.id, imageId);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível remover a foto";
+    redirectToProfilePhotos({ error: message });
+  }
+
+  revalidatePath("/painel/perfil");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+  redirectToProfilePhotos({ photosSaved: "1" });
 }
 
 export async function updateProviderPasswordAction(formData: FormData) {

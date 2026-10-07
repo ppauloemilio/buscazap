@@ -11,6 +11,8 @@ import {
   ServiceArea,
 } from "@/domain/enums";
 import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
+import { PRICING } from "@/config/pricing";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 import { isPremiumActive } from "@/lib/provider-session";
 
@@ -21,6 +23,7 @@ type PrismaAdvertisementWithImages = PrismaAdvertisement & {
   readonly provider?: {
     readonly subscriptionExpiresAt?: Date | null;
     readonly role?: string;
+    readonly companyImages?: readonly { readonly url: string; readonly sortOrder: number }[];
   };
 };
 
@@ -71,6 +74,31 @@ export function mapAdvertisementToEntity(
   const logoImageUrl = resolveLogoImageUrl(ad.images);
   const plan = options?.plan;
   const showPaidExtras = plan !== "free";
+  const adGalleryUrls = resolveGalleryImageUrls(ad.images).map(
+    resolveAdvertisementImageUrl
+  );
+  const companyUrls = (ad.provider?.companyImages ?? [])
+    .slice()
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((image) => resolveAdvertisementImageUrl(image.url))
+    .slice(0, PRICING.PROVIDER_MAX_COMPANY_PHOTOS);
+
+  let galleryImages: readonly string[] = [];
+  if (showPaidExtras) {
+    if (isNewAdProfileEnabled()) {
+      const premiumExtras = premiumActive
+        ? adGalleryUrls.slice(0, PRICING.PREMIUM_AD_GALLERY)
+        : [];
+      galleryImages = [...companyUrls, ...premiumExtras].slice(
+        0,
+        premiumActive
+          ? PRICING.PREMIUM_MAX_GALLERY
+          : PRICING.PROVIDER_MAX_COMPANY_PHOTOS
+      );
+    } else {
+      galleryImages = adGalleryUrls;
+    }
+  }
 
   return {
     id: ad.id,
@@ -105,9 +133,7 @@ export function mapAdvertisementToEntity(
       showPaidExtras && logoImageUrl
         ? resolveAdvertisementImageUrl(logoImageUrl)
         : undefined,
-    galleryImages: showPaidExtras
-      ? resolveGalleryImageUrls(ad.images).map(resolveAdvertisementImageUrl)
-      : [],
+    galleryImages,
     whatsappNumber: ad.whatsappNumber,
     whatsappLabel: ad.whatsappLabel ?? undefined,
     secondaryWhatsappNumber: showPaidExtras

@@ -65,7 +65,7 @@ export function AdvertisementImagesEditor({
   const canEditGallery = premiumActive || forceGalleryEdit;
   const galleryLimit =
     maxGallery ??
-    (premiumActive ? PRICING.PREMIUM_MAX_GALLERY : PRICING.PAID_MAX_GALLERY);
+    (premiumActive ? PRICING.PREMIUM_AD_GALLERY : 0);
   const remainingGallerySlots = Math.max(0, galleryLimit - galleryImages.length);
 
   function handleUpdateSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -284,18 +284,19 @@ export function AdvertisementImagesEditor({
                 htmlFor="galleryImages"
                 className="block text-sm font-semibold"
               >
-                Galeria do anúncio ({galleryImages.length}/{galleryLimit})
+                Galeria premium do anúncio ({galleryImages.length}/{galleryLimit})
               </label>
               <span className="text-xs font-medium text-whatsapp">
-                {premiumActive
-                  ? `Premium · até ${PRICING.PREMIUM_MAX_GALLERY}`
-                  : `Plano pago · até ${PRICING.PAID_MAX_GALLERY}`}
+                Premium · até {PRICING.PREMIUM_AD_GALLERY}
               </span>
             </div>
             <p className="mb-2 text-xs text-muted-foreground">
-              {premiumActive
-                ? `Premium ativo: ${PRICING.PAID_MAX_GALLERY} fotos do plano pago + ${PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} extras = até ${PRICING.PREMIUM_MAX_GALLERY} na galeria.`
-                : `Todo anunciante pago pode enviar até ${PRICING.PAID_MAX_GALLERY} fotos na galeria (além da capa e do logo). Com premium: +${PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} fotos (total ${PRICING.PREMIUM_MAX_GALLERY}).`}
+              Fotos extras deste anúncio (destaque premium). As{" "}
+              {PRICING.PROVIDER_MAX_COMPANY_PHOTOS} fotos da empresa ficam em{" "}
+              <Link href="/painel/perfil" className="underline">
+                Meu perfil
+              </Link>
+              ; na página pública somam até {PRICING.PREMIUM_MAX_GALLERY}.
             </p>
             {remainingGallerySlots > 0 ? (
               <div className="flex items-center gap-2 rounded-md border bg-background p-2">

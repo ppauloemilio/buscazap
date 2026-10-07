@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { KeyRound, User } from "lucide-react";
+import { Images, KeyRound, User } from "lucide-react";
 import {
   updateProviderPasswordAction,
   updateProviderProfileAction,
 } from "@/actions/provider-actions";
+import { listProviderCompanyImages } from "@/application/services/provider-image-service";
 import { listActiveCities, listActiveStates } from "@/application/services/catalog-service";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import { ProviderCompanyImagesEditor } from "@/features/panel/components/provider-company-images-editor";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
-import { getCurrentProvider } from "@/lib/provider-session";
+import {
+  canProviderUsePaidFeatures,
+  getCurrentProvider,
+} from "@/lib/provider-session";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +27,7 @@ interface ProfilePageProps {
   readonly searchParams: Promise<{
     readonly error?: string;
     readonly saved?: string;
+    readonly photosSaved?: string;
     readonly passwordError?: string;
     readonly passwordSaved?: string;
   }>;
@@ -31,9 +38,12 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   if (!provider) redirect("/entrar");
 
   const params = await searchParams;
-  const [states, cities] = await Promise.all([
+  const newProfile = isNewAdProfileEnabled();
+  const paidActive = canProviderUsePaidFeatures(provider);
+  const [states, cities, companyImages] = await Promise.all([
     listActiveStates(),
     listActiveCities(),
+    newProfile ? listProviderCompanyImages(provider.id) : Promise.resolve([]),
   ]);
 
   return (
@@ -177,30 +187,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                     className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   />
                 </div>
-
-                <div>
-                  <label htmlFor="businessHours" className="mb-1 block text-sm font-medium">
-                    Horário de atendimento
-                  </label>
-                  <Input
-                    id="businessHours"
-                    name="businessHours"
-                    defaultValue={provider.businessHours ?? ""}
-                    placeholder="Ex.: Seg–Sáb, 8h–18h"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="responseHint" className="mb-1 block text-sm font-medium">
-                    Tempo de resposta
-                  </label>
-                  <Input
-                    id="responseHint"
-                    name="responseHint"
-                    defaultValue={provider.responseHint ?? ""}
-                    placeholder="Ex.: Respondo em até 15 min"
-                  />
-                </div>
               </div>
 
               <Button type="submit" variant="whatsapp" size="sm">
@@ -209,6 +195,28 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
             </form>
           </CardContent>
         </Card>
+
+        {newProfile && (
+          <Card>
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Images className="h-4 w-4 text-whatsapp" />
+                Fotos da empresa
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              {params.photosSaved === "1" && (
+                <p className="mb-2 rounded-lg bg-whatsapp/10 p-2.5 text-sm text-whatsapp">
+                  Fotos da empresa atualizadas.
+                </p>
+              )}
+              <ProviderCompanyImagesEditor
+                images={companyImages}
+                paidActive={paidActive}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="p-3 pb-2">

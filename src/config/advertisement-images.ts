@@ -11,12 +11,20 @@ export const ADVERTISEMENT_IMAGE_LIMITS = {
   maxFileSizeBytes: 4 * 1024 * 1024,
   /** Soma máxima de todos os arquivos em um único envio. */
   maxRequestBytes: 4 * 1024 * 1024,
-  /** Máx. de arquivos por envio (batch). Preferir getMaxGalleryImages p/ teto do plano. */
+  /** Máx. de arquivos por envio (batch). Preferir getMax* helpers. */
   maxGalleryImages: 9,
   allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"] as const,
   allowedExtensions: [".jpg", ".jpeg", ".png", ".webp"] as const,
 } as const;
 
+/** Limite de fotos GALLERY no anúncio (só premium no freemium). */
+export function getMaxAdGalleryImages(input: {
+  readonly premiumActive: boolean;
+}): number {
+  return input.premiumActive ? PRICING.PREMIUM_AD_GALLERY : 0;
+}
+
+/** @deprecated Prefer getMaxAdGalleryImages + fotos da empresa no perfil */
 export function getMaxGalleryImages(input: {
   readonly paidActive: boolean;
   readonly premiumActive: boolean;
@@ -26,8 +34,8 @@ export function getMaxGalleryImages(input: {
   }
 
   return input.premiumActive
-    ? PRICING.PREMIUM_MAX_GALLERY
-    : PRICING.PAID_MAX_GALLERY;
+    ? PRICING.PREMIUM_AD_GALLERY
+    : 0;
 }
 
 /** @deprecated Use getMaxGalleryImages */

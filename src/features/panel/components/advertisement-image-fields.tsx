@@ -33,9 +33,10 @@ export function AdvertisementImageFields() {
           </p>
           <p className="text-xs text-muted-foreground">
             Badge premium, seção de destaques, prioridade na busca e +
-            {PRICING.PREMIUM_MAX_GALLERY - PRICING.PAID_MAX_GALLERY} fotos na
-            galeria (total {PRICING.PREMIUM_MAX_GALLERY}, além da capa e do logo)
-            — você poderá adicioná-las após ativar o destaque premium.
+            {PRICING.PREMIUM_AD_GALLERY} fotos neste anúncio (somam às{" "}
+            {PRICING.PROVIDER_MAX_COMPANY_PHOTOS} da empresa em Meu perfil =
+            total {PRICING.PREMIUM_MAX_GALLERY}) — adicione após ativar o
+            destaque.
           </p>
         </div>
       </label>

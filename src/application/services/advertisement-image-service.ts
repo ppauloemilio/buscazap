@@ -1,7 +1,7 @@
 import {
   ADVERTISEMENT_IMAGE_KIND,
   ADVERTISEMENT_IMAGE_LIMITS,
-  getMaxGalleryImages,
+  getMaxAdGalleryImages,
 } from "@/config/advertisement-images";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { uploadAdvertisementImage } from "@/lib/image-upload";
@@ -116,10 +116,8 @@ async function resolveGalleryMax(advertisementId: string): Promise<number> {
   });
 
   const premiumActive = isPremiumActive(ad?.premiumExpiresAt ?? null);
-  return getMaxGalleryImages({
-    paidActive: true,
-    premiumActive,
-  });
+  // Freemium: fotos da empresa ficam no perfil; no anúncio só premium (5).
+  return getMaxAdGalleryImages({ premiumActive });
 }
 
 export async function addAdvertisementGalleryImages(

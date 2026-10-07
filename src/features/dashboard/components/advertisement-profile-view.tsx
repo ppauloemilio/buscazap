@@ -78,12 +78,12 @@ export function AdvertisementProfileView({
   const hours = parseBusinessHoursJson(advertisement.businessHoursJson);
   const open = isOpenNow(hours);
   const hoursList = formatBusinessHoursList(hours);
-  // Galeria = fotos extras (sem repetir a capa do topo)
+  // Galeria pública: 4 do perfil (+ 5 do anúncio se premium)
   const gallery = (advertisement.galleryImages ?? []).slice(
     0,
     advertisement.isPremium
       ? PRICING.PREMIUM_MAX_GALLERY
-      : PRICING.PAID_MAX_GALLERY
+      : PRICING.PROVIDER_MAX_COMPANY_PHOTOS
   );
   const hasReviews = advertisement.reviewCount > 0;
 

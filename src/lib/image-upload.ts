@@ -94,6 +94,20 @@ export async function uploadAdvertisementImage(
   );
 }
 
+export async function uploadProviderImage(
+  file: File,
+  providerId: string,
+  filenamePrefix: string
+): Promise<string> {
+  const timestamp = Date.now();
+  return storeImageFile(
+    file,
+    `providers/${providerId}/${filenamePrefix}-${timestamp}`,
+    path.join(process.cwd(), "public", "uploads", "providers", providerId),
+    `/uploads/providers/${providerId}`
+  );
+}
+
 export async function uploadLeadImage(
   file: File,
   leadId: string
