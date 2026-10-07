@@ -1,7 +1,7 @@
 import {
   ADVERTISEMENT_IMAGE_KIND,
   ADVERTISEMENT_IMAGE_LIMITS,
-  getMaxAdvertisementImages,
+  getMaxGalleryImages,
 } from "@/config/advertisement-images";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { uploadAdvertisementImage } from "@/lib/image-upload";
@@ -67,6 +67,44 @@ export async function replaceAdvertisementCover(
   });
 }
 
+export async function replaceAdvertisementLogo(
+  advertisementId: string,
+  logoFile: File
+): Promise<void> {
+  const logoUrl = await uploadAdvertisementImage(
+    logoFile,
+    advertisementId,
+    "logo"
+  );
+
+  await prisma.advertisementImage.deleteMany({
+    where: {
+      advertisementId,
+      kind: ADVERTISEMENT_IMAGE_KIND.LOGO,
+    },
+  });
+
+  await prisma.advertisementImage.create({
+    data: {
+      advertisementId,
+      url: logoUrl,
+      kind: ADVERTISEMENT_IMAGE_KIND.LOGO,
+      sortOrder: 0,
+    },
+  });
+}
+
+export async function removeAdvertisementLogo(
+  advertisementId: string
+): Promise<void> {
+  await prisma.advertisementImage.deleteMany({
+    where: {
+      advertisementId,
+      kind: ADVERTISEMENT_IMAGE_KIND.LOGO,
+    },
+  });
+}
+
 async function resolveGalleryMax(advertisementId: string): Promise<number> {
   if (!isNewAdProfileEnabled()) {
     return ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages;
@@ -74,23 +112,14 @@ async function resolveGalleryMax(advertisementId: string): Promise<number> {
 
   const ad = await prisma.advertisement.findUnique({
     where: { id: advertisementId },
-    select: {
-      premiumExpiresAt: true,
-      images: { select: { id: true, kind: true } },
-    },
+    select: { premiumExpiresAt: true },
   });
 
   const premiumActive = isPremiumActive(ad?.premiumExpiresAt ?? null);
-  const totalMax = getMaxAdvertisementImages({
+  return getMaxGalleryImages({
     paidActive: true,
     premiumActive,
   });
-  const coverCount =
-    ad?.images.filter((image) => image.kind === ADVERTISEMENT_IMAGE_KIND.COVER)
-      .length ?? 0;
-
-  // Galeria = total permitido menos a capa
-  return Math.max(0, totalMax - Math.max(coverCount, 1));
 }
 
 export async function addAdvertisementGalleryImages(

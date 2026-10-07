@@ -49,6 +49,7 @@ export interface Advertisement {
   readonly rating: number;
   readonly reviewCount: number;
   readonly imageUrl?: string;
+  readonly logoUrl?: string;
   readonly galleryImages?: readonly string[];
   readonly whatsappNumber: string;
   readonly whatsappLabel?: string;

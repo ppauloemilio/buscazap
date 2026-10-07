@@ -236,8 +236,11 @@ export async function findPublicAdvertisements(
     },
     include: {
       images: {
-        where: { kind: ADVERTISEMENT_IMAGE_KIND.COVER },
-        take: 1,
+        where: {
+          kind: {
+            in: [ADVERTISEMENT_IMAGE_KIND.COVER, ADVERTISEMENT_IMAGE_KIND.LOGO],
+          },
+        },
       },
       provider: {
         select: {
@@ -467,8 +470,11 @@ export async function findAdvertisementsByIds(ids: readonly string[]) {
     },
     include: {
       images: {
-        where: { kind: ADVERTISEMENT_IMAGE_KIND.COVER },
-        take: 1,
+        where: {
+          kind: {
+            in: [ADVERTISEMENT_IMAGE_KIND.COVER, ADVERTISEMENT_IMAGE_KIND.LOGO],
+          },
+        },
       },
       provider: {
         select: {
@@ -543,6 +549,9 @@ export async function findProviderAdvertisementForEdit(
   const cover = advertisement.images.find(
     (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.COVER
   );
+  const logo = advertisement.images.find(
+    (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.LOGO
+  );
   const gallery = advertisement.images.filter(
     (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.GALLERY
   );
@@ -560,6 +569,12 @@ export async function findProviderAdvertisementForEdit(
       ? {
           id: cover.id,
           url: resolveAdvertisementImageUrl(cover.url),
+        }
+      : null,
+    logoImage: logo
+      ? {
+          id: logo.id,
+          url: resolveAdvertisementImageUrl(logo.url),
         }
       : null,
     galleryImages: gallery.map((image) => ({

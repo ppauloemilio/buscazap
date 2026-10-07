@@ -35,6 +35,17 @@ function resolveCoverImageUrl(
   return cover?.url ?? images[0]?.url;
 }
 
+function resolveLogoImageUrl(
+  images: readonly PrismaAdvertisementImage[] | undefined
+): string | undefined {
+  if (!images?.length) {
+    return undefined;
+  }
+
+  return images.find((image) => image.kind === ADVERTISEMENT_IMAGE_KIND.LOGO)
+    ?.url;
+}
+
 function resolveGalleryImageUrls(
   images: readonly PrismaAdvertisementImage[] | undefined
 ): readonly string[] {
@@ -57,6 +68,7 @@ export function mapAdvertisementToEntity(
 ): Advertisement {
   const premiumActive = isPremiumActive(ad.premiumExpiresAt);
   const coverImageUrl = resolveCoverImageUrl(ad.images);
+  const logoImageUrl = resolveLogoImageUrl(ad.images);
   const plan = options?.plan;
   const showPaidExtras = plan !== "free";
 
@@ -88,6 +100,10 @@ export function mapAdvertisementToEntity(
     imageUrl:
       showPaidExtras && coverImageUrl
         ? resolveAdvertisementImageUrl(coverImageUrl)
+        : undefined,
+    logoUrl:
+      showPaidExtras && logoImageUrl
+        ? resolveAdvertisementImageUrl(logoImageUrl)
         : undefined,
     galleryImages: showPaidExtras
       ? resolveGalleryImageUrls(ad.images).map(resolveAdvertisementImageUrl)

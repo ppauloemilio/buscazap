@@ -216,23 +216,32 @@ export default async function EditAdvertisementPage({
 
       {canEditPhotos ? (
         <div className="max-w-xl space-y-2 border-t pt-4">
-          <h3 className="text-base font-semibold">Fotos</h3>
+          <h3 className="text-base font-semibold">
+            {newProfile ? "Fotos do perfil" : "Fotos"}
+          </h3>
           <p className="text-xs text-muted-foreground">
             {newProfile
               ? advertisement.premiumActive
-                ? `Plano pago: até ${PRICING.PAID_MAX_IMAGES} fotos. Premium: até ${PRICING.PREMIUM_MAX_IMAGES}.`
-                : `Plano pago: até ${PRICING.PAID_MAX_IMAGES} fotos. Ative o premium para fotos extras.`
+                ? `Capa + logo + até ${PRICING.PREMIUM_MAX_GALLERY} fotos na galeria (premium).`
+                : `Capa + logo + até ${PRICING.PAID_MAX_GALLERY} fotos na galeria. Premium libera ${PRICING.PREMIUM_MAX_GALLERY}.`
               : "Altere a capa e a galeria premium (até 5 fotos extras)."}
           </p>
           <AdvertisementImagesEditor
             advertisementId={advertisement.id}
             title={advertisement.title}
             coverImage={advertisement.coverImage}
+            logoImage={advertisement.logoImage}
             galleryImages={advertisement.galleryImages}
-            premiumActive={
-              newProfile ? paidActive : advertisement.premiumActive
+            premiumActive={advertisement.premiumActive}
+            maxGallery={
+              newProfile
+                ? advertisement.premiumActive
+                  ? PRICING.PREMIUM_MAX_GALLERY
+                  : PRICING.PAID_MAX_GALLERY
+                : undefined
             }
-            forceGalleryEdit={newProfile && paidActive}
+            forceGalleryEdit={newProfile ? paidActive : false}
+            showLogoField={newProfile}
           />
         </div>
       ) : (
@@ -240,7 +249,7 @@ export default async function EditAdvertisementPage({
           {newProfile ? (
             <>
               Assine por {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês para
-              fotos, produtos, serviços e perfil completo.{" "}
+              capa, logo, galeria, produtos, serviços e perfil completo.{" "}
               <Link
                 href="/painel/assinatura"
                 className="font-medium text-whatsapp hover:underline"

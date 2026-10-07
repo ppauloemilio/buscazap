@@ -81,9 +81,12 @@ export function AdvertisementPaidProfileEditor({
   return (
     <div className="max-w-xl space-y-6 border-t pt-4">
       <div>
-        <h3 className="text-base font-semibold">Perfil completo</h3>
+        <h3 className="text-base font-semibold">
+          Perfil completo — endereço, horários e contatos
+        </h3>
         <p className="text-xs text-muted-foreground">
-          Endereço, horários, Instagram, site, produtos e serviços (plano{" "}
+          Descrição fica no formulário acima. Aqui: endereço, horários,
+          Instagram, site, produtos e serviços (plano{" "}
           {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}).
         </p>
       </div>

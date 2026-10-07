@@ -1,9 +1,13 @@
 export const PRICING = {
   SUBSCRIPTION_AMOUNT: 9.99,
-  /** Fotos no plano pago (capa + galeria). Premium pode exceder. */
+  /** Fotos da galeria no plano pago (além de capa e logo). */
+  PAID_MAX_GALLERY: 4,
+  /** Fotos da galeria com destaque premium. */
+  PREMIUM_MAX_GALLERY: 5,
+  /** @deprecated Prefer PAID_MAX_GALLERY */
   PAID_MAX_IMAGES: 4,
-  /** Fotos totais com destaque premium ativo. */
-  PREMIUM_MAX_IMAGES: 10,
+  /** @deprecated Prefer PREMIUM_MAX_GALLERY */
+  PREMIUM_MAX_IMAGES: 5,
   /** Produtos cadastráveis no plano pago. */
   PAID_MAX_PRODUCTS: 3,
   /** Serviços cadastráveis no plano pago. */

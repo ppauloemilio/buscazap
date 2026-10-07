@@ -145,7 +145,19 @@ export function AdvertisementProfileView({
         </div>
 
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
+          <div className="flex min-w-0 items-start gap-3">
+            {advertisement.logoUrl ? (
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border bg-muted">
+                <AdvertisementCover
+                  title={advertisement.title}
+                  category={advertisement.category}
+                  imageUrl={advertisement.logoUrl}
+                  compact
+                  fit="cover"
+                />
+              </div>
+            ) : null}
+            <div className="min-w-0">
             <h1 className="text-xl font-bold md:text-2xl">
               {advertisement.title}
             </h1>
@@ -166,6 +178,7 @@ export function AdvertisementProfileView({
                 {advertisement.description.replace(/<[^>]+>/g, " ").trim()}
               </p>
             )}
+            </div>
           </div>
           <Button variant="whatsapp" size="lg" className="shrink-0" asChild>
             <TrackedWhatsAppLink

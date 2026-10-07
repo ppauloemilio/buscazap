@@ -48,7 +48,9 @@ import { getCatalogLocationError } from "@/application/services/catalog-location
 import {
   addAdvertisementGalleryImages,
   removeAdvertisementGalleryImage,
+  removeAdvertisementLogo,
   replaceAdvertisementCover,
+  replaceAdvertisementLogo,
   saveAdvertisementImages,
 } from "@/application/services/advertisement-image-service";
 import {
@@ -550,6 +552,7 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
     await requireOwnedPremiumAdvertisement(provider.id, advertisementId);
 
     const coverFile = formData.get("coverImage");
+    const logoFile = formData.get("logoImage");
     const galleryFiles = parseImageFiles(formData, "galleryImages");
 
     if (galleryFiles.length > ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages) {
@@ -569,9 +572,10 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
     }
 
     const hasCoverFile = coverFile instanceof File && coverFile.size > 0;
+    const hasLogoFile = logoFile instanceof File && logoFile.size > 0;
     const hasGalleryFiles = galleryFiles.length > 0;
 
-    if (!hasCoverFile && !hasGalleryFiles) {
+    if (!hasCoverFile && !hasLogoFile && !hasGalleryFiles) {
       redirectToEditImages(advertisementId, {
         error: "Selecione ao menos uma foto para atualizar",
       });
@@ -584,8 +588,16 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
       }
     }
 
+    if (hasLogoFile) {
+      const logoValidationError = validateImageFile(logoFile, "Logo da marca");
+      if (logoValidationError) {
+        redirectToEditImages(advertisementId, { error: logoValidationError });
+      }
+    }
+
     const requestFiles = [
       ...(hasCoverFile ? [coverFile as File] : []),
+      ...(hasLogoFile ? [logoFile as File] : []),
       ...galleryFiles,
     ];
     const requestBytes = requestFiles.reduce((sum, file) => sum + file.size, 0);
@@ -599,6 +611,10 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
 
     if (hasCoverFile) {
       await replaceAdvertisementCover(advertisementId, coverFile);
+    }
+
+    if (hasLogoFile) {
+      await replaceAdvertisementLogo(advertisementId, logoFile as File);
     }
 
     if (hasGalleryFiles) {
@@ -645,6 +661,30 @@ export async function removeAdvertisementGalleryImageAction(formData: FormData) 
         ? error.message
         : "Não foi possível remover a foto da galeria";
 
+    redirectToEditImages(advertisementId, { error: message });
+  }
+
+  revalidateAdvertisementPaths(advertisementId);
+  redirectToEditImages(advertisementId, { saved: "1" });
+}
+
+export async function removeAdvertisementLogoAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const advertisementId = formData.get("advertisementId");
+
+  if (typeof advertisementId !== "string" || !advertisementId) {
+    redirect("/painel/anuncios");
+  }
+
+  await requireOwnedPremiumAdvertisement(provider.id, advertisementId);
+
+  try {
+    await removeAdvertisementLogo(advertisementId);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível remover o logo";
     redirectToEditImages(advertisementId, { error: message });
   }
 

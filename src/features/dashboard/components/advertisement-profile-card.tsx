@@ -111,29 +111,31 @@ export function AdvertisementProfileCard({
         <div className="absolute right-2 top-2">
           <FavoriteButton advertisementId={advertisement.id} />
         </div>
-        {advertisement.imageUrl && (
-          <div className="absolute -bottom-5 left-2.5 h-11 w-11 overflow-hidden rounded-lg border-2 border-background bg-muted shadow">
-            <AdvertisementCover
-              title={advertisement.title}
-              category={advertisement.category}
-              imageUrl={advertisement.imageUrl}
-              compact
-              fit="cover"
-            />
-          </div>
-        )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col space-y-1.5 px-2.5 pb-2.5 pt-6">
-        <div className="min-w-0">
-          <Link href={detailHref} onClick={handleOpenDetail}>
-            <h3 className="line-clamp-1 text-sm font-semibold hover:text-whatsapp">
-              {advertisement.title}
-            </h3>
-          </Link>
-          <p className="truncate text-[11px] text-muted-foreground">
-            {advertisement.category}
-          </p>
+      <div className="flex min-w-0 flex-1 flex-col space-y-1.5 px-2.5 pb-2.5 pt-2.5">
+        <div className="flex min-w-0 items-start gap-2">
+          {advertisement.logoUrl ? (
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
+              <AdvertisementCover
+                title={advertisement.title}
+                category={advertisement.category}
+                imageUrl={advertisement.logoUrl}
+                compact
+                fit="cover"
+              />
+            </div>
+          ) : null}
+          <div className="min-w-0">
+            <Link href={detailHref} onClick={handleOpenDetail}>
+              <h3 className="line-clamp-1 text-sm font-semibold hover:text-whatsapp">
+                {advertisement.title}
+              </h3>
+            </Link>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {advertisement.category}
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-1">
