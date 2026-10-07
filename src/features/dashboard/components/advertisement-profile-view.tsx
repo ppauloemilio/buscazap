@@ -77,10 +77,11 @@ export function AdvertisementProfileView({
   const hours = parseBusinessHoursJson(advertisement.businessHoursJson);
   const open = isOpenNow(hours);
   const hoursList = formatBusinessHoursList(hours);
-  const gallery = [
-    ...(advertisement.imageUrl ? [advertisement.imageUrl] : []),
-    ...(advertisement.galleryImages ?? []),
-  ].slice(0, advertisement.isPremium ? 10 : 4);
+  // Galeria = fotos extras (sem repetir a capa do topo)
+  const gallery = (advertisement.galleryImages ?? []).slice(
+    0,
+    advertisement.isPremium ? 9 : 3
+  );
   const hasReviews = advertisement.reviewCount > 0;
 
   if (isFree) {
@@ -133,45 +134,38 @@ export function AdvertisementProfileView({
           priority
           fit="cover"
         />
+        <div className="absolute right-3 top-3">
+          <FavoriteButton advertisementId={advertisement.id} size="sm" />
+        </div>
       </div>
 
-      <div className="container mx-auto px-4">
-        <div className="relative -mt-10 mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="flex items-end gap-3">
-            <div className="h-20 w-20 overflow-hidden rounded-xl border-4 border-background bg-muted shadow-md">
-              <AdvertisementCover
-                title={advertisement.title}
-                category={advertisement.category}
-                imageUrl={advertisement.imageUrl}
-                compact
-                fit="cover"
-              />
-            </div>
-            <div className="pb-1">
-              <div className="mb-1 flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-bold md:text-2xl">
-                  {advertisement.title}
-                </h1>
-                <FavoriteButton advertisementId={advertisement.id} size="sm" />
+      <div className="container mx-auto px-4 pt-4">
+        <div className="mb-4">
+          <AdvertisementBackLink />
+        </div>
+
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h1 className="text-xl font-bold md:text-2xl">
+              {advertisement.title}
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {advertisement.category}
+            </p>
+            {hasReviews && (
+              <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                <span className="font-medium text-foreground">
+                  {formatRating(advertisement.rating)}
+                </span>
+                <span>({advertisement.reviewCount})</span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {advertisement.category}
+            )}
+            {advertisement.description && (
+              <p className="mt-1 line-clamp-2 max-w-xl text-sm text-muted-foreground">
+                {advertisement.description.replace(/<[^>]+>/g, " ").trim()}
               </p>
-              {hasReviews && (
-                <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <span className="font-medium text-foreground">
-                    {formatRating(advertisement.rating)}
-                  </span>
-                  <span>({advertisement.reviewCount})</span>
-                </div>
-              )}
-              {advertisement.description && (
-                <p className="mt-1 line-clamp-2 max-w-xl text-sm text-muted-foreground">
-                  {advertisement.description.replace(/<[^>]+>/g, " ").trim()}
-                </p>
-              )}
-            </div>
+            )}
           </div>
           <Button variant="whatsapp" size="lg" className="shrink-0" asChild>
             <TrackedWhatsAppLink
@@ -182,10 +176,6 @@ export function AdvertisementProfileView({
               Chamar no WhatsApp
             </TrackedWhatsAppLink>
           </Button>
-        </div>
-
-        <div className="mb-4">
-          <AdvertisementBackLink />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
