@@ -20,12 +20,10 @@ export default async function HomePage() {
       <HeroSearch
         cities={data.cityNames}
         neighborhoodsByCity={data.neighborhoodsByCity}
-        categories={data.categories.map((category) => ({
-          name: category.name,
-          slug: category.slug,
-          icon: category.icon,
-        }))}
       />
+      {homepageSettings.showPopularCategories && (
+        <CategoryGrid categories={data.popularCategories} />
+      )}
       {homepageSettings.showUrgentSearches && <UrgentSearches />}
       {isAdmin && <StatsSection stats={data.stats} />}
       {isNewAdProfileEnabled() ? (
@@ -60,9 +58,6 @@ export default async function HomePage() {
             />
           )}
         </>
-      )}
-      {homepageSettings.showPopularCategories && (
-        <CategoryGrid categories={data.popularCategories} />
       )}
       {homepageSettings.showCityExplorer && (
         <CityExplorer cities={data.cityNames} />
