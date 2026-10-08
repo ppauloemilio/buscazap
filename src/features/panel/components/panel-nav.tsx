@@ -11,6 +11,7 @@ import {
   Gift,
   Sparkles,
   BarChart3,
+  Tag,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -35,12 +36,23 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function PanelNav() {
+interface PanelNavProps {
+  readonly showPromotions?: boolean;
+}
+
+export function PanelNav({ showPromotions = false }: PanelNavProps) {
   const pathname = usePathname();
+  const items = showPromotions
+    ? [
+        ...NAV_ITEMS.slice(0, 3),
+        { href: "/painel/promocoes", label: "Promoções", icon: Tag },
+        ...NAV_ITEMS.slice(3),
+      ]
+    : NAV_ITEMS;
 
   return (
     <nav className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:flex lg:flex-col">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = isActive(pathname, item.href);
 
         return (

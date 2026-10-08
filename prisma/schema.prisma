@@ -29,10 +29,13 @@ model Provider {
   referredBy            Provider?       @relation("ProviderReferrals", fields: [referredById], references: [id], onDelete: SetNull)
   referrals             Provider[]      @relation("ProviderReferrals")
   subscriptionExpiresAt DateTime?
+  /** BASIC (padrão) ou PLUS — promoções só no PLUS com assinatura ativa. */
+  subscriptionTier      String          @default("BASIC")
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
   advertisements        Advertisement[]
   companyImages         ProviderImage[]
+  promotions            ProviderPromotion[]
   payments              Payment[]
   subscriptions         Subscription[]
   auditLogs             AuditLog[]
@@ -48,6 +51,25 @@ model ProviderImage {
   url        String
   sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())
+
+  @@index([providerId, sortOrder])
+}
+
+model ProviderPromotion {
+  id            String   @id @default(cuid())
+  providerId    String
+  provider      Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  imageUrl      String?
+  priceOriginal Float
+  pricePromo    Float
+  startsAt      DateTime
+  endsAt        DateTime
+  isEnabled     Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([providerId, sortOrder])
 }
@@ -297,6 +319,7 @@ model HomepageSetting {
   showUrgentSearches    Boolean  @default(false)
   showPopularCategories Boolean  @default(false)
   showCityExplorer      Boolean  @default(false)
+  plusPlanEnabled       Boolean  @default(false)
   updatedAt             DateTime @updatedAt
 }
 

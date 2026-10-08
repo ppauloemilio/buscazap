@@ -287,6 +287,7 @@ export async function updateHomepageSettingsAction(formData: FormData) {
     showUrgentSearches: formData.get("showUrgentSearches") === "on",
     showPopularCategories: formData.get("showPopularCategories") === "on",
     showCityExplorer: formData.get("showCityExplorer") === "on",
+    plusPlanEnabled: formData.get("plusPlanEnabled") === "on",
   });
 
   revalidatePath("/");

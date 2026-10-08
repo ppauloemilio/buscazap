@@ -67,6 +67,17 @@ export function mapAdvertisementToEntity(
   options?: {
     readonly plan?: "free" | "paid";
     readonly subscriptionActive?: boolean;
+    readonly hasActivePromotions?: boolean;
+    readonly promotions?: readonly {
+      readonly id: string;
+      readonly title: string;
+      readonly description: string;
+      readonly imageUrl: string | null;
+      readonly priceOriginal: number;
+      readonly pricePromo: number;
+      readonly startsAt: Date;
+      readonly endsAt: Date;
+    }[];
   }
 ): Advertisement {
   const premiumActive = isPremiumActive(ad.premiumExpiresAt);
@@ -147,6 +158,22 @@ export function mapAdvertisementToEntity(
     premiumExpiresAt: ad.premiumExpiresAt?.toISOString(),
     plan,
     subscriptionActive: options?.subscriptionActive,
+    hasActivePromotions: options?.hasActivePromotions,
+    promotions:
+      showPaidExtras && options?.promotions?.length
+        ? options.promotions.map((promo) => ({
+            id: promo.id,
+            title: promo.title,
+            description: promo.description,
+            imageUrl: promo.imageUrl
+              ? resolveAdvertisementImageUrl(promo.imageUrl)
+              : undefined,
+            priceOriginal: promo.priceOriginal,
+            pricePromo: promo.pricePromo,
+            startsAt: promo.startsAt.toISOString(),
+            endsAt: promo.endsAt.toISOString(),
+          }))
+        : undefined,
     products: showPaidExtras
       ? (ad.products ?? [])
           .slice()

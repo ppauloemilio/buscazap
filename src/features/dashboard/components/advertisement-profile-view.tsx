@@ -38,7 +38,12 @@ import {
 } from "@/shared/utils/business-hours";
 import { cn } from "@/lib/utils";
 
-type ProfileTab = "descricao" | "produtos" | "servicos" | "avaliacoes";
+type ProfileTab =
+  | "descricao"
+  | "produtos"
+  | "servicos"
+  | "promocoes"
+  | "avaliacoes";
 
 interface ReviewItem {
   readonly id: string;
@@ -53,17 +58,20 @@ interface AdvertisementProfileViewProps {
   readonly reviews: readonly ReviewItem[];
 }
 
-const TABS: { id: ProfileTab; label: string }[] = [
-  { id: "descricao", label: "Descrição" },
-  { id: "produtos", label: "Produtos" },
-  { id: "servicos", label: "Serviços" },
-  { id: "avaliacoes", label: "Avaliações" },
-];
-
 export function AdvertisementProfileView({
   advertisement,
   reviews,
 }: AdvertisementProfileViewProps) {
+  const hasPromotions = (advertisement.promotions?.length ?? 0) > 0;
+  const tabs: { id: ProfileTab; label: string }[] = [
+    { id: "descricao", label: "Descrição" },
+    { id: "produtos", label: "Produtos" },
+    { id: "servicos", label: "Serviços" },
+    ...(hasPromotions
+      ? [{ id: "promocoes" as const, label: "Promoções" }]
+      : []),
+    { id: "avaliacoes", label: "Avaliações" },
+  ];
   const [tab, setTab] = useState<ProfileTab>("descricao");
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const isFree = advertisement.plan === "free";
@@ -263,7 +271,7 @@ export function AdvertisementProfileView({
 
             <div className="border-b">
               <nav className="flex gap-4 overflow-x-auto">
-                {TABS.map((item) => (
+                {tabs.map((item) => (
                   <button
                     key={item.id}
                     type="button"
@@ -367,6 +375,47 @@ export function AdvertisementProfileView({
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {tab === "promocoes" && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {advertisement.promotions?.map((promo) => (
+                    <article
+                      key={promo.id}
+                      className="overflow-hidden rounded-xl border bg-card"
+                    >
+                      {promo.imageUrl ? (
+                        <div className="relative aspect-[16/10] bg-muted">
+                          <Image
+                            src={promo.imageUrl}
+                            alt={promo.title}
+                            fill
+                            className="object-cover"
+                            sizes="320px"
+                          />
+                        </div>
+                      ) : null}
+                      <div className="space-y-2 p-4">
+                        <h3 className="font-semibold">{promo.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {promo.description}
+                        </p>
+                        <div className="flex flex-wrap items-baseline gap-2">
+                          <span className="text-sm text-muted-foreground line-through">
+                            {formatPriceBRL(promo.priceOriginal)}
+                          </span>
+                          <span className="text-lg font-bold text-whatsapp">
+                            {formatPriceBRL(promo.pricePromo)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Válida até{" "}
+                          {new Date(promo.endsAt).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               )}
 

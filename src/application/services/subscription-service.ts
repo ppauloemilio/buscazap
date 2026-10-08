@@ -1,7 +1,12 @@
 import type { Prisma } from "@prisma/client";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { PRICING } from "@/config/pricing";
+import {
+  SUBSCRIPTION_TIER_REFERENCE,
+  SubscriptionTier,
+} from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
+import { getProviderSubscriptionTier } from "@/lib/plus-plan";
 import {
   canRenewSubscription,
   hasActiveSubscription,
@@ -45,9 +50,36 @@ export async function getSubscriptionStatus(providerId: string) {
       : null,
     lastSubscription: provider.subscriptions[0] ?? null,
     monthlyAmount: PRICING.SUBSCRIPTION_AMOUNT,
+    plusMonthlyAmount: PRICING.SUBSCRIPTION_PLUS_AMOUNT,
+    subscriptionTier: getProviderSubscriptionTier(provider),
     durationDays: PRICING.SUBSCRIPTION_DAYS,
     renewalWindowDays: PRICING.SUBSCRIPTION_RENEWAL_WINDOW_DAYS,
   };
+}
+
+export async function downgradeProviderToBasicTier(providerId: string) {
+  const provider = await prisma.provider.findUnique({
+    where: { id: providerId },
+    select: { id: true, role: true, subscriptionExpiresAt: true },
+  });
+
+  if (!provider || isAdminProvider(provider)) {
+    throw new Error("Não é possível alterar o plano desta conta");
+  }
+
+  await prisma.provider.update({
+    where: { id: providerId },
+    data: { subscriptionTier: SubscriptionTier.BASIC },
+  });
+}
+
+function resolveTierFromPaymentReference(
+  referenceId: string | null | undefined
+): SubscriptionTier {
+  if (referenceId === SUBSCRIPTION_TIER_REFERENCE.PLUS) {
+    return SubscriptionTier.PLUS;
+  }
+  return SubscriptionTier.BASIC;
 }
 
 export async function activateSubscription(
@@ -56,6 +88,15 @@ export async function activateSubscription(
   paymentId: string,
   paidAt: Date
 ) {
+  const payment = await tx.payment.findUnique({
+    where: { id: paymentId },
+    select: { amount: true, referenceId: true },
+  });
+
+  if (!payment) {
+    throw new Error("PAYMENT_NOT_FOUND");
+  }
+
   const provider = await tx.provider.findUnique({
     where: { id: providerId },
   });
@@ -63,6 +104,8 @@ export async function activateSubscription(
   if (!provider) {
     throw new Error("PROVIDER_NOT_FOUND");
   }
+
+  const tier = resolveTierFromPaymentReference(payment.referenceId);
 
   const baseDate =
     provider.subscriptionExpiresAt &&
@@ -77,7 +120,7 @@ export async function activateSubscription(
     data: {
       providerId,
       paymentId,
-      amount: PRICING.SUBSCRIPTION_AMOUNT,
+      amount: payment.amount,
       startsAt: paidAt,
       expiresAt,
     },
@@ -85,7 +128,10 @@ export async function activateSubscription(
 
   await tx.provider.update({
     where: { id: providerId },
-    data: { subscriptionExpiresAt: expiresAt },
+    data: {
+      subscriptionExpiresAt: expiresAt,
+      subscriptionTier: tier,
+    },
   });
 
   await tx.advertisement.updateMany({

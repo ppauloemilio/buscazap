@@ -41,10 +41,21 @@ export enum ProviderLeadStatus {
   DISMISSED = "DISMISSED",
 }
 
+export enum SubscriptionTier {
+  BASIC = "BASIC",
+  PLUS = "PLUS",
+}
+
 export enum PaymentType {
   SUBSCRIPTION = "SUBSCRIPTION",
   PREMIUM_BOOST = "PREMIUM_BOOST",
 }
+
+/** Valor em Payment.referenceId para assinaturas PIX. */
+export const SUBSCRIPTION_TIER_REFERENCE = {
+  BASIC: "BASIC",
+  PLUS: "PLUS",
+} as const;
 
 export enum PaymentStatus {
   PENDING = "PENDING",

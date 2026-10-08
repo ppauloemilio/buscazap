@@ -1,7 +1,13 @@
 import { randomBytes } from "crypto";
 import QRCode from "qrcode";
 import { PRICING } from "@/config/pricing";
-import { PaymentStatus, PaymentType } from "@/domain/enums";
+import {
+  PaymentStatus,
+  PaymentType,
+  SUBSCRIPTION_TIER_REFERENCE,
+  SubscriptionTier,
+} from "@/domain/enums";
+import { isPlusPlanOfferEnabled } from "@/lib/plus-plan";
 import { getPixProvider } from "@/infrastructure/pix";
 import { prisma } from "@/lib/prisma";
 import {
@@ -91,13 +97,31 @@ async function getProviderPaymentProfile(providerId: string) {
 
 export async function createSubscriptionPayment(
   providerId: string,
-  options?: { readonly bypassRenewalWindow?: boolean }
+  options?: {
+    readonly bypassRenewalWindow?: boolean;
+    readonly tier?: SubscriptionTier;
+  }
 ) {
   const provider = await getProviderPaymentProfile(providerId);
+  const tier = options?.tier ?? SubscriptionTier.BASIC;
+
+  if (tier === SubscriptionTier.PLUS && !(await isPlusPlanOfferEnabled())) {
+    throw new Error("Plano Plus indisponível no momento");
+  }
+
+  const amount =
+    tier === SubscriptionTier.PLUS
+      ? PRICING.SUBSCRIPTION_PLUS_AMOUNT
+      : PRICING.SUBSCRIPTION_AMOUNT;
+
+  const hasActive = hasActiveSubscription(provider.subscriptionExpiresAt);
+  const upgradingToPlusWhileActive =
+    tier === SubscriptionTier.PLUS && hasActive;
 
   if (
     !options?.bypassRenewalWindow &&
-    hasActiveSubscription(provider.subscriptionExpiresAt) &&
+    !upgradingToPlusWhileActive &&
+    hasActive &&
     !canRenewSubscription(provider.subscriptionExpiresAt)
   ) {
     throw new Error(
@@ -105,13 +129,20 @@ export async function createSubscriptionPayment(
     );
   }
 
+  const tierLabel =
+    tier === SubscriptionTier.PLUS ? "Plano Plus" : "Plano pago";
+
   return initiatePayment({
     providerId,
     providerEmail: provider.email,
     providerName: provider.name,
     type: PaymentType.SUBSCRIPTION,
-    amount: PRICING.SUBSCRIPTION_AMOUNT,
-    description: "Assinatura mensal BuscaZapp",
+    amount,
+    description: `Assinatura mensal BuscaZapp — ${tierLabel}`,
+    referenceId:
+      tier === SubscriptionTier.PLUS
+        ? SUBSCRIPTION_TIER_REFERENCE.PLUS
+        : SUBSCRIPTION_TIER_REFERENCE.BASIC,
   });
 }
 

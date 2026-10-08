@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { LayoutGrid, MapPin, Zap } from "lucide-react";
+import { LayoutGrid, MapPin, Sparkles, Zap } from "lucide-react";
 import { updateHomepageSettingsAction } from "@/actions/admin-actions";
 import { getHomepageSettings } from "@/application/services/homepage-settings-service";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
@@ -31,6 +31,13 @@ const TOGGLES = [
     label: "Buscar por cidade",
     description: "Lista de cidades para explorar anúncios.",
     icon: MapPin,
+  },
+  {
+    name: "plusPlanEnabled",
+    label: "Plano Plus (promoções)",
+    description:
+      "Permite upgrade Plus e menu Promoções no painel do anunciante.",
+    icon: Sparkles,
   },
 ] as const;
 

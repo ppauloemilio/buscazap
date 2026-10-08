@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Star, MapPin, MessageCircle, CheckCircle2 } from "lucide-react";
+import { Star, MapPin, MessageCircle, CheckCircle2, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -162,6 +162,15 @@ export function AdvertisementProfileCard({
               className="px-1.5 py-0 text-[9px] leading-4"
             >
               Fechado
+            </Badge>
+          )}
+          {advertisement.hasActivePromotions && (
+            <Badge
+              variant="outline"
+              className="gap-0.5 border-amber-300 bg-amber-50 px-1.5 py-0 text-[9px] leading-4 text-amber-900"
+            >
+              <Tag className="h-2.5 w-2.5" />
+              Promoções
             </Badge>
           )}
         </div>

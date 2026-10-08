@@ -25,6 +25,11 @@ import {
   resolveCategorySlugByName,
   resolveCategorySlugsByNames,
 } from "@/application/services/slug-service";
+import {
+  getProviderIdsWithActivePromotions,
+  listActivePromotionsForProvider,
+} from "@/application/services/provider-promotion-service";
+import { canUsePlusFeatures } from "@/lib/plus-plan";
 
 const PUBLIC_SEARCH_MAX_RESULTS = 300;
 
@@ -46,6 +51,41 @@ function mapListedAdvertisement(
   });
 
   return mapAdvertisementToEntity(ad, { plan, subscriptionActive });
+}
+
+async function enrichMappedAdvertisementWithPromotions(
+  advertisement: Parameters<typeof mapListedAdvertisement>[0] & {
+    readonly providerId: string;
+    readonly provider: {
+      readonly role: string;
+      readonly subscriptionExpiresAt: Date | null;
+      readonly subscriptionTier: string;
+    };
+  },
+  mapped: Advertisement
+): Promise<Advertisement> {
+  if (mapped.plan === "free") {
+    return mapped;
+  }
+
+  if (
+    !(await canUsePlusFeatures({
+      role: advertisement.provider.role,
+      subscriptionExpiresAt: advertisement.provider.subscriptionExpiresAt,
+      subscriptionTier: advertisement.provider.subscriptionTier,
+    }))
+  ) {
+    return mapped;
+  }
+
+  const promotions = await listActivePromotionsForProvider(advertisement.providerId);
+
+  return mapAdvertisementToEntity(advertisement, {
+    plan: mapped.plan,
+    subscriptionActive: mapped.subscriptionActive,
+    hasActivePromotions: promotions.length > 0,
+    promotions,
+  });
 }
 
 export function getAdSlotLimitMessage(): string {
@@ -354,7 +394,22 @@ export async function findPublicAdvertisements(
     });
   }
 
-  return results;
+  const providerIds = [
+    ...new Set(
+      results
+        .map((ad) => ad.providerId)
+        .filter((id): id is string => Boolean(id))
+    ),
+  ];
+  const providersWithPromotions =
+    await getProviderIdsWithActivePromotions(providerIds);
+
+  return results.map((ad) => ({
+    ...ad,
+    hasActivePromotions: ad.providerId
+      ? providersWithPromotions.has(ad.providerId)
+      : false,
+  }));
 }
 
 export async function findAdvertisementById(id: string) {
@@ -376,6 +431,7 @@ export async function findAdvertisementById(id: string) {
           status: true,
           role: true,
           subscriptionExpiresAt: true,
+          subscriptionTier: true,
           name: true,
           bio: true,
           businessHours: true,
@@ -405,7 +461,10 @@ export async function findAdvertisementById(id: string) {
   }
 
   const categorySlug = await resolveCategorySlugByName(advertisement.category);
-  const mapped = mapListedAdvertisement(advertisement);
+  const mapped = await enrichMappedAdvertisementWithPromotions(
+    advertisement,
+    mapListedAdvertisement(advertisement)
+  );
 
   return {
     ...mapped,
@@ -459,6 +518,7 @@ export async function findAdvertisementByCategoryAndSlug(
           status: true,
           role: true,
           subscriptionExpiresAt: true,
+          subscriptionTier: true,
           name: true,
           bio: true,
           businessHours: true,
@@ -476,7 +536,10 @@ export async function findAdvertisementByCategoryAndSlug(
     return undefined;
   }
 
-  const mapped = mapListedAdvertisement(advertisement);
+  const mapped = await enrichMappedAdvertisementWithPromotions(
+    advertisement,
+    mapListedAdvertisement(advertisement)
+  );
 
   return {
     ...mapped,

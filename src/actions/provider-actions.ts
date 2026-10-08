@@ -11,6 +11,8 @@ import {
   createPremiumBoostPayment,
   createSubscriptionPayment,
 } from "@/application/services/payment-service";
+import { downgradeProviderToBasicTier } from "@/application/services/subscription-service";
+import { SubscriptionTier } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
 import { canUsePaidAdFeatures } from "@/lib/provider-plan";
 import {
@@ -282,22 +284,54 @@ export async function logoutProviderAction() {
   redirect("/");
 }
 
-export async function createSubscriptionPaymentAction() {
+function parseSubscriptionTierFromForm(
+  value: FormDataEntryValue | null
+): SubscriptionTier {
+  if (value === SubscriptionTier.PLUS) {
+    return SubscriptionTier.PLUS;
+  }
+  return SubscriptionTier.BASIC;
+}
+
+export async function createSubscriptionPaymentAction(formData?: FormData) {
   const provider = await requireCurrentProvider();
 
   if (isAdminProvider(provider)) {
     redirect("/painel/assinatura");
   }
 
+  const tier = parseSubscriptionTierFromForm(formData?.get("tier") ?? null);
+
   let payment;
 
   try {
-    payment = await createSubscriptionPayment(provider.id);
+    payment = await createSubscriptionPayment(provider.id, { tier });
   } catch (error) {
     redirectWithPaymentError("/painel/assinatura", error);
   }
 
   redirect(`/pagamento/${payment.id}`);
+}
+
+export async function downgradeToBasicPlanAction() {
+  const provider = await requireCurrentProvider();
+
+  if (isAdminProvider(provider)) {
+    redirect("/painel/assinatura");
+  }
+
+  try {
+    await downgradeProviderToBasicTier(provider.id);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível alterar o plano";
+    redirect(`/painel/assinatura?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/painel");
+  revalidatePath("/painel/assinatura");
+  revalidatePath("/painel/promocoes");
+  redirect("/painel/assinatura?downgraded=1");
 }
 
 export async function createPremiumPaymentAction(advertisementId: string) {
@@ -1172,4 +1206,136 @@ export async function deleteAdvertisementServiceAction(formData: FormData) {
 
   revalidateAdvertisementPaths(advertisementId);
   redirectToAdEdit(advertisementId, { saved: "1" });
+}
+
+function redirectToPromotions(query?: { error?: string; saved?: string }): never {
+  const params = new URLSearchParams();
+  if (query?.error) params.set("error", query.error);
+  if (query?.saved) params.set("saved", "1");
+  const qs = params.toString();
+  redirect(qs ? `/painel/promocoes?${qs}` : "/painel/promocoes");
+}
+
+export async function saveProviderPromotionAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const promotionId = String(formData.get("promotionId") ?? "").trim() || undefined;
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const priceOriginal = Number(formData.get("priceOriginal"));
+  const pricePromo = Number(formData.get("pricePromo"));
+  const startsAtRaw = String(formData.get("startsAt") ?? "").trim();
+  const endsAtRaw = String(formData.get("endsAt") ?? "").trim();
+
+  if (!startsAtRaw || !endsAtRaw) {
+    redirectToPromotions({ error: "Informe datas de início e fim válidas" });
+  }
+
+  const startsAtValue = new Date(startsAtRaw);
+  const endsAtValue = new Date(endsAtRaw);
+
+  if (
+    Number.isNaN(startsAtValue.getTime()) ||
+    Number.isNaN(endsAtValue.getTime())
+  ) {
+    redirectToPromotions({ error: "Informe datas de início e fim válidas" });
+  }
+
+  const imageFile = formData.get("image");
+  let imageUrl: string | null | undefined;
+
+  try {
+    if (imageFile instanceof File && imageFile.size > 0) {
+      const validationError = validateImageFile(imageFile, "Imagem da promoção");
+      if (validationError) {
+        redirectToPromotions({ error: validationError });
+      }
+      const { uploadAdvertisementImage } = await import("@/lib/image-upload");
+      const ad = await prisma.advertisement.findFirst({
+        where: { providerId: provider.id },
+        select: { id: true },
+        orderBy: { createdAt: "asc" },
+      });
+      const uploadScope = ad?.id ?? provider.id;
+      imageUrl = await uploadAdvertisementImage(
+        imageFile,
+        uploadScope,
+        `promo-${Date.now()}`
+      );
+    }
+
+    const { upsertProviderPromotion } = await import(
+      "@/application/services/provider-promotion-service"
+    );
+    await upsertProviderPromotion({
+      providerId: provider.id,
+      promotionId,
+      title,
+      description,
+      priceOriginal,
+      pricePromo,
+      startsAt: startsAtValue,
+      endsAt: endsAtValue,
+      imageUrl,
+    });
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    const message =
+      error instanceof Error ? error.message : "Não foi possível salvar a promoção";
+    redirectToPromotions({ error: message });
+  }
+
+  revalidatePath("/painel/promocoes");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+  redirectToPromotions({ saved: "1" });
+}
+
+export async function deleteProviderPromotionAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const promotionId = String(formData.get("promotionId") ?? "").trim();
+  if (!promotionId) redirect("/painel/promocoes");
+
+  try {
+    const { deleteProviderPromotion } = await import(
+      "@/application/services/provider-promotion-service"
+    );
+    await deleteProviderPromotion({
+      providerId: provider.id,
+      promotionId,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível excluir";
+    redirectToPromotions({ error: message });
+  }
+
+  revalidatePath("/painel/promocoes");
+  revalidatePath("/buscar");
+  redirectToPromotions({ saved: "1" });
+}
+
+export async function toggleProviderPromotionAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const promotionId = String(formData.get("promotionId") ?? "").trim();
+  const enabled = formData.get("enabled") === "true";
+  if (!promotionId) redirect("/painel/promocoes");
+
+  try {
+    const { setProviderPromotionEnabled } = await import(
+      "@/application/services/provider-promotion-service"
+    );
+    await setProviderPromotionEnabled({
+      providerId: provider.id,
+      promotionId,
+      enabled,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível atualizar";
+    redirectToPromotions({ error: message });
+  }
+
+  revalidatePath("/painel/promocoes");
+  revalidatePath("/buscar");
+  redirectToPromotions({ saved: "1" });
 }

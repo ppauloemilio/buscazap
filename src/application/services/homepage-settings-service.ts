@@ -5,12 +5,14 @@ export type HomepageSettings = {
   readonly showUrgentSearches: boolean;
   readonly showPopularCategories: boolean;
   readonly showCityExplorer: boolean;
+  readonly plusPlanEnabled: boolean;
 };
 
 export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   showUrgentSearches: false,
   showPopularCategories: false,
   showCityExplorer: false,
+  plusPlanEnabled: false,
 };
 
 export async function getHomepageSettings(): Promise<HomepageSettings> {
@@ -29,6 +31,7 @@ export async function getHomepageSettings(): Promise<HomepageSettings> {
       showUrgentSearches: settings.showUrgentSearches,
       showPopularCategories: settings.showPopularCategories,
       showCityExplorer: settings.showCityExplorer,
+      plusPlanEnabled: settings.plusPlanEnabled,
     };
   } catch {
     // Table may not exist yet during first deploy window.
@@ -44,11 +47,13 @@ export async function updateHomepageSettings(input: HomepageSettings) {
       showUrgentSearches: input.showUrgentSearches,
       showPopularCategories: input.showPopularCategories,
       showCityExplorer: input.showCityExplorer,
+      plusPlanEnabled: input.plusPlanEnabled,
     },
     update: {
       showUrgentSearches: input.showUrgentSearches,
       showPopularCategories: input.showPopularCategories,
       showCityExplorer: input.showCityExplorer,
+      plusPlanEnabled: input.plusPlanEnabled,
     },
   });
 }

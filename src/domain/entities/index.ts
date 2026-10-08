@@ -33,6 +33,17 @@ export interface AdvertisementServiceItem {
   readonly imageUrl?: string;
 }
 
+export interface ProviderPromotionItem {
+  readonly id: string;
+  readonly title: string;
+  readonly description: string;
+  readonly imageUrl?: string;
+  readonly priceOriginal: number;
+  readonly pricePromo: number;
+  readonly startsAt: string;
+  readonly endsAt: string;
+}
+
 export interface Advertisement {
   readonly id: string;
   readonly title: string;
@@ -62,6 +73,8 @@ export interface Advertisement {
   /** Plano público exibido (freemium). Ausente = legado/pago. */
   readonly plan?: "free" | "paid";
   readonly subscriptionActive?: boolean;
+  readonly hasActivePromotions?: boolean;
+  readonly promotions?: readonly ProviderPromotionItem[];
   readonly products?: readonly AdvertisementProductItem[];
   readonly services?: readonly AdvertisementServiceItem[];
   readonly providerId?: string;

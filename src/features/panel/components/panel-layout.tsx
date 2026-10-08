@@ -7,6 +7,7 @@ import {
 } from "@/lib/provider-session";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { PanelNav } from "@/features/panel/components/panel-nav";
+import { canUsePlusFeatures } from "@/lib/plus-plan";
 import { SubscriptionReminderBanner } from "@/features/panel/components/subscription-reminder-banner";
 
 export async function PanelLayout({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,7 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
   const subscriptionActive = canProviderUsePaidFeatures(provider);
   const isAdmin = isAdminProvider(provider);
   const subscription = await getSubscriptionStatus(provider.id);
+  const showPromotions = await canUsePlusFeatures(provider);
 
   return (
     <div className="container mx-auto px-4 py-4 md:py-5">
@@ -43,7 +45,7 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[180px_1fr]">
-        <PanelNav />
+        <PanelNav showPromotions={showPromotions} />
         <div>
           <SubscriptionReminderBanner
             active={subscription.active}
