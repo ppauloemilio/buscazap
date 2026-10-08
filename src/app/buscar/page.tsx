@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { getPopularCategories } from "@/application/services/analytics-service";
 import { searchAdvertisements } from "@/application/services/search-service";
 import {
   categoryNameFromCatalog,
@@ -10,6 +11,7 @@ import {
 } from "@/lib/public-search-catalog";
 import { PageHeader } from "@/components/layout/page-header";
 import { AdvertisementListings } from "@/features/dashboard/components/advertisement-listings";
+import { CategoryGrid } from "@/features/dashboard/components/category-grid";
 import { SearchFilterSummary } from "@/features/search/components/search-filter-summary";
 import { SearchForm } from "@/features/search/components/search-form";
 import { buildEmptySearchTitle } from "@/features/search/utils/search-filter-summary";
@@ -48,9 +50,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const isPremium = params.premium === "true";
   const plan = isPremium ? undefined : parsePlanFilter(params.plan);
 
-  const [catalog, results] = await Promise.all([
-    getPublicSearchCatalog(),
-    getPublicSearchCatalog().then((catalog) =>
+  const catalogPromise = getPublicSearchCatalog();
+  const [catalog, results, popularCategories] = await Promise.all([
+    catalogPromise,
+    catalogPromise.then((catalog) =>
       searchAdvertisements({
         query: params.q ?? "",
         city: params.city,
@@ -62,6 +65,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         knownCategorySlugs: categorySlugMap(catalog),
       })
     ),
+    catalogPromise.then((catalog) => getPopularCategories(catalog.categories)),
   ]);
 
   const categoryName = params.category
@@ -70,7 +74,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const cityNames = catalog.cityNames;
   const neighborhoods = neighborhoodNamesFromCatalog(catalog, params.city);
-  const categories = catalog.categories;
 
   const filterParams = {
     query: params.q,
@@ -116,11 +119,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           initialSort={params.sort}
           cities={cityNames}
           neighborhoods={neighborhoods}
-          categories={categories.map((item) => ({
-            name: item.name,
-            slug: item.slug,
-            icon: item.icon,
-          }))}
+        />
+
+        <CategoryGrid
+          categories={popularCategories}
+          embedded
+          activeCategorySlug={params.category}
         />
 
         <SearchFilterSummary filters={filterParams} count={results.length} />

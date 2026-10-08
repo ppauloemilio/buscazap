@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CategoryIcon } from "@/components/category/category-icon";
-import type { SearchCategoryOption } from "@/features/dashboard/components/hero-search";
 import { CitySelect } from "@/features/search/components/city-select";
 import { NeighborhoodSelect } from "@/features/search/components/neighborhood-select";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
@@ -27,7 +25,6 @@ interface SearchFormProps {
   readonly initialSort?: string;
   readonly cities?: readonly string[];
   readonly neighborhoods?: readonly string[];
-  readonly categories?: readonly SearchCategoryOption[];
 }
 
 export function SearchForm({
@@ -40,19 +37,15 @@ export function SearchForm({
   initialSort,
   cities = POPULAR_CITIES,
   neighborhoods = [],
-  categories = [],
 }: SearchFormProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [city, setCity] = useState(initialCity);
   const [neighborhood, setNeighborhood] = useState(initialNeighborhood);
-  const [category, setCategory] = useState(initialCategory || "all");
-  const [showFilters, setShowFilters] = useState(true);
 
   useEffect(() => {
     setQuery(initialQuery);
-    setCategory(initialCategory || "all");
-  }, [initialQuery, initialCategory]);
+  }, [initialQuery]);
 
   useEffect(() => {
     setNeighborhood(initialNeighborhood);
@@ -79,12 +72,10 @@ export function SearchForm({
     readonly query?: string;
     readonly city?: string;
     readonly neighborhood?: string;
-    readonly category?: string;
   }) {
     const resolvedQuery = next?.query ?? query;
     const resolvedCity = next?.city ?? city;
     const resolvedNeighborhood = next?.neighborhood ?? neighborhood;
-    const resolvedCategory = next?.category ?? category;
 
     setPreferredCity(resolvedCity);
 
@@ -92,7 +83,7 @@ export function SearchForm({
       query: resolvedQuery,
       city: resolvedCity,
       neighborhood: resolvedCity ? resolvedNeighborhood : undefined,
-      category: resolvedCategory === "all" ? undefined : resolvedCategory,
+      category: initialCategory,
       premium: initialPremium,
       plan: initialPlan,
       sort: initialSort,
@@ -111,8 +102,8 @@ export function SearchForm({
       onSubmit={handleSearch}
       className="rounded-xl border bg-card p-4 shadow-sm md:p-5"
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <div className="relative min-w-0 flex-1 basis-full sm:basis-64">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
@@ -148,66 +139,15 @@ export function SearchForm({
           id="search-neighborhood"
           className="sm:w-28"
         />
-        <Button type="submit" variant="whatsapp" size="sm" className="h-8 px-3 text-xs sm:w-auto">
+        <Button
+          type="submit"
+          variant="whatsapp"
+          size="sm"
+          className="h-8 shrink-0 px-3 text-xs sm:px-4"
+        >
           <Search className="h-3.5 w-3.5" />
           Buscar
         </Button>
-      </div>
-
-      <div className="mt-3 space-y-2">
-        <button
-          type="button"
-          onClick={() => setShowFilters((current) => !current)}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-          {showFilters ? "Ocultar categorias" : "Categorias"}
-        </button>
-
-        {showFilters && (
-          <div className="flex flex-wrap gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                setCategory("all");
-                setCity("");
-                setNeighborhood("");
-                navigate({ category: "all", city: "", neighborhood: "" });
-              }}
-              className={`rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                category === "all"
-                  ? "bg-whatsapp text-whatsapp-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              Todas
-            </button>
-            {categories.map((item) => (
-              <button
-                key={item.slug}
-                type="button"
-                onClick={() => {
-                  setCategory(item.slug);
-                  setCity("");
-                  setNeighborhood("");
-                  navigate({ category: item.slug, city: "", neighborhood: "" });
-                }}
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                  category === item.slug
-                    ? "bg-whatsapp text-whatsapp-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                <CategoryIcon
-                  icon={item.icon}
-                  size="sm"
-                  className="text-[11px]"
-                />
-                {item.name}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     </form>
   );

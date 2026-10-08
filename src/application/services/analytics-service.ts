@@ -1,3 +1,4 @@
+import type { Category } from "@/domain/entities";
 import { ANALYTICS_EVENT_TYPE } from "@/config/analytics";
 import { markDataFetchDynamic } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
@@ -68,6 +69,25 @@ export async function getCategoryAdViewCounts(
   }
 
   return viewsByCategory;
+}
+
+/** Categorias com anúncios, ordenadas por visualizações (AD_VIEW). */
+export async function getPopularCategories(
+  categories: readonly Category[],
+  days = 30
+): Promise<Category[]> {
+  const adViewsByCategory = await getCategoryAdViewCounts(days);
+
+  return categories
+    .filter((category) => category.count > 0)
+    .slice()
+    .sort((a, b) => {
+      const viewsA = adViewsByCategory.get(a.name) ?? 0;
+      const viewsB = adViewsByCategory.get(b.name) ?? 0;
+      if (viewsB !== viewsA) return viewsB - viewsA;
+      if (b.count !== a.count) return b.count - a.count;
+      return a.name.localeCompare(b.name, "pt-BR");
+    });
 }
 
 export async function recordAnalyticsEvent(input: {
