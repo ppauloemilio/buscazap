@@ -14,6 +14,7 @@ import {
   buildSearchHref,
   getPreferredCity,
   setPreferredCity,
+  type SearchPlanFilter,
 } from "@/shared/utils/search-preferences";
 
 interface SearchFormProps {
@@ -22,6 +23,7 @@ interface SearchFormProps {
   readonly initialNeighborhood?: string;
   readonly initialCategory?: string;
   readonly initialPremium?: boolean;
+  readonly initialPlan?: SearchPlanFilter;
   readonly initialSort?: string;
   readonly cities?: readonly string[];
   readonly neighborhoods?: readonly string[];
@@ -34,6 +36,7 @@ export function SearchForm({
   initialNeighborhood = "",
   initialCategory,
   initialPremium,
+  initialPlan,
   initialSort,
   cities = POPULAR_CITIES,
   neighborhoods = [],
@@ -91,6 +94,7 @@ export function SearchForm({
       neighborhood: resolvedCity ? resolvedNeighborhood : undefined,
       category: resolvedCategory === "all" ? undefined : resolvedCategory,
       premium: initialPremium,
+      plan: initialPlan,
       sort: initialSort,
     });
 

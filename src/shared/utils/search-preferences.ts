@@ -27,6 +27,8 @@ export function setPreferredCity(city: string): void {
   }
 }
 
+export type SearchPlanFilter = "paid" | "free";
+
 export function buildSearchHref(input: {
   readonly query?: string;
   readonly city?: string;
@@ -34,6 +36,8 @@ export function buildSearchHref(input: {
   readonly category?: string;
   readonly type?: string;
   readonly premium?: boolean;
+  /** Filtra por plano freemium (pago sem premium / listagem grátis). */
+  readonly plan?: SearchPlanFilter;
   readonly sort?: string;
 }): string {
   const params = new URLSearchParams();
@@ -45,7 +49,11 @@ export function buildSearchHref(input: {
   }
   if (input.category?.trim()) params.set("category", input.category.trim());
   if (input.type && input.type !== "all") params.set("type", input.type);
-  if (input.premium) params.set("premium", "true");
+  if (input.premium) {
+    params.set("premium", "true");
+  } else if (input.plan === "paid" || input.plan === "free") {
+    params.set("plan", input.plan);
+  }
   if (input.sort?.trim()) params.set("sort", input.sort.trim());
 
   const queryString = params.toString();

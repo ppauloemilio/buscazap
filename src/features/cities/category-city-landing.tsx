@@ -158,14 +158,20 @@ export async function CategoryCityLandingPage({
           <AdvertisementListings
             advertisements={featured}
             regularTitle={`${category.name} em ${city.name}`}
-            viewAllHref={buildSearchHref({
-              city: city.name,
-              category: category.slug,
-            })}
             premiumViewAllHref={buildSearchHref({
               city: city.name,
               category: category.slug,
               premium: true,
+            })}
+            paidViewAllHref={buildSearchHref({
+              city: city.name,
+              category: category.slug,
+              plan: "paid",
+            })}
+            freeViewAllHref={buildSearchHref({
+              city: city.name,
+              category: category.slug,
+              plan: "free",
             })}
             returnTo={pagePath}
           />

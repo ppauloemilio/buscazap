@@ -10,7 +10,10 @@ interface AdvertisementListingsProps {
   readonly advertisements: readonly Advertisement[];
   readonly regularTitle?: string;
   readonly regularDescription?: string;
+  /** @deprecated Prefer paidViewAllHref */
   readonly viewAllHref?: string;
+  readonly paidViewAllHref?: string;
+  readonly freeViewAllHref?: string;
   readonly premiumViewAllHref?: string;
   readonly returnTo?: string;
   readonly premiumOnly?: boolean;
@@ -21,6 +24,8 @@ export function AdvertisementListings({
   regularTitle = "Anúncios",
   regularDescription,
   viewAllHref,
+  paidViewAllHref,
+  freeViewAllHref,
   premiumViewAllHref = "/buscar?premium=true",
   returnTo,
   premiumOnly = false,
@@ -30,6 +35,9 @@ export function AdvertisementListings({
   const { paid, free } = freemium
     ? splitAdvertisementsByPlan(regular)
     : { paid: regular, free: [] as Advertisement[] };
+
+  const paidHref = paidViewAllHref ?? viewAllHref;
+  const freeHref = freeViewAllHref ?? viewAllHref;
 
   if (premiumOnly) {
     if (premium.length === 0) {
@@ -67,7 +75,7 @@ export function AdvertisementListings({
           title={regularTitle}
           description={regularDescription}
           advertisements={paid}
-          viewAllHref={viewAllHref}
+          viewAllHref={paidHref}
           returnTo={returnTo}
         />
       )}
@@ -77,7 +85,7 @@ export function AdvertisementListings({
           compact
           title="Listagens grátis"
           advertisements={free}
-          viewAllHref={viewAllHref}
+          viewAllHref={freeHref}
           returnTo={returnTo}
         />
       )}

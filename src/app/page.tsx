@@ -35,7 +35,9 @@ export default async function HomePage() {
             ...data.homeRegularAdvertisements,
           ]}
           regularTitle="Anúncios"
-          viewAllHref="/buscar"
+          premiumViewAllHref="/buscar?premium=true"
+          paidViewAllHref="/buscar?plan=paid"
+          freeViewAllHref="/buscar?plan=free"
           returnTo="/"
         />
       ) : (

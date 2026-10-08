@@ -1,6 +1,6 @@
 import type { AdvertisementType, ServiceArea } from "@/domain/enums";
 import type { Advertisement, SearchFilters } from "@/domain/entities";
-import { AdvertisementStatus } from "@/domain/enums";
+import { AdvertisementStatus, UserRole } from "@/domain/enums";
 import { getCategoryBySlug } from "@/application/services/catalog-service";
 import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
@@ -166,6 +166,8 @@ export async function findPublicAdvertisements(
   filters: SearchFilters & {
     readonly premium?: boolean;
     readonly nonPremiumOnly?: boolean;
+    /** Freemium: só pagos (sem premium) ou só listagens grátis. */
+    readonly plan?: "paid" | "free";
     readonly sort?: string;
     readonly take?: number;
     readonly knownCategorySlugs?:
@@ -197,6 +199,13 @@ export async function findPublicAdvertisements(
       ? filters.take
       : PUBLIC_SEARCH_MAX_RESULTS;
 
+  const planFilter =
+    !filters.premium && (filters.plan === "paid" || filters.plan === "free")
+      ? filters.plan
+      : undefined;
+  const excludePremium =
+    Boolean(filters.nonPremiumOnly) || planFilter === "paid" || planFilter === "free";
+
   const advertisements = await prisma.advertisement.findMany({
     where: {
       ...publicListingAdvertisementWhere(now),
@@ -216,12 +225,35 @@ export async function findPublicAdvertisements(
           }
         : {}),
       ...(filters.premium ? { premiumExpiresAt: { gt: now } } : {}),
-      ...(filters.nonPremiumOnly
+      ...(excludePremium
         ? {
             OR: [
               { premiumExpiresAt: null },
               { premiumExpiresAt: { lte: now } },
             ],
+          }
+        : {}),
+      ...(planFilter === "paid"
+        ? {
+            provider: {
+              status: "ACTIVE",
+              OR: [
+                { role: UserRole.ADMIN },
+                { subscriptionExpiresAt: { gt: now } },
+              ],
+            },
+          }
+        : {}),
+      ...(planFilter === "free"
+        ? {
+            provider: {
+              status: "ACTIVE",
+              role: { not: UserRole.ADMIN },
+              OR: [
+                { subscriptionExpiresAt: null },
+                { subscriptionExpiresAt: { lte: now } },
+              ],
+            },
           }
         : {}),
       ...(queryFilter

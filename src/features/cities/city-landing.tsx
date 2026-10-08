@@ -147,10 +147,17 @@ export async function CityLandingPage({ city }: { readonly city: SeoCity }) {
           <AdvertisementListings
             advertisements={featured}
             regularTitle={`Anúncios em ${city.name}`}
-            viewAllHref={buildSearchHref({ city: city.name })}
             premiumViewAllHref={buildSearchHref({
               city: city.name,
               premium: true,
+            })}
+            paidViewAllHref={buildSearchHref({
+              city: city.name,
+              plan: "paid",
+            })}
+            freeViewAllHref={buildSearchHref({
+              city: city.name,
+              plan: "free",
             })}
             returnTo={pagePath}
           />

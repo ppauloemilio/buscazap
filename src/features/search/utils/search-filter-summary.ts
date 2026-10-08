@@ -1,4 +1,7 @@
-import { buildSearchHref } from "@/shared/utils/search-preferences";
+import {
+  buildSearchHref,
+  type SearchPlanFilter,
+} from "@/shared/utils/search-preferences";
 
 export interface SearchFilterParams {
   readonly query?: string;
@@ -7,6 +10,7 @@ export interface SearchFilterParams {
   readonly categorySlug?: string;
   readonly categoryName?: string;
   readonly premium?: boolean;
+  readonly plan?: SearchPlanFilter;
   readonly sort?: string;
 }
 
@@ -29,25 +33,19 @@ function buildHref(
         : filters.neighborhood,
     categorySlug: omit === "categorySlug" ? undefined : filters.categorySlug,
     premium: omit === "premium" ? undefined : filters.premium,
+    plan: omit === "plan" ? undefined : filters.plan,
     sort: filters.sort,
   };
 
-  const href = buildSearchHref({
+  return buildSearchHref({
     query: next.query,
     city: next.city,
     neighborhood: next.neighborhood,
     category: next.categorySlug,
+    premium: next.premium,
+    plan: next.plan,
+    sort: next.sort,
   });
-
-  const params = new URLSearchParams(
-    href.includes("?") ? href.split("?")[1] : ""
-  );
-
-  if (next.premium) params.set("premium", "true");
-  if (next.sort?.trim()) params.set("sort", next.sort.trim());
-
-  const qs = params.toString();
-  return qs ? `/buscar?${qs}` : "/buscar";
 }
 
 export function hasActiveSearchFilters(filters: SearchFilterParams): boolean {
@@ -56,7 +54,8 @@ export function hasActiveSearchFilters(filters: SearchFilterParams): boolean {
       filters.city?.trim() ||
       filters.neighborhood?.trim() ||
       filters.categorySlug?.trim() ||
-      filters.premium
+      filters.premium ||
+      filters.plan
   );
 }
 
@@ -80,38 +79,52 @@ function buildFilterPhrase(filters: SearchFilterParams): string {
   const query = filters.query?.trim();
   const category = filters.categoryName?.trim();
   const location = buildLocationPhrase(filters);
-  const premiumSuffix = filters.premium ? " · destaque premium" : "";
+  const planSuffix = filters.premium
+    ? " · destaque premium"
+    : filters.plan === "paid"
+      ? " · anúncios pagos"
+      : filters.plan === "free"
+        ? " · listagens grátis"
+        : "";
 
   if (query && category && location) {
-    return `"${query}" em ${category} ${location}${premiumSuffix}`;
+    return `"${query}" em ${category} ${location}${planSuffix}`;
   }
 
   if (query && category) {
-    return `"${query}" em ${category}${premiumSuffix}`;
+    return `"${query}" em ${category}${planSuffix}`;
   }
 
   if (query && location) {
-    return `"${query}" ${location}${premiumSuffix}`;
+    return `"${query}" ${location}${planSuffix}`;
   }
 
   if (category && location) {
-    return `${category} ${location}${premiumSuffix}`;
+    return `${category} ${location}${planSuffix}`;
   }
 
   if (query) {
-    return `"${query}"${premiumSuffix}`;
+    return `"${query}"${planSuffix}`;
   }
 
   if (category) {
-    return category + premiumSuffix;
+    return category + planSuffix;
   }
 
   if (location) {
-    return `anúncios ${location}${premiumSuffix}`;
+    return `anúncios ${location}${planSuffix}`;
   }
 
   if (filters.premium) {
     return "anúncios em destaque premium";
+  }
+
+  if (filters.plan === "paid") {
+    return "anúncios pagos";
+  }
+
+  if (filters.plan === "free") {
+    return "listagens grátis";
   }
 
   return "filtros selecionados";
@@ -175,6 +188,22 @@ export function buildSearchFilterChips(
       id: "premium",
       label: "Destaque premium",
       clearHref: buildHref(filters, "premium"),
+    });
+  }
+
+  if (filters.plan === "paid") {
+    chips.push({
+      id: "plan",
+      label: "Anúncios pagos",
+      clearHref: buildHref(filters, "plan"),
+    });
+  }
+
+  if (filters.plan === "free") {
+    chips.push({
+      id: "plan",
+      label: "Listagens grátis",
+      clearHref: buildHref(filters, "plan"),
     });
   }
 
