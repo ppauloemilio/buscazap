@@ -87,7 +87,7 @@ export function AdvertisementSection({
             className={cn(
               "grid gap-2",
               isFreeSection
-                ? "items-start grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+                ? "items-stretch grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
                 : "items-stretch grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
             )}
           >

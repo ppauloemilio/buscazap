@@ -76,7 +76,6 @@ export function AdvertisementListings({
           variant="free"
           compact
           title="Listagens grátis"
-          description="Nome, categoria, bairro e WhatsApp"
           advertisements={free}
           viewAllHref={viewAllHref}
           returnTo={returnTo}

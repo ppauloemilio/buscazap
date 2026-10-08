@@ -57,10 +57,10 @@ export function AdvertisementProfileCard({
 
   if (isFree) {
     return (
-      <article className="h-fit self-start overflow-hidden rounded-lg border bg-card p-2.5 shadow-sm">
+      <article className="flex h-full flex-col overflow-hidden rounded-lg border bg-card p-2.5 shadow-sm">
         <div className="mb-1.5 flex items-start justify-between gap-1.5">
           <div className="min-w-0">
-            <h3 className="line-clamp-2 text-xs font-semibold leading-snug">
+            <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-semibold leading-snug">
               {advertisement.title}
             </h3>
             <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
@@ -76,7 +76,7 @@ export function AdvertisementProfileCard({
         <Button
           variant="whatsapp"
           size="sm"
-          className="h-7 w-full px-2 text-[11px]"
+          className="mt-auto h-7 w-full px-2 text-[11px]"
           asChild
         >
           <TrackedWhatsAppLink
