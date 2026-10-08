@@ -5,6 +5,7 @@ import { findProviderAdvertisements, providerHasAdSlotAvailable } from "@/applic
 import { syncReferralPremiumCredits } from "@/application/services/referral-service";
 import {
   getCurrentProvider,
+  canProviderPublish,
   canProviderUsePaidFeatures,
   isAdminProvider,
 } from "@/lib/provider-session";
@@ -16,6 +17,7 @@ import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 
 interface ProviderAdsPageProps {
@@ -33,8 +35,10 @@ export default async function ProviderAdsPage({
   if (!provider) redirect("/entrar");
 
   const params = await searchParams;
+  const freemium = isNewAdProfileEnabled();
   const subscriptionActive = canProviderUsePaidFeatures(provider);
   const isAdmin = isAdminProvider(provider);
+  const canCreateAd = canProviderPublish(provider);
   const [advertisements, hasAdSlot, referralCredits] = await Promise.all([
     findProviderAdvertisements(provider.id),
     isAdmin
@@ -54,13 +58,20 @@ export default async function ProviderAdsPage({
     <PanelLayout>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">Meus anúncios</h2>
-        {subscriptionActive && hasAdSlot ? (
-          <Button variant="whatsapp" size="sm" asChild>
-            <Link href="/painel/anuncios/novo">Novo anúncio</Link>
-          </Button>
-        ) : subscriptionActive && !hasAdSlot ? (
+        {canCreateAd && hasAdSlot ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {!subscriptionActive && !isAdmin && freemium && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/painel/assinatura">Assinar plano pago</Link>
+              </Button>
+            )}
+            <Button variant="whatsapp" size="sm" asChild>
+              <Link href="/painel/anuncios/novo">Novo anúncio</Link>
+            </Button>
+          </div>
+        ) : canCreateAd && !hasAdSlot ? (
           <p className="max-w-xs text-right text-xs text-muted-foreground">
-            Limite de {PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio na assinatura.
+            Limite de {PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio.
             Filial: +{formatPriceBRL(PRICING.EXTRA_AD_AMOUNT)}/mês — fale conosco.
           </p>
         ) : (

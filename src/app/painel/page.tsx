@@ -4,11 +4,12 @@ import { CreditCard, Crown, Megaphone, Eye, MousePointerClick } from "lucide-rea
 import { findProviderAdvertisements } from "@/application/services/advertisement-service";
 import { getProviderAnalyticsReport } from "@/application/services/analytics-service";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPriceBRL, PRICING } from "@/config/pricing";
 
 export default async function PanelPage() {
   const provider = await getCurrentProvider();
@@ -22,6 +23,7 @@ export default async function PanelPage() {
 
   const premiumCount = advertisements.filter((ad) => ad.premiumActive).length;
   const isAdmin = isAdminProvider(provider);
+  const freemium = isNewAdProfileEnabled();
 
   return (
     <PanelLayout>
@@ -29,12 +31,18 @@ export default async function PanelPage() {
         <Card>
           <CardHeader className="p-3 pb-1">
             <CardTitle className="text-xs font-medium text-muted-foreground">
-              Assinatura
+              Plano
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <p className="text-xl font-bold">
-              {isAdmin ? "Admin" : subscription.active ? "Ativa" : "Inativa"}
+              {isAdmin
+                ? "Admin"
+                : subscription.active
+                  ? "Pago"
+                  : freemium
+                    ? "Grátis"
+                    : "Inativo"}
             </p>
           </CardContent>
         </Card>
@@ -93,10 +101,18 @@ export default async function PanelPage() {
           <CardContent className="p-3">
             <CreditCard className="mb-2 h-6 w-6 text-whatsapp" />
             <h3 className="text-sm font-semibold">
-              Assinatura {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês
+              {subscription.active
+                ? `Plano pago ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`
+                : freemium
+                  ? `Upgrade ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`
+                  : `Assinatura ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`}
             </h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Necessária para publicar anúncios na plataforma.
+              {subscription.active
+                ? "Perfil completo ativo. Gerencie renovação e extras."
+                : freemium
+                  ? "Libere capa, fotos, horário, produtos e serviços."
+                  : "Necessária para publicar anúncios na plataforma."}
             </p>
             <Button
               variant="whatsapp"
@@ -104,7 +120,13 @@ export default async function PanelPage() {
               className="mt-2 w-full sm:w-auto"
               asChild
             >
-              <Link href="/painel/assinatura">Gerenciar</Link>
+              <Link href="/painel/assinatura">
+                {subscription.active
+                  ? "Gerenciar"
+                  : freemium
+                    ? "Fazer upgrade"
+                    : "Assinar"}
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -134,11 +156,29 @@ export default async function PanelPage() {
           <CardContent className="flex items-center gap-2 p-3 text-sm">
             <Megaphone className="h-4 w-4 shrink-0 text-amber-600" />
             <p>
-              Sua assinatura está inativa.{" "}
-              <Link href="/painel/assinatura" className="font-medium text-whatsapp hover:underline">
-                Assine agora
-              </Link>{" "}
-              para publicar anúncios.
+              {freemium ? (
+                <>
+                  Você está no plano grátis.{" "}
+                  <Link
+                    href="/painel/assinatura"
+                    className="font-medium text-whatsapp hover:underline"
+                  >
+                    Faça upgrade
+                  </Link>{" "}
+                  para o perfil completo quando quiser.
+                </>
+              ) : (
+                <>
+                  Sua assinatura está inativa.{" "}
+                  <Link
+                    href="/painel/assinatura"
+                    className="font-medium text-whatsapp hover:underline"
+                  >
+                    Assine agora
+                  </Link>{" "}
+                  para publicar anúncios.
+                </>
+              )}
             </p>
           </CardContent>
         </Card>
