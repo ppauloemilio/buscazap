@@ -189,10 +189,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 Limpar filtros
               </Link>
               <Link
-                href="/parceiro"
+                href="/anunciar"
                 className="inline-flex h-10 items-center justify-center rounded-md bg-whatsapp px-5 text-sm font-medium text-whatsapp-foreground transition-colors hover:bg-whatsapp/90"
               >
-                Indicar / anunciar no BuscaZapp
+                Anunciar no BuscaZapp
               </Link>
             </div>
             <div className="mt-5 flex flex-wrap justify-center gap-2">

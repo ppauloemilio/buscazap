@@ -4,6 +4,7 @@ import {
   CheckCircle,
   CreditCard,
   Eye,
+  Gift,
   MapPin,
   Megaphone,
   MessageCircle,
@@ -19,16 +20,19 @@ import { BrandLogo } from "@/components/layout/brand-logo";
 import { LocationFields } from "@/features/panel/components/location-fields";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
 import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-contacts-fields";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { ServiceArea } from "@/domain/enums";
+import { cn } from "@/lib/utils";
 import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
 
 export const metadata: Metadata = {
   title: "Anuncie no BuscaZapp",
   description:
-    "Coloque seu negócio na frente de quem busca serviços na sua cidade. Contato direto no WhatsApp. Assinatura a partir de R$ 9,99/mês.",
+    "Coloque seu negócio na frente de quem busca serviços na sua cidade. Comece grátis ou assine o perfil completo a partir de R$ 9,99/mês.",
 };
 
 interface PartnerPageProps {
@@ -57,32 +61,65 @@ const BENEFITS = [
   {
     icon: Sparkles,
     title: "Destaque opcional",
-    text: `Quer mais destaque? Premium por ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias, com prioridade e mais fotos.`,
+    text: `No plano pago, premium por ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias com prioridade e fotos extras no anúncio.`,
   },
 ] as const;
 
-const STEPS = [
-  {
-    icon: Megaphone,
-    title: "1. Crie sua conta",
-    text: "Cadastro rápido com WhatsApp. Em poucos minutos você já está no painel.",
-  },
-  {
-    icon: CreditCard,
-    title: "2. Assine via PIX",
-    text: `${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês para publicar. Pagamento simples e liberação após a confirmação.`,
-  },
-  {
-    icon: Zap,
-    title: "3. Receba contatos",
-    text: "Seu anúncio aparece nas buscas. O cliente chama e você fecha o negócio.",
-  },
+const FREE_PLAN_BENEFITS = [
+  "Listagem básica na busca",
+  "Nome, categoria, bairro e WhatsApp",
+  "Ideal para começar sem pagar",
+  "Upgrade para o plano pago quando quiser",
+] as const;
+
+const PAID_PLAN_BENEFITS = [
+  "Perfil completo com capa, logo e fotos da empresa",
+  "Horário, Instagram, site, produtos e serviços",
+  `${PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio incluso na mensalidade`,
+  `Destaque premium opcional: ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias`,
 ] as const;
 
 export default async function PartnerLeadPage({ searchParams }: PartnerPageProps) {
   const params = await searchParams;
   const locationOptions = await listActiveCatalogLocationOptions();
   const priceLabel = formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT);
+  const freemium = isNewAdProfileEnabled();
+
+  const steps = freemium
+    ? ([
+        {
+          icon: Megaphone,
+          title: "1. Crie sua conta",
+          text: "Cadastro rápido com WhatsApp. Em poucos minutos você já está no painel.",
+        },
+        {
+          icon: Gift,
+          title: "2. Publique grátis ou assine",
+          text: `Comece com listagem básica ou assine ${priceLabel}/mês para o perfil completo.`,
+        },
+        {
+          icon: Zap,
+          title: "3. Receba contatos",
+          text: "Seu anúncio aparece nas buscas. O cliente chama e você fecha o negócio.",
+        },
+      ] as const)
+    : ([
+        {
+          icon: Megaphone,
+          title: "1. Crie sua conta",
+          text: "Cadastro rápido com WhatsApp. Em poucos minutos você já está no painel.",
+        },
+        {
+          icon: CreditCard,
+          title: "2. Assine via PIX",
+          text: `${priceLabel}/mês para publicar. Pagamento simples e liberação após a confirmação.`,
+        },
+        {
+          icon: Zap,
+          title: "3. Receba contatos",
+          text: "Seu anúncio aparece nas buscas. O cliente chama e você fecha o negócio.",
+        },
+      ] as const);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[hsl(150_25%_97%)]">
@@ -120,20 +157,44 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
           </p>
 
           {params.sent !== "1" && (
-            <div className="mt-7 flex w-full max-w-md flex-col items-stretch gap-2.5 sm:flex-row sm:justify-center">
-              <Button variant="whatsapp" size="lg" className="px-8 text-base" asChild>
-                <Link href="/cadastro">Começar por {priceLabel}/mês</Link>
-              </Button>
-              <Button variant="outline" size="lg" className="px-6 text-base" asChild>
-                <a href="#interesse">Prefiro que falem comigo</a>
-              </Button>
+            <div className="mt-7 flex w-full max-w-lg flex-col items-stretch gap-2.5 sm:flex-row sm:justify-center">
+              {freemium ? (
+                <>
+                  <Button variant="whatsapp" size="lg" className="px-8 text-base" asChild>
+                    <Link href="/cadastro">Começar grátis</Link>
+                  </Button>
+                  <Button variant="outline" size="lg" className="px-6 text-base" asChild>
+                    <a href="#planos">Ver planos</a>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="whatsapp" size="lg" className="px-8 text-base" asChild>
+                    <Link href="/cadastro">Começar por {priceLabel}/mês</Link>
+                  </Button>
+                  <Button variant="outline" size="lg" className="px-6 text-base" asChild>
+                    <a href="#interesse">Prefiro que falem comigo</a>
+                  </Button>
+                </>
+              )}
             </div>
           )}
 
           <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <Search className="h-3.5 w-3.5 text-whatsapp" />
-            Assinatura {priceLabel}/mês · 1 anúncio incluso · PIX
+            {freemium
+              ? `Grátis para começar · Plano pago ${priceLabel}/mês · PIX`
+              : `Assinatura ${priceLabel}/mês · 1 anúncio incluso · PIX`}
           </p>
+
+          {freemium && params.sent !== "1" && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Prefere conversar antes?{" "}
+              <a href="#interesse" className="font-medium text-whatsapp hover:underline">
+                Deixe seus dados
+              </a>
+            </p>
+          )}
         </div>
       </section>
 
@@ -167,7 +228,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
             Como funciona
           </h2>
           <ol className="grid gap-4 sm:grid-cols-3">
-            {STEPS.map((step) => (
+            {steps.map((step) => (
               <li key={step.title} className="text-center sm:text-left">
                 <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-whatsapp/10 sm:mx-0">
                   <step.icon className="h-4 w-4 text-whatsapp" />
@@ -182,52 +243,119 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
         </div>
       </section>
 
-      <section className="relative px-4 pb-10">
-        <div className="container mx-auto max-w-xl">
-          <div className="rounded-2xl border border-whatsapp/20 bg-card/95 p-5 text-center shadow-sm md:p-6">
-            <p className="text-xs font-semibold uppercase tracking-wider text-whatsapp">
-              Plano anunciante
-            </p>
-            <p className="mt-2 text-3xl font-bold text-foreground">
-              {priceLabel}
-              <span className="text-base font-normal text-muted-foreground">/mês</span>
-            </p>
-            <ul className="mx-auto mt-4 max-w-sm space-y-2 text-left text-sm text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
-                1 anúncio incluso na mensalidade
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
-                Contato direto no WhatsApp (até 2 números no anúncio)
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
-                Pagamento via PIX · cancele quando quiser (ao fim do período)
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
-                Destaque premium opcional:{" "}
-                {formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias
-              </li>
-            </ul>
-            {params.sent !== "1" && (
-              <Button
-                variant="whatsapp"
-                size="lg"
-                className="mt-5 w-full sm:w-auto sm:px-10"
-                asChild
-              >
-                <Link href="/cadastro">Criar conta e assinar</Link>
-              </Button>
-            )}
-            <p className="mt-2 text-xs text-muted-foreground">
-              Já tem conta?{" "}
-              <Link href="/entrar" className="font-medium text-whatsapp hover:underline">
-                Entrar no painel
-              </Link>
-            </p>
-          </div>
+      <section id="planos" className="relative scroll-mt-6 px-4 pb-10">
+        <div className="container mx-auto max-w-3xl">
+          {freemium ? (
+            <>
+              <h2 className="mb-2 text-center text-lg font-bold text-foreground md:text-xl">
+                Escolha como anunciar
+              </h2>
+              <p className="mb-5 text-center text-sm text-muted-foreground">
+                Mesma conta nos dois planos. No painel você sobe do grátis para o
+                pago quando quiser.
+              </p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <article className="flex flex-col rounded-2xl border bg-card/95 p-5 shadow-sm">
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                      <Gift className="h-5 w-5 text-foreground" />
+                    </div>
+                    <Badge variant="secondary">Grátis</Badge>
+                  </div>
+                  <h3 className="text-base font-semibold">Listagem grátis</h3>
+                  <p className="mt-1 text-2xl font-bold">
+                    R$ 0
+                    <span className="text-sm font-normal text-muted-foreground">
+                      /sempre
+                    </span>
+                  </p>
+                  <ul className="mt-4 flex-1 space-y-2 text-sm text-muted-foreground">
+                    {FREE_PLAN_BENEFITS.map((item) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  {params.sent !== "1" && (
+                    <Button variant="outline" className="mt-5 w-full" asChild>
+                      <Link href="/cadastro">Começar grátis</Link>
+                    </Button>
+                  )}
+                </article>
+
+                <article
+                  className={cn(
+                    "flex flex-col rounded-2xl border-2 border-whatsapp/50 bg-card/95 p-5 shadow-sm",
+                    "ring-1 ring-whatsapp/20"
+                  )}
+                >
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-whatsapp/10">
+                      <Sparkles className="h-5 w-5 text-whatsapp" />
+                    </div>
+                    <Badge variant="whatsapp">Recomendado</Badge>
+                  </div>
+                  <h3 className="text-base font-semibold">Plano pago</h3>
+                  <p className="mt-1 text-2xl font-bold text-whatsapp">
+                    {priceLabel}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      /mês
+                    </span>
+                  </p>
+                  <ul className="mt-4 flex-1 space-y-2 text-sm text-muted-foreground">
+                    {PAID_PLAN_BENEFITS.map((item) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  {params.sent !== "1" && (
+                    <Button variant="whatsapp" className="mt-5 w-full" asChild>
+                      <Link href="/cadastro">Criar conta e assinar</Link>
+                    </Button>
+                  )}
+                </article>
+              </div>
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                Já tem conta?{" "}
+                <Link href="/entrar" className="font-medium text-whatsapp hover:underline">
+                  Entrar no painel
+                </Link>
+              </p>
+            </>
+          ) : (
+            <div className="mx-auto max-w-xl rounded-2xl border border-whatsapp/20 bg-card/95 p-5 text-center shadow-sm md:p-6">
+              <p className="text-xs font-semibold uppercase tracking-wider text-whatsapp">
+                Plano anunciante
+              </p>
+              <p className="mt-2 text-3xl font-bold text-foreground">
+                {priceLabel}
+                <span className="text-base font-normal text-muted-foreground">
+                  /mês
+                </span>
+              </p>
+              <ul className="mx-auto mt-4 max-w-sm space-y-2 text-left text-sm text-muted-foreground">
+                {PAID_PLAN_BENEFITS.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              {params.sent !== "1" && (
+                <Button
+                  variant="whatsapp"
+                  size="lg"
+                  className="mt-5 w-full sm:w-auto sm:px-10"
+                  asChild
+                >
+                  <Link href="/cadastro">Criar conta e assinar</Link>
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -240,7 +368,10 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Deixe seus dados. Entramos em contato no WhatsApp para tirar
-                dúvidas e te ajudar a publicar.
+                dúvidas
+                {freemium
+                  ? " e te ajudar a publicar (grátis ou plano pago)."
+                  : " e te ajudar a publicar."}
               </p>
             </div>
 
@@ -251,13 +382,22 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                   Recebemos seu interesse!
                 </p>
                 <p className="mt-1 pl-6 text-whatsapp/90">
-                  Em breve falamos com você no WhatsApp para seguir com o
-                  cadastro e a assinatura.
+                  Em breve falamos com você no WhatsApp
+                  {freemium
+                    ? " para seguir com a listagem grátis ou o plano pago."
+                    : " para seguir com o cadastro e a assinatura."}
                 </p>
-                <div className="mt-3 pl-6">
+                <div className="mt-3 flex flex-wrap gap-2 pl-6">
                   <Button variant="whatsapp" size="sm" asChild>
-                    <Link href="/cadastro">Ou criar conta agora</Link>
+                    <Link href="/cadastro">
+                      {freemium ? "Ou criar conta agora" : "Ou criar conta agora"}
+                    </Link>
                   </Button>
+                  {freemium && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href="/anunciar">Ver planos</Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
@@ -356,14 +496,23 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
 
                 <div>
                   <label htmlFor="photo" className="mb-1 block text-sm font-medium">
-                    Foto do anúncio
+                    Foto do anúncio{" "}
+                    {freemium && (
+                      <span className="font-normal text-muted-foreground">
+                        (opcional)
+                      </span>
+                    )}
                   </label>
                   <ImageFileInput
                     id="photo"
                     name="photo"
                     label="Foto"
-                    required
-                    hint={`JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}`}
+                    required={!freemium}
+                    hint={
+                      freemium
+                        ? `Opcional. Útil se for para o plano pago. JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}`
+                        : `JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}`
+                    }
                   />
                 </div>
 
@@ -383,8 +532,10 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                   >
                     Privacidade
                   </Link>
-                  . A publicação acontece após a assinatura (
-                  {priceLabel}/mês).
+                  .
+                  {freemium
+                    ? " Você pode começar grátis ou assinar o perfil completo depois."
+                    : ` A publicação acontece após a assinatura (${priceLabel}/mês).`}
                 </p>
 
                 <p className="text-center text-xs text-muted-foreground">
@@ -393,7 +544,9 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                     href="/cadastro"
                     className="font-medium text-whatsapp hover:underline"
                   >
-                    Criar conta e pagar o PIX
+                    {freemium
+                      ? "Criar conta grátis"
+                      : "Criar conta e pagar o PIX"}
                   </Link>
                 </p>
               </form>

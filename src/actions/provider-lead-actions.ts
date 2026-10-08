@@ -10,6 +10,7 @@ import {
   updateProviderLeadStatus,
 } from "@/application/services/provider-lead-service";
 import { getCatalogLocationError } from "@/application/services/catalog-location";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { buildAdvertisementNotifyWhatsAppHref } from "@/lib/advertisement-notify-message";
 import { uploadLeadImage, validateImageFile } from "@/lib/image-upload";
@@ -53,15 +54,20 @@ export async function submitProviderLeadAction(formData: FormData) {
   }
 
   const photoFile = formData.get("photo");
-  if (!(photoFile instanceof File) || photoFile.size === 0) {
+  const hasPhoto = photoFile instanceof File && photoFile.size > 0;
+  const freemium = isNewAdProfileEnabled();
+
+  if (!hasPhoto && !freemium) {
     redirect(
       `/parceiro?error=${encodeURIComponent("A foto do anúncio é obrigatória")}`
     );
   }
 
-  const photoError = validateImageFile(photoFile, "Foto");
-  if (photoError) {
-    redirect(`/parceiro?error=${encodeURIComponent(photoError)}`);
+  if (hasPhoto) {
+    const photoError = validateImageFile(photoFile, "Foto");
+    if (photoError) {
+      redirect(`/parceiro?error=${encodeURIComponent(photoError)}`);
+    }
   }
 
   let leadId: string | null = null;
@@ -70,11 +76,13 @@ export async function submitProviderLeadAction(formData: FormData) {
     const lead = await createProviderLead(parsed.data);
     leadId = lead.id;
 
-    const photoUrl = await uploadLeadImage(photoFile, lead.id);
-    await prisma.providerLead.update({
-      where: { id: lead.id },
-      data: { photoUrl },
-    });
+    if (hasPhoto) {
+      const photoUrl = await uploadLeadImage(photoFile, lead.id);
+      await prisma.providerLead.update({
+        where: { id: lead.id },
+        data: { photoUrl },
+      });
+    }
   } catch (error) {
     if (leadId) {
       await prisma.providerLead.delete({ where: { id: leadId } }).catch(() => null);
