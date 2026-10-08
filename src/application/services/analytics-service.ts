@@ -18,6 +18,58 @@ function formatDayKey(date: Date): string {
   return startOfDay(date).toISOString().slice(0, 10);
 }
 
+/** Visualizações de anúncio (AD_VIEW) agregadas por nome de categoria. */
+export async function getCategoryAdViewCounts(
+  days = 30
+): Promise<ReadonlyMap<string, number>> {
+  markDataFetchDynamic();
+
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  since.setHours(0, 0, 0, 0);
+
+  const adViewsGrouped = await prisma.analyticsEvent.groupBy({
+    by: ["advertisementId"],
+    where: {
+      type: ANALYTICS_EVENT_TYPE.AD_VIEW,
+      advertisementId: { not: null },
+      createdAt: { gte: since },
+    },
+    _count: { id: true },
+  });
+
+  const advertisementIds = adViewsGrouped
+    .map((row) => row.advertisementId)
+    .filter((id): id is string => Boolean(id));
+
+  if (advertisementIds.length === 0) {
+    return new Map();
+  }
+
+  const advertisements = await prisma.advertisement.findMany({
+    where: { id: { in: advertisementIds } },
+    select: { id: true, category: true },
+  });
+
+  const viewsByAdId = new Map(
+    adViewsGrouped.map((row) => [
+      row.advertisementId as string,
+      row._count.id,
+    ])
+  );
+
+  const viewsByCategory = new Map<string, number>();
+  for (const ad of advertisements) {
+    const views = viewsByAdId.get(ad.id) ?? 0;
+    if (views <= 0) continue;
+    const key = ad.category.trim();
+    if (!key) continue;
+    viewsByCategory.set(key, (viewsByCategory.get(key) ?? 0) + views);
+  }
+
+  return viewsByCategory;
+}
+
 export async function recordAnalyticsEvent(input: {
   readonly type: string;
   readonly path?: string;

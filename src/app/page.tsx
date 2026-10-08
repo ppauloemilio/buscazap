@@ -62,7 +62,7 @@ export default async function HomePage() {
         </>
       )}
       {homepageSettings.showPopularCategories && (
-        <CategoryGrid categories={data.categories} />
+        <CategoryGrid categories={data.popularCategories} />
       )}
       {homepageSettings.showCityExplorer && (
         <CityExplorer cities={data.cityNames} />

@@ -1,6 +1,7 @@
 import type { DashboardStats, Category, Advertisement } from "@/domain/entities";
 import type { HomepageSettings } from "@/application/services/homepage-settings-service";
 import { getHomepageAdvertisements } from "@/application/services/advertisement-service";
+import { getCategoryAdViewCounts } from "@/application/services/analytics-service";
 import {
   DEFAULT_HOMEPAGE_SETTINGS,
   getHomepageSettings,
@@ -11,6 +12,8 @@ import { prisma } from "@/lib/prisma";
 export interface DashboardData {
   readonly stats: DashboardStats;
   readonly categories: readonly Category[];
+  /** Categorias com anúncios, ordenadas por visualizações (home). */
+  readonly popularCategories: readonly Category[];
   readonly cityNames: readonly string[];
   readonly neighborhoodsByCity: ReadonlyArray<{
     readonly city: string;
@@ -31,6 +34,7 @@ const EMPTY_STATS: DashboardStats = {
 const EMPTY_DASHBOARD: DashboardData = {
   stats: EMPTY_STATS,
   categories: [],
+  popularCategories: [],
   cityNames: [],
   neighborhoodsByCity: [],
   homePremiumAdvertisements: [],
@@ -38,16 +42,34 @@ const EMPTY_DASHBOARD: DashboardData = {
   homepageSettings: DEFAULT_HOMEPAGE_SETTINGS,
 };
 
+function sortPopularCategories(
+  categories: readonly Category[],
+  adViewsByCategory: ReadonlyMap<string, number>
+): Category[] {
+  return categories
+    .filter((category) => category.count > 0)
+    .slice()
+    .sort((a, b) => {
+      const viewsA = adViewsByCategory.get(a.name) ?? 0;
+      const viewsB = adViewsByCategory.get(b.name) ?? 0;
+      if (viewsB !== viewsA) return viewsB - viewsA;
+      if (b.count !== a.count) return b.count - a.count;
+      return a.name.localeCompare(b.name, "pt-BR");
+    });
+}
+
 async function loadDashboardData(includeStats: boolean): Promise<DashboardData> {
   const catalogPromise = getPublicSearchCatalog();
 
-  const [homepageSettings, catalog, homepageAdvertisements] = await Promise.all([
-    getHomepageSettings(),
-    catalogPromise,
-    catalogPromise.then((catalog) =>
-      getHomepageAdvertisements(categorySlugMap(catalog))
-    ),
-  ]);
+  const [homepageSettings, catalog, homepageAdvertisements, adViewsByCategory] =
+    await Promise.all([
+      getHomepageSettings(),
+      catalogPromise,
+      catalogPromise.then((catalog) =>
+        getHomepageAdvertisements(categorySlugMap(catalog))
+      ),
+      getCategoryAdViewCounts(30),
+    ]);
 
   let stats = EMPTY_STATS;
 
@@ -71,6 +93,10 @@ async function loadDashboardData(includeStats: boolean): Promise<DashboardData> 
   return {
     stats,
     categories: catalog.categories,
+    popularCategories: sortPopularCategories(
+      catalog.categories,
+      adViewsByCategory
+    ),
     cityNames: catalog.cityNames,
     neighborhoodsByCity: catalog.neighborhoodsByCity,
     homePremiumAdvertisements: homepageAdvertisements.premium,
