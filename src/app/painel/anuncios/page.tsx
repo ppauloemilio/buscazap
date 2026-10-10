@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import { isFreeListingProvider } from "@/lib/free-listing";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 
 interface ProviderAdsPageProps {
@@ -36,6 +37,7 @@ export default async function ProviderAdsPage({
 
   const params = await searchParams;
   const freemium = isNewAdProfileEnabled();
+  const freeListing = isFreeListingProvider(provider);
   const subscriptionActive = canProviderUsePaidFeatures(provider);
   const isAdmin = isAdminProvider(provider);
   const canCreateAd = canProviderPublish(provider);
@@ -57,16 +59,27 @@ export default async function ProviderAdsPage({
   return (
     <PanelLayout>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Meus anúncios</h2>
+        <h2 className="text-lg font-semibold">
+          {freeListing ? "Meu anúncio" : "Meus anúncios"}
+        </h2>
         {canCreateAd && hasAdSlot ? (
           <div className="flex flex-wrap items-center gap-2">
-            {!subscriptionActive && !isAdmin && freemium && (
+            {freeListing && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/painel/assinatura">Melhorar plano</Link>
+              </Button>
+            )}
+            {!freeListing && !subscriptionActive && !isAdmin && freemium && (
               <Button variant="outline" size="sm" asChild>
                 <Link href="/painel/assinatura">Assinar plano pago</Link>
               </Button>
             )}
             <Button variant="whatsapp" size="sm" asChild>
-              <Link href="/painel/anuncios/novo">Novo anúncio</Link>
+              <Link href="/painel/anuncios/novo">
+                {freeListing && advertisements.length === 0
+                  ? "Criar anúncio grátis"
+                  : "Novo anúncio"}
+              </Link>
             </Button>
           </div>
         ) : canCreateAd && !hasAdSlot ? (

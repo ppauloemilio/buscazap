@@ -12,6 +12,7 @@ import {
   Sparkles,
   BarChart3,
   Tag,
+  KeyRound,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,19 +37,42 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+const FREE_NAV_ITEMS: ReadonlyArray<{
+  readonly href: string;
+  readonly label: string;
+  readonly icon: LucideIcon;
+}> = [
+  { href: "/painel/anuncios", label: "Meu anúncio", icon: Megaphone },
+  { href: "/painel/assinatura", label: "Melhorar plano", icon: Sparkles },
+  { href: "/painel/perfil", label: "Senha", icon: KeyRound },
+];
+
 interface PanelNavProps {
   readonly showPromotions?: boolean;
+  readonly freeListing?: boolean;
 }
 
-export function PanelNav({ showPromotions = false }: PanelNavProps) {
+export function PanelNav({
+  showPromotions = false,
+  freeListing = false,
+}: PanelNavProps) {
   const pathname = usePathname();
-  const items = showPromotions
-    ? [
-        ...NAV_ITEMS.slice(0, 3),
-        { href: "/painel/promocoes", label: "Promoções", icon: Tag },
-        ...NAV_ITEMS.slice(3),
-      ]
-    : NAV_ITEMS;
+
+  let items: ReadonlyArray<{
+    readonly href: string;
+    readonly label: string;
+    readonly icon: LucideIcon;
+  }> = NAV_ITEMS;
+
+  if (freeListing) {
+    items = FREE_NAV_ITEMS;
+  } else if (showPromotions) {
+    items = [
+      ...NAV_ITEMS.slice(0, 3),
+      { href: "/painel/promocoes", label: "Promoções", icon: Tag },
+      ...NAV_ITEMS.slice(3),
+    ];
+  }
 
   return (
     <nav className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:flex lg:flex-col">

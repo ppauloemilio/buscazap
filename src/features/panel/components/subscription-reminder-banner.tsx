@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, AlertTriangle } from "lucide-react";
+import { Clock, AlertTriangle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SubscriptionReminderBannerProps {
@@ -10,6 +10,7 @@ interface SubscriptionReminderBannerProps {
   readonly expiresAt: string | null;
   readonly isTrial: boolean;
   readonly canRenew: boolean;
+  readonly freeListing?: boolean;
 }
 
 function daysLeft(expiresAt: string): number {
@@ -23,8 +24,26 @@ export function SubscriptionReminderBanner({
   expiresAt,
   isTrial,
   canRenew,
+  freeListing = false,
 }: SubscriptionReminderBannerProps) {
   if (isAdmin) return null;
+
+  if (freeListing) {
+    return (
+      <div className="mb-3 flex flex-col gap-2 rounded-lg border border-whatsapp/25 bg-whatsapp/5 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-2 text-sm text-foreground">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+          <p>
+            Plano grátis ativo na busca. Upgrade libera capa, fotos, descrição,
+            horário e selo verificado.
+          </p>
+        </div>
+        <Button variant="whatsapp" size="sm" asChild>
+          <Link href="/painel/assinatura">Ver planos</Link>
+        </Button>
+      </div>
+    );
+  }
 
   if (!active) {
     return (

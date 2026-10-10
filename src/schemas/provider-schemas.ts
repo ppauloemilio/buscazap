@@ -463,6 +463,52 @@ export const adminUpdateAdvertisementSchema = z
   });
 
 /** Mesmo formato do admin — edição pelo anunciante. */
+const requiredNeighborhood = z.preprocess(
+  (value) => (typeof value === "string" ? value.trim() : value),
+  z.string().min(2, "Informe o bairro")
+);
+
+function refineAdvertisementCategorySelection(
+  data: { readonly category: string; readonly customCategory?: string },
+  ctx: z.RefinementCtx
+) {
+  if (data.category === CATEGORY_OTHER_VALUE && !data.customCategory) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Informe a categoria desejada",
+      path: ["customCategory"],
+    });
+  }
+}
+
+const freeAdvertisementObjectSchema = z.object({
+  title: z.string().trim().min(3, "Título deve ter ao menos 3 caracteres"),
+  category: z.string().min(1, "Selecione uma categoria"),
+  customCategory: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return undefined;
+      const trimmed = value.trim();
+      return trimmed.length === 0 ? undefined : trimmed;
+    },
+    z.string().min(2, "Categoria deve ter ao menos 2 caracteres").max(50).optional()
+  ),
+  city: z.string().min(2, "Informe a cidade"),
+  state: z.string().length(2, "UF deve ter 2 letras"),
+  neighborhood: requiredNeighborhood,
+  whatsappNumber: whatsappIdentity,
+});
+
+/** Listagem grátis: título, local, categoria e WhatsApp. */
+export const createFreeAdvertisementSchema = freeAdvertisementObjectSchema.superRefine(
+  (data, ctx) => refineAdvertisementCategorySelection(data, ctx)
+);
+
+export const updateFreeAdvertisementSchema = freeAdvertisementObjectSchema
+  .extend({
+    advertisementId: z.string().min(1, "Anúncio inválido"),
+  })
+  .superRefine((data, ctx) => refineAdvertisementCategorySelection(data, ctx));
+
 export const updateAdvertisementSchema = adminUpdateAdvertisementSchema;
 
 export function resolveAdvertisementCategory(input: {

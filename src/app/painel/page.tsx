@@ -7,6 +7,8 @@ import { getSubscriptionStatus } from "@/application/services/subscription-servi
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
+import { isFreeListingProvider } from "@/lib/free-listing";
+import { FreePanelOverview } from "@/features/panel/components/free-panel-overview";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,9 +26,19 @@ export default async function PanelPage() {
   const premiumCount = advertisements.filter((ad) => ad.premiumActive).length;
   const isAdmin = isAdminProvider(provider);
   const freemium = isNewAdProfileEnabled();
+  const freeListing = isFreeListingProvider(provider);
+  const firstAd = advertisements[0];
 
   return (
     <PanelLayout>
+      {freeListing ? (
+        <FreePanelOverview
+          advertisementCount={advertisements.length}
+          firstAdId={firstAd?.id}
+          firstAdPublicHref={firstAd?.publicHref}
+        />
+      ) : (
+        <>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="p-3 pb-1">
@@ -151,7 +163,7 @@ export default async function PanelPage() {
         </Card>
       </div>
 
-      {!subscription.active && !isAdmin && (
+      {!subscription.active && !isAdmin && !freeListing && (
         <Card className="mt-2 border-amber-200 bg-amber-50">
           <CardContent className="flex items-center gap-2 p-3 text-sm">
             <Megaphone className="h-4 w-4 shrink-0 text-amber-600" />
@@ -182,6 +194,8 @@ export default async function PanelPage() {
             </p>
           </CardContent>
         </Card>
+      )}
+        </>
       )}
     </PanelLayout>
   );

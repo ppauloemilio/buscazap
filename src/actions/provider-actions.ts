@@ -16,6 +16,10 @@ import { SubscriptionTier } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
 import { canUsePaidAdFeatures } from "@/lib/provider-plan";
 import {
+  FREE_LISTING_DEFAULTS,
+  isFreeListingProvider,
+} from "@/lib/free-listing";
+import {
   canProviderPublish,
   canProviderUsePaidFeatures,
   getCurrentProvider,
@@ -35,6 +39,9 @@ import {
 import { findProviderByLogin } from "@/application/services/provider-auth-service";
 import {
   createAdvertisementSchema,
+  createFreeAdvertisementSchema,
+  updateFreeAdvertisementSchema,
+  type CreateAdvertisementInput,
   loginProviderSchema,
   registerProviderSchema,
   updateAdvertisementSchema,
@@ -375,22 +382,36 @@ export async function createAdvertisementAction(formData: FormData) {
     redirect("/painel/assinatura");
   }
 
-  const parsed = createAdvertisementSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description"),
-    type: formData.get("type"),
-    category: formData.get("category"),
-    customCategory: formData.get("customCategory"),
-    city: formData.get("city"),
-    state: formData.get("state"),
-    neighborhood: formData.get("neighborhood") || undefined,
-    serviceArea: formData.get("serviceArea"),
-    whatsappNumber: formData.get("whatsappNumber"),
-    whatsappLabel: formData.get("whatsappLabel") || undefined,
-    secondaryWhatsappNumber: formData.get("secondaryWhatsappNumber") || undefined,
-    secondaryWhatsappLabel: formData.get("secondaryWhatsappLabel") || undefined,
-    withPremium: formData.get("withPremium") === "on",
-  });
+  const freeListing = isFreeListingProvider(provider);
+
+  const parsed = freeListing
+    ? createFreeAdvertisementSchema.safeParse({
+        title: formData.get("title"),
+        category: formData.get("category"),
+        customCategory: formData.get("customCategory"),
+        city: formData.get("city"),
+        state: formData.get("state"),
+        neighborhood: formData.get("neighborhood"),
+        whatsappNumber: formData.get("whatsappNumber"),
+      })
+    : createAdvertisementSchema.safeParse({
+        title: formData.get("title"),
+        description: formData.get("description"),
+        type: formData.get("type"),
+        category: formData.get("category"),
+        customCategory: formData.get("customCategory"),
+        city: formData.get("city"),
+        state: formData.get("state"),
+        neighborhood: formData.get("neighborhood") || undefined,
+        serviceArea: formData.get("serviceArea"),
+        whatsappNumber: formData.get("whatsappNumber"),
+        whatsappLabel: formData.get("whatsappLabel") || undefined,
+        secondaryWhatsappNumber:
+          formData.get("secondaryWhatsappNumber") || undefined,
+        secondaryWhatsappLabel:
+          formData.get("secondaryWhatsappLabel") || undefined,
+        withPremium: formData.get("withPremium") === "on",
+      });
 
   if (!parsed.success) {
     redirect(
@@ -406,34 +427,53 @@ export async function createAdvertisementAction(formData: FormData) {
     redirect(`/painel/anuncios/novo?error=${encodeURIComponent(locationError)}`);
   }
 
-  const coverFile = formData.get("coverImage");
-  if (!(coverFile instanceof File)) {
-    redirect(
-      `/painel/anuncios/novo?error=${encodeURIComponent("A foto de capa é obrigatória")}`
-    );
+  let coverFile: File | null = null;
+  if (!freeListing) {
+    const cover = formData.get("coverImage");
+    if (!(cover instanceof File)) {
+      redirect(
+        `/painel/anuncios/novo?error=${encodeURIComponent("A foto de capa é obrigatória")}`
+      );
+    }
+
+    const coverValidationError = validateImageFile(cover, "Foto de capa");
+    if (coverValidationError) {
+      redirect(
+        `/painel/anuncios/novo?error=${encodeURIComponent(coverValidationError)}`
+      );
+    }
+    coverFile = cover;
   }
 
-  const coverValidationError = validateImageFile(coverFile, "Foto de capa");
-  if (coverValidationError) {
-    redirect(
-      `/painel/anuncios/novo?error=${encodeURIComponent(coverValidationError)}`
-    );
-  }
-
-  const advertisementData = {
-    title: parsed.data.title,
-    description: parsed.data.description,
-    type: parsed.data.type,
-    city: parsed.data.city,
-    state: parsed.data.state,
-    neighborhood: parsed.data.neighborhood,
-    serviceArea: parsed.data.serviceArea,
-    whatsappNumber: parsed.data.whatsappNumber,
-    whatsappLabel: parsed.data.whatsappLabel,
-    secondaryWhatsappNumber: parsed.data.secondaryWhatsappNumber,
-    secondaryWhatsappLabel: parsed.data.secondaryWhatsappLabel,
-    withPremium: parsed.data.withPremium,
-  };
+  const advertisementData = freeListing
+    ? {
+        title: parsed.data.title,
+        description: FREE_LISTING_DEFAULTS.description,
+        type: FREE_LISTING_DEFAULTS.type,
+        city: parsed.data.city,
+        state: parsed.data.state,
+        neighborhood: parsed.data.neighborhood,
+        serviceArea: FREE_LISTING_DEFAULTS.serviceArea,
+        whatsappNumber: parsed.data.whatsappNumber,
+        withPremium: false as const,
+      }
+    : (() => {
+        const paid = parsed.data as CreateAdvertisementInput;
+        return {
+          title: paid.title,
+          description: paid.description,
+          type: paid.type,
+          city: paid.city,
+          state: paid.state,
+          neighborhood: paid.neighborhood,
+          serviceArea: paid.serviceArea,
+          whatsappNumber: paid.whatsappNumber,
+          whatsappLabel: paid.whatsappLabel,
+          secondaryWhatsappNumber: paid.secondaryWhatsappNumber,
+          secondaryWhatsappLabel: paid.secondaryWhatsappLabel,
+          withPremium: paid.withPremium,
+        };
+      })();
 
   const categoryResolution = await resolveAdvertisementCategoryFromCatalog(parsed.data);
 
@@ -456,19 +496,21 @@ export async function createAdvertisementAction(formData: FormData) {
     redirect(`/painel/anuncios/novo?error=${encodeURIComponent(message)}`);
   }
 
-  try {
-    await saveAdvertisementImages(result.advertisement.id, coverFile, []);
-  } catch (error) {
-    await deleteProviderAdvertisement(provider.id, result.advertisement.id);
+  if (coverFile) {
+    try {
+      await saveAdvertisementImages(result.advertisement.id, coverFile, []);
+    } catch (error) {
+      await deleteProviderAdvertisement(provider.id, result.advertisement.id);
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Não foi possível enviar as fotos do anúncio";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível enviar as fotos do anúncio";
 
-    redirect(
-      `/painel/anuncios/novo?error=${encodeURIComponent(message)}`
-    );
+      redirect(
+        `/painel/anuncios/novo?error=${encodeURIComponent(message)}`
+      );
+    }
   }
 
   revalidatePath("/painel/anuncios");
@@ -518,22 +560,37 @@ export async function updateAdvertisementAction(formData: FormData) {
     redirect("/painel/anuncios");
   }
 
-  const parsed = updateAdvertisementSchema.safeParse({
-    advertisementId,
-    title: formData.get("title"),
-    description: formData.get("description"),
-    type: formData.get("type"),
-    category: formData.get("category"),
-    customCategory: formData.get("customCategory"),
-    city: formData.get("city"),
-    state: formData.get("state"),
-    neighborhood: formData.get("neighborhood") || undefined,
-    serviceArea: formData.get("serviceArea"),
-    whatsappNumber: formData.get("whatsappNumber"),
-    whatsappLabel: formData.get("whatsappLabel") || undefined,
-    secondaryWhatsappNumber: formData.get("secondaryWhatsappNumber") || undefined,
-    secondaryWhatsappLabel: formData.get("secondaryWhatsappLabel") || undefined,
-  });
+  const freeListing = isFreeListingProvider(provider);
+
+  const parsed = freeListing
+    ? updateFreeAdvertisementSchema.safeParse({
+        advertisementId,
+        title: formData.get("title"),
+        category: formData.get("category"),
+        customCategory: formData.get("customCategory"),
+        city: formData.get("city"),
+        state: formData.get("state"),
+        neighborhood: formData.get("neighborhood"),
+        whatsappNumber: formData.get("whatsappNumber"),
+      })
+    : updateAdvertisementSchema.safeParse({
+        advertisementId,
+        title: formData.get("title"),
+        description: formData.get("description"),
+        type: formData.get("type"),
+        category: formData.get("category"),
+        customCategory: formData.get("customCategory"),
+        city: formData.get("city"),
+        state: formData.get("state"),
+        neighborhood: formData.get("neighborhood") || undefined,
+        serviceArea: formData.get("serviceArea"),
+        whatsappNumber: formData.get("whatsappNumber"),
+        whatsappLabel: formData.get("whatsappLabel") || undefined,
+        secondaryWhatsappNumber:
+          formData.get("secondaryWhatsappNumber") || undefined,
+        secondaryWhatsappLabel:
+          formData.get("secondaryWhatsappLabel") || undefined,
+      });
 
   if (!parsed.success) {
     redirect(
@@ -549,23 +606,48 @@ export async function updateAdvertisementAction(formData: FormData) {
     redirect(`${redirectBase}?error=${encodeURIComponent(locationError)}`);
   }
 
+  const existingAd = freeListing
+    ? await prisma.advertisement.findFirst({
+        where: { id: advertisementId, providerId: provider.id },
+        select: {
+          description: true,
+          type: true,
+          serviceArea: true,
+        },
+      })
+    : null;
+
   try {
     await updateProviderAdvertisement({
       providerId: provider.id,
       advertisementId: parsed.data.advertisementId,
       title: parsed.data.title,
-      description: parsed.data.description,
-      type: parsed.data.type,
+      description: freeListing
+        ? (existingAd?.description ?? FREE_LISTING_DEFAULTS.description)
+        : (parsed.data as CreateAdvertisementInput).description,
+      type: freeListing
+        ? (existingAd?.type as typeof FREE_LISTING_DEFAULTS.type) ??
+          FREE_LISTING_DEFAULTS.type
+        : (parsed.data as CreateAdvertisementInput).type,
       category: parsed.data.category,
       customCategory: parsed.data.customCategory,
       city: parsed.data.city,
       state: parsed.data.state,
       neighborhood: parsed.data.neighborhood,
-      serviceArea: parsed.data.serviceArea,
+      serviceArea: freeListing
+        ? ((existingAd?.serviceArea as typeof FREE_LISTING_DEFAULTS.serviceArea) ??
+          FREE_LISTING_DEFAULTS.serviceArea)
+        : (parsed.data as CreateAdvertisementInput).serviceArea,
       whatsappNumber: parsed.data.whatsappNumber,
-      whatsappLabel: parsed.data.whatsappLabel,
-      secondaryWhatsappNumber: parsed.data.secondaryWhatsappNumber,
-      secondaryWhatsappLabel: parsed.data.secondaryWhatsappLabel,
+      whatsappLabel: freeListing
+        ? undefined
+        : (parsed.data as CreateAdvertisementInput).whatsappLabel,
+      secondaryWhatsappNumber: freeListing
+        ? undefined
+        : (parsed.data as CreateAdvertisementInput).secondaryWhatsappNumber,
+      secondaryWhatsappLabel: freeListing
+        ? undefined
+        : (parsed.data as CreateAdvertisementInput).secondaryWhatsappLabel,
     });
   } catch (error) {
     const message =

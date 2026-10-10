@@ -23,6 +23,8 @@ import {
   canProviderUsePaidFeatures,
   getCurrentProvider,
 } from "@/lib/provider-session";
+import { isFreeListingProvider } from "@/lib/free-listing";
+import { FreeAdvertisementForm } from "@/features/panel/components/free-advertisement-form";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 
 interface EditAdvertisementPageProps {
@@ -61,9 +63,10 @@ export default async function EditAdvertisementPage({
 
   const newProfile = isNewAdProfileEnabled();
   const paidActive = canProviderUsePaidFeatures(provider);
-  const canEditPhotos = newProfile
-    ? paidActive
-    : advertisement.premiumActive;
+  const freeListing = isFreeListingProvider(provider);
+  const canEditPhotos =
+    !freeListing &&
+    (newProfile ? paidActive : advertisement.premiumActive);
 
   return (
     <PanelLayout>
@@ -112,112 +115,131 @@ export default async function EditAdvertisementPage({
         </div>
       )}
 
-      <form
-        action={updateAdvertisementAction}
-        className="mb-6 max-w-xl space-y-2.5"
-      >
-        <input type="hidden" name="advertisementId" value={advertisement.id} />
-
-        <div>
-          <label htmlFor="title" className="mb-1 block text-sm font-medium">
-            Título
-          </label>
-          <Input
-            id="title"
-            name="title"
-            defaultValue={advertisement.title}
-            required
-            minLength={5}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="description" className="mb-1 block text-sm font-medium">
-            Descrição
-          </label>
-          <DescriptionEditor
-            defaultValue={advertisement.description}
-            required
-            minLength={20}
-            rows={8}
-          />
-        </div>
-
-        <div className="grid gap-2 sm:grid-cols-2">
-          <div>
-            <label htmlFor="type" className="mb-1 block text-sm font-medium">
-              Tipo
-            </label>
-            <select
-              id="type"
-              name="type"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              required
-              defaultValue={typeDefault}
-            >
-              {ADVERTISEMENT_TYPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <AdvertisementCategoryFields
+      {freeListing ? (
+        <div className="mb-6">
+          <FreeAdvertisementForm
+            action={updateAdvertisementAction}
             categories={categories}
+            states={locationOptions.states}
+            cities={locationOptions.cities}
+            advertisementId={advertisement.id}
+            defaultTitle={advertisement.title}
             defaultCategory={advertisement.category}
+            defaultCity={advertisement.location.city}
+            defaultState={advertisement.location.state}
+            defaultNeighborhood={advertisement.location.neighborhood ?? ""}
+            defaultWhatsapp={toLocalWhatsAppDigits(advertisement.whatsappNumber)}
+            submitLabel="Salvar alterações"
           />
         </div>
+      ) : (
+        <form
+          action={updateAdvertisementAction}
+          className="mb-6 max-w-xl space-y-2.5"
+        >
+          <input type="hidden" name="advertisementId" value={advertisement.id} />
 
-        <LocationFields
-          states={locationOptions.states}
-          cities={locationOptions.cities}
-          defaultCity={advertisement.location.city}
-          defaultState={advertisement.location.state}
-        />
-
-        <div className="grid gap-2 sm:grid-cols-2">
           <div>
-            <label
-              htmlFor="neighborhood"
-              className="mb-1 block text-sm font-medium"
-            >
-              Bairro{" "}
-              <span className="font-normal text-muted-foreground">(opcional)</span>
+            <label htmlFor="title" className="mb-1 block text-sm font-medium">
+              Título
             </label>
             <Input
-              id="neighborhood"
-              name="neighborhood"
-              defaultValue={advertisement.location.neighborhood ?? ""}
-              placeholder="Ex.: Nazaré — ou vazio se for delivery"
-              minLength={2}
+              id="title"
+              name="title"
+              defaultValue={advertisement.title}
+              required
+              minLength={5}
             />
           </div>
-          <ServiceAreaField defaultValue={advertisement.serviceArea} />
-        </div>
 
-        <WhatsAppContactsFields
-          defaultPrimaryNumber={toLocalWhatsAppDigits(
-            advertisement.whatsappNumber
-          )}
-          defaultPrimaryLabel={advertisement.whatsappLabel ?? ""}
-          defaultSecondaryNumber={
-            advertisement.secondaryWhatsappNumber
-              ? toLocalWhatsAppDigits(advertisement.secondaryWhatsappNumber)
-              : ""
-          }
-          defaultSecondaryLabel={advertisement.secondaryWhatsappLabel ?? ""}
-        />
+          <div>
+            <label htmlFor="description" className="mb-1 block text-sm font-medium">
+              Descrição
+            </label>
+            <DescriptionEditor
+              defaultValue={advertisement.description}
+              required
+              minLength={20}
+              rows={8}
+            />
+          </div>
 
-        <div className="flex gap-2 pt-1">
-          <Button type="submit" variant="whatsapp" size="sm">
-            Salvar alterações
-          </Button>
-          <Button type="button" variant="outline" size="sm" asChild>
-            <Link href="/painel/anuncios">Cancelar</Link>
-          </Button>
-        </div>
-      </form>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div>
+              <label htmlFor="type" className="mb-1 block text-sm font-medium">
+                Tipo
+              </label>
+              <select
+                id="type"
+                name="type"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                required
+                defaultValue={typeDefault}
+              >
+                {ADVERTISEMENT_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <AdvertisementCategoryFields
+              categories={categories}
+              defaultCategory={advertisement.category}
+            />
+          </div>
+
+          <LocationFields
+            states={locationOptions.states}
+            cities={locationOptions.cities}
+            defaultCity={advertisement.location.city}
+            defaultState={advertisement.location.state}
+          />
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="neighborhood"
+                className="mb-1 block text-sm font-medium"
+              >
+                Bairro{" "}
+                <span className="font-normal text-muted-foreground">(opcional)</span>
+              </label>
+              <Input
+                id="neighborhood"
+                name="neighborhood"
+                defaultValue={advertisement.location.neighborhood ?? ""}
+                placeholder="Ex.: Nazaré — ou vazio se for delivery"
+                minLength={2}
+              />
+            </div>
+            <ServiceAreaField defaultValue={advertisement.serviceArea} />
+          </div>
+
+          <WhatsAppContactsFields
+            defaultPrimaryNumber={toLocalWhatsAppDigits(
+              advertisement.whatsappNumber
+            )}
+            defaultPrimaryLabel={advertisement.whatsappLabel ?? ""}
+            defaultSecondaryNumber={
+              advertisement.secondaryWhatsappNumber
+                ? toLocalWhatsAppDigits(advertisement.secondaryWhatsappNumber)
+                : ""
+            }
+            defaultSecondaryLabel={advertisement.secondaryWhatsappLabel ?? ""}
+          />
+
+          <div className="flex gap-2 pt-1">
+            <Button type="submit" variant="whatsapp" size="sm">
+              Salvar alterações
+            </Button>
+            <Button type="button" variant="outline" size="sm" asChild>
+              <Link href="/painel/anuncios">Cancelar</Link>
+            </Button>
+          </div>
+        </form>
+      )}
 
       {canEditPhotos ? (
         <div className="max-w-xl space-y-2 border-t pt-4">
@@ -291,11 +313,16 @@ export default async function EditAdvertisementPage({
         />
       )}
 
-      {newProfile && !paidActive && (
-        <div className="mt-4 max-w-xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
-          Seu anúncio está na listagem básica (grátis). Os dados do perfil
-          completo ficam pausados e voltam automaticamente ao renovar a
-          assinatura.
+      {freeListing && (
+        <div className="mt-4 max-w-md rounded-lg border border-whatsapp/25 bg-whatsapp/5 px-3 py-3 text-sm">
+          Quer capa, descrição, fotos e selo verificado?{" "}
+          <Link
+            href="/painel/assinatura"
+            className="font-medium text-whatsapp hover:underline"
+          >
+            Fazer upgrade
+          </Link>
+          .
         </div>
       )}
     </PanelLayout>

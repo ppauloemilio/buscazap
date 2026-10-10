@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
 import { registerProviderAction } from "@/actions/provider-actions";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,13 +20,18 @@ interface RegisterPageProps {
 
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
   const params = await searchParams;
+  const freemium = isNewAdProfileEnabled();
 
   return (
     <>
       <PageHeader
         compact
         title="Criar conta de anunciante"
-        description="Cadastre-se e assine para publicar anúncios na sua cidade"
+        description={
+          freemium
+            ? "Conta rápida — em seguida você publica a listagem grátis"
+            : "Cadastre-se e assine para publicar anúncios na sua cidade"
+        }
       />
       <section className="container mx-auto max-w-md px-4 py-5">
         <div className="rounded-xl border bg-card p-4">

@@ -14,6 +14,8 @@ import {
   canProviderUsePaidFeatures,
   getCurrentProvider,
 } from "@/lib/provider-session";
+import { isFreeListingProvider } from "@/lib/free-listing";
+import Link from "next/link";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +42,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const params = await searchParams;
   const newProfile = isNewAdProfileEnabled();
   const paidActive = canProviderUsePaidFeatures(provider);
+  const freeListing = isFreeListingProvider(provider);
   const [states, cities, companyImages] = await Promise.all([
     listActiveStates(),
     listActiveCities(),
@@ -49,6 +52,21 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   return (
     <PanelLayout>
       <div className="space-y-3">
+        {freeListing && (
+          <Card className="border-whatsapp/20 bg-whatsapp/5">
+            <CardContent className="space-y-2 p-3 text-sm">
+              <p>
+                No plano grátis, título, cidade, bairro, categoria e WhatsApp
+                ficam no seu anúncio.
+              </p>
+              <Button variant="whatsapp" size="sm" asChild>
+                <Link href="/painel/anuncios">Editar anúncio</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {!freeListing && (
         <Card>
           <CardHeader className="p-3 pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -195,8 +213,9 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
             </form>
           </CardContent>
         </Card>
+        )}
 
-        {newProfile && (
+        {newProfile && !freeListing && (
           <Card>
             <CardHeader className="p-3 pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -222,7 +241,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           <CardHeader className="p-3 pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <KeyRound className="h-4 w-4 text-whatsapp" />
-              Alterar senha
+              {freeListing ? "Senha da conta" : "Alterar senha"}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
