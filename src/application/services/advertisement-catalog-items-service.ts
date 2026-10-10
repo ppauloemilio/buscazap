@@ -1,5 +1,5 @@
 import { PRICING } from "@/config/pricing";
-import { canUsePaidAdFeatures } from "@/lib/provider-plan";
+import { canManagePaidAdvertisementContent } from "@/lib/provider-plan";
 import { prisma } from "@/lib/prisma";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 
@@ -9,14 +9,20 @@ async function requirePaidOwnedAdvertisement(
 ) {
   const provider = await prisma.provider.findUnique({
     where: { id: providerId },
-    select: { id: true, role: true, subscriptionExpiresAt: true, status: true },
+    select: {
+      id: true,
+      role: true,
+      subscriptionExpiresAt: true,
+      listingProfile: true,
+      status: true,
+    },
   });
 
   if (!provider || provider.status === "BLOCKED") {
     throw new Error("Conta bloqueada ou inválida");
   }
 
-  if (!canUsePaidAdFeatures(provider)) {
+  if (!canManagePaidAdvertisementContent(provider)) {
     throw new Error("Assinatura necessária para editar o perfil completo");
   }
 

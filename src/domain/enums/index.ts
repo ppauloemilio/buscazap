@@ -46,6 +46,12 @@ export enum SubscriptionTier {
   PLUS = "PLUS",
 }
 
+/** Painel: SIMPLE = listagem grátis (5 campos); FULL = perfil completo (não regride ao vencer). */
+export enum ListingProfile {
+  SIMPLE = "SIMPLE",
+  FULL = "FULL",
+}
+
 export enum PaymentType {
   SUBSCRIPTION = "SUBSCRIPTION",
   PREMIUM_BOOST = "PREMIUM_BOOST",

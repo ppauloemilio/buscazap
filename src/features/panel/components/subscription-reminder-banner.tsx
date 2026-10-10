@@ -11,6 +11,7 @@ interface SubscriptionReminderBannerProps {
   readonly isTrial: boolean;
   readonly canRenew: boolean;
   readonly freeListing?: boolean;
+  readonly expiredFullProfile?: boolean;
 }
 
 function daysLeft(expiresAt: string): number {
@@ -25,6 +26,7 @@ export function SubscriptionReminderBanner({
   isTrial,
   canRenew,
   freeListing = false,
+  expiredFullProfile = false,
 }: SubscriptionReminderBannerProps) {
   if (isAdmin) return null;
 
@@ -50,10 +52,14 @@ export function SubscriptionReminderBanner({
       <div className="mb-3 flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-2 text-sm text-amber-900">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>Sua assinatura está inativa. Assine para publicar e renovar anúncios.</p>
+          <p>
+            {expiredFullProfile
+              ? "Assinatura vencida: na vitrine seu anúncio aparece como listagem básica. Seus dados continuam salvos — renove para exibir capa, descrição e selo verificado de novo."
+              : "Sua assinatura está inativa. Assine para liberar o perfil completo na vitrine."}
+          </p>
         </div>
         <Button variant="whatsapp" size="sm" asChild>
-          <Link href="/painel/assinatura">Fazer assinatura</Link>
+          <Link href="/painel/assinatura">Renovar plano</Link>
         </Button>
       </div>
     );

@@ -10,11 +10,11 @@ import { listActiveCities, listActiveStates } from "@/application/services/catal
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { ProviderCompanyImagesEditor } from "@/features/panel/components/provider-company-images-editor";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
+import { getCurrentProvider } from "@/lib/provider-session";
 import {
-  canProviderUsePaidFeatures,
-  getCurrentProvider,
-} from "@/lib/provider-session";
-import { isFreeListingProvider } from "@/lib/free-listing";
+  hasFullListingProfile,
+  shouldUseSimpleFreeListingUx,
+} from "@/lib/free-listing";
 import Link from "next/link";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
@@ -41,8 +41,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 
   const params = await searchParams;
   const newProfile = isNewAdProfileEnabled();
-  const paidActive = canProviderUsePaidFeatures(provider);
-  const freeListing = isFreeListingProvider(provider);
+  const simpleListing = shouldUseSimpleFreeListingUx(provider);
+  const canManageCompanyPhotos = hasFullListingProfile(provider);
   const [states, cities, companyImages] = await Promise.all([
     listActiveStates(),
     listActiveCities(),
@@ -52,7 +52,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   return (
     <PanelLayout>
       <div className="space-y-3">
-        {freeListing && (
+        {simpleListing && (
           <Card className="border-whatsapp/20 bg-whatsapp/5">
             <CardContent className="space-y-2 p-3 text-sm">
               <p>
@@ -66,7 +66,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           </Card>
         )}
 
-        {!freeListing && (
+        {!simpleListing && (
         <Card>
           <CardHeader className="p-3 pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -215,7 +215,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         </Card>
         )}
 
-        {newProfile && !freeListing && (
+        {newProfile && !simpleListing && (
           <Card>
             <CardHeader className="p-3 pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -231,7 +231,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
               )}
               <ProviderCompanyImagesEditor
                 images={companyImages}
-                paidActive={paidActive}
+                paidActive={canManageCompanyPhotos}
               />
             </CardContent>
           </Card>
@@ -241,7 +241,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           <CardHeader className="p-3 pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <KeyRound className="h-4 w-4 text-whatsapp" />
-              {freeListing ? "Senha da conta" : "Alterar senha"}
+              {simpleListing ? "Senha da conta" : "Alterar senha"}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">

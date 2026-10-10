@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { PRICING } from "@/config/pricing";
 import {
+  ListingProfile,
   SUBSCRIPTION_TIER_REFERENCE,
   SubscriptionTier,
 } from "@/domain/enums";
@@ -131,6 +132,7 @@ export async function activateSubscription(
     data: {
       subscriptionExpiresAt: expiresAt,
       subscriptionTier: tier,
+      listingProfile: ListingProfile.FULL,
     },
   });
 

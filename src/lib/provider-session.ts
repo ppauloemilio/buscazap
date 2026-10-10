@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 export type ProviderAccessProfile = {
   readonly role: string;
   readonly subscriptionExpiresAt: Date | null;
+  readonly listingProfile?: string | null;
 };
 
 export const getCurrentProvider = cache(async () => {

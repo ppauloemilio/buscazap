@@ -19,11 +19,11 @@ import { WhatsAppContactsFields } from "@/features/panel/components/whatsapp-con
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdvertisementType } from "@/domain/enums";
+import { canProviderUsePaidFeatures, getCurrentProvider } from "@/lib/provider-session";
 import {
-  canProviderUsePaidFeatures,
-  getCurrentProvider,
-} from "@/lib/provider-session";
-import { isFreeListingProvider } from "@/lib/free-listing";
+  hasFullListingProfile,
+  shouldUseSimpleFreeListingUx,
+} from "@/lib/free-listing";
 import { FreeAdvertisementForm } from "@/features/panel/components/free-advertisement-form";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 
@@ -62,11 +62,12 @@ export default async function EditAdvertisementPage({
     : AdvertisementType.SERVICE;
 
   const newProfile = isNewAdProfileEnabled();
-  const paidActive = canProviderUsePaidFeatures(provider);
-  const freeListing = isFreeListingProvider(provider);
+  const subscriptionActive = canProviderUsePaidFeatures(provider);
+  const simpleListing = shouldUseSimpleFreeListingUx(provider);
+  const fullProfile = hasFullListingProfile(provider);
   const canEditPhotos =
-    !freeListing &&
-    (newProfile ? paidActive : advertisement.premiumActive);
+    !simpleListing &&
+    (newProfile ? fullProfile : advertisement.premiumActive);
 
   return (
     <PanelLayout>
@@ -115,7 +116,15 @@ export default async function EditAdvertisementPage({
         </div>
       )}
 
-      {freeListing ? (
+      {!subscriptionActive && fullProfile && newProfile && (
+        <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Sua assinatura está vencida: na busca o anúncio aparece como listagem
+          básica, mas você pode editar todo o cadastro. Ao renovar, a vitrine
+          completa volta automaticamente.
+        </div>
+      )}
+
+      {simpleListing ? (
         <div className="mb-6">
           <FreeAdvertisementForm
             action={updateAdvertisementAction}
@@ -301,7 +310,7 @@ export default async function EditAdvertisementPage({
         </div>
       )}
 
-      {newProfile && paidActive && (
+      {newProfile && fullProfile && (
         <AdvertisementPaidProfileEditor
           advertisementId={advertisement.id}
           streetAddress={advertisement.streetAddress}
@@ -313,7 +322,7 @@ export default async function EditAdvertisementPage({
         />
       )}
 
-      {freeListing && (
+      {simpleListing && (
         <div className="mt-4 max-w-md rounded-lg border border-whatsapp/25 bg-whatsapp/5 px-3 py-3 text-sm">
           Quer capa, descrição, fotos e selo verificado?{" "}
           <Link

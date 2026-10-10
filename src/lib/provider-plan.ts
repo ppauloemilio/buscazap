@@ -1,4 +1,5 @@
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import { hasFullListingProfile } from "@/lib/free-listing";
 import {
   hasActiveSubscription,
   isAdminProvider,
@@ -31,6 +32,20 @@ export function canUsePaidAdFeatures(provider: ProviderAccessProfile): boolean {
   }
 
   return getProviderPlan(provider) === "paid";
+}
+
+/** Editar capa, perfil completo e catálogo no painel (inclui assinatura vencida com perfil FULL). */
+export function canManagePaidAdvertisementContent(
+  provider: ProviderAccessProfile
+): boolean {
+  if (!isNewAdProfileEnabled()) {
+    return (
+      isAdminProvider(provider) ||
+      hasActiveSubscription(provider.subscriptionExpiresAt)
+    );
+  }
+
+  return hasFullListingProfile(provider);
 }
 
 /** Com freemium ligado, qualquer anunciante ativo pode manter listagem básica. */

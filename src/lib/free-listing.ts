@@ -1,14 +1,18 @@
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
-import { AdvertisementType, ServiceArea } from "@/domain/enums";
+import { AdvertisementType, ListingProfile, ServiceArea } from "@/domain/enums";
 import {
   canProviderUsePaidFeatures,
   isAdminProvider,
   type ProviderAccessProfile,
 } from "@/lib/provider-session";
 
-/** Listagem básica (freemium) sem assinatura paga. */
-export function isFreeListingProvider(
-  provider: ProviderAccessProfile
+export type ProviderListingAccess = ProviderAccessProfile & {
+  readonly listingProfile?: string | null;
+};
+
+/** Painel e formulários enxutos (usuário novo listagem grátis). */
+export function shouldUseSimpleFreeListingUx(
+  provider: ProviderListingAccess
 ): boolean {
   if (!isNewAdProfileEnabled()) {
     return false;
@@ -16,7 +20,28 @@ export function isFreeListingProvider(
   if (isAdminProvider(provider)) {
     return false;
   }
-  return !canProviderUsePaidFeatures(provider);
+  return !hasFullListingProfile(provider);
+}
+
+/** @deprecated Use shouldUseSimpleFreeListingUx */
+export function isFreeListingProvider(provider: ProviderListingAccess): boolean {
+  return shouldUseSimpleFreeListingUx(provider);
+}
+
+/** Pode usar painel completo (criou/assinou perfil pago; mantém após vencimento). */
+export function hasFullListingProfile(provider: ProviderListingAccess): boolean {
+  if (!isNewAdProfileEnabled()) {
+    return true;
+  }
+  if (isAdminProvider(provider)) {
+    return true;
+  }
+  return (provider.listingProfile ?? ListingProfile.SIMPLE) === ListingProfile.FULL;
+}
+
+/** Vitrine paga ativa (assinatura vigente). */
+export function hasActivePaidPublicListing(provider: ProviderAccessProfile): boolean {
+  return canProviderUsePaidFeatures(provider);
 }
 
 export const FREE_LISTING_DEFAULT_DESCRIPTION =

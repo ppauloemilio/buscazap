@@ -8,7 +8,10 @@ import {
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { PanelNav } from "@/features/panel/components/panel-nav";
 import { canUsePlusFeatures } from "@/lib/plus-plan";
-import { isFreeListingProvider } from "@/lib/free-listing";
+import {
+  hasFullListingProfile,
+  shouldUseSimpleFreeListingUx,
+} from "@/lib/free-listing";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { SubscriptionReminderBanner } from "@/features/panel/components/subscription-reminder-banner";
 
@@ -29,33 +32,36 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
   const isAdmin = isAdminProvider(provider);
   const subscription = await getSubscriptionStatus(provider.id);
   const showPromotions = await canUsePlusFeatures(provider);
-  const freeListing = isFreeListingProvider(provider);
+  const simpleListing = shouldUseSimpleFreeListingUx(provider);
+  const fullProfile = hasFullListingProfile(provider);
   const freemium = isNewAdProfileEnabled();
 
   return (
     <div className="container mx-auto px-4 py-4 md:py-5">
       <div className="mb-3">
         <h1 className="text-xl font-bold md:text-2xl">
-          {freeListing ? "Minha listagem" : "Painel do Usuário"}
+          {simpleListing ? "Minha listagem" : "Painel do Usuário"}
         </h1>
         <p className="text-sm text-muted-foreground">
           Olá, {provider.name}
           {isAdmin
             ? " — acesso administrativo (sem cobrança)"
-            : freeListing
+            : simpleListing
               ? " — plano grátis"
               : subscriptionActive
                 ? subscription.isTrial
                   ? " — período grátis ativo"
                   : " — assinatura ativa"
-                : freemium
-                  ? " — plano grátis"
-                  : " — assinatura inativa"}
+                : fullProfile && freemium
+                  ? " — assinatura vencida (vitrine básica)"
+                  : freemium
+                    ? " — plano grátis"
+                    : " — assinatura inativa"}
         </p>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[180px_1fr]">
-        <PanelNav showPromotions={showPromotions} freeListing={freeListing} />
+        <PanelNav showPromotions={showPromotions} freeListing={simpleListing} />
         <div>
           <SubscriptionReminderBanner
             active={subscription.active}
@@ -63,7 +69,8 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
             expiresAt={subscription.expiresAt?.toISOString() ?? null}
             isTrial={subscription.isTrial}
             canRenew={subscription.canRenew}
-            freeListing={freeListing}
+            freeListing={simpleListing}
+            expiredFullProfile={fullProfile && !subscriptionActive && !simpleListing}
           />
           {children}
         </div>

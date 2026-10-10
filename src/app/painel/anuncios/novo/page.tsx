@@ -14,7 +14,9 @@ import {
   canProviderPublish,
   isAdminProvider,
 } from "@/lib/provider-session";
-import { isFreeListingProvider } from "@/lib/free-listing";
+import { hasFullListingProfile, shouldUseSimpleFreeListingUx } from "@/lib/free-listing";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import { AdvertisementProfileExtrasFields } from "@/features/panel/components/advertisement-profile-extras-fields";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
 import { listActiveCatalogLocationOptions } from "@/application/services/catalog-location";
@@ -50,7 +52,9 @@ export default async function NewAdvertisementPage({
   }
 
   const params = await searchParams;
-  const freeListing = isFreeListingProvider(provider);
+  const simpleListing = shouldUseSimpleFreeListingUx(provider);
+  const newProfile = isNewAdProfileEnabled();
+  const fullProfile = hasFullListingProfile(provider);
   const [categories, locationOptions] = await Promise.all([
     getCategoriesWithCounts(),
     listActiveCatalogLocationOptions(),
@@ -59,7 +63,7 @@ export default async function NewAdvertisementPage({
   return (
     <PanelLayout>
       <h2 className="mb-3 text-lg font-semibold">
-        {freeListing ? "Publicar listagem grátis" : "Novo anúncio"}
+        {simpleListing ? "Publicar listagem grátis" : "Novo anúncio"}
       </h2>
 
       {params.error && (
@@ -68,7 +72,7 @@ export default async function NewAdvertisementPage({
         </p>
       )}
 
-      {freeListing ? (
+      {simpleListing ? (
         <FreeAdvertisementForm
           action={createAdvertisementAction}
           categories={categories}
@@ -146,7 +150,11 @@ export default async function NewAdvertisementPage({
             />
           </div>
 
-          <AdvertisementImageFields />
+          <AdvertisementImageFields showLogo={newProfile && fullProfile} />
+
+          {newProfile && fullProfile ? (
+            <AdvertisementProfileExtrasFields />
+          ) : null}
 
           <div className="flex gap-2">
             <Button type="submit" variant="whatsapp" size="sm">

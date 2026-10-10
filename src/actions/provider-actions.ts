@@ -14,14 +14,13 @@ import {
 import { downgradeProviderToBasicTier } from "@/application/services/subscription-service";
 import { SubscriptionTier } from "@/domain/enums";
 import { prisma } from "@/lib/prisma";
-import { canUsePaidAdFeatures } from "@/lib/provider-plan";
+import { canManagePaidAdvertisementContent } from "@/lib/provider-plan";
 import {
   FREE_LISTING_DEFAULTS,
-  isFreeListingProvider,
+  shouldUseSimpleFreeListingUx,
 } from "@/lib/free-listing";
 import {
   canProviderPublish,
-  canProviderUsePaidFeatures,
   getCurrentProvider,
   isAdminProvider,
   isPremiumActive,
@@ -90,6 +89,35 @@ function redirectToEditImages(
   redirect(`/painel/anuncios/${advertisementId}/editar${suffix}`);
 }
 
+function parseBusinessHoursFromForm(formData: FormData): Record<string, string | null> {
+  const hours: Record<string, string | null> = {};
+  for (let day = 0; day < 7; day += 1) {
+    const raw = formData.get(`hours_${day}`);
+    const value = typeof raw === "string" ? raw.trim() : "";
+    hours[String(day)] = value || null;
+  }
+  return hours;
+}
+
+async function saveAdvertisementProfileExtrasFromForm(
+  providerId: string,
+  advertisementId: string,
+  formData: FormData
+) {
+  const hours = parseBusinessHoursFromForm(formData);
+  const { updateAdvertisementProfileExtras } = await import(
+    "@/application/services/advertisement-catalog-items-service"
+  );
+  await updateAdvertisementProfileExtras({
+    providerId,
+    advertisementId,
+    streetAddress: String(formData.get("streetAddress") ?? "").trim() || null,
+    instagram: String(formData.get("instagram") ?? "").trim() || null,
+    website: String(formData.get("website") ?? "").trim() || null,
+    businessHoursJson: JSON.stringify(hours),
+  });
+}
+
 async function requireOwnedPremiumAdvertisement(
   providerId: string,
   advertisementId: string
@@ -107,9 +135,9 @@ async function requireOwnedPremiumAdvertisement(
   if (isNewAdProfileEnabled()) {
     const provider = await prisma.provider.findUnique({
       where: { id: providerId },
-      select: { role: true, subscriptionExpiresAt: true },
+      select: { role: true, subscriptionExpiresAt: true, listingProfile: true },
     });
-    if (!provider || !canUsePaidAdFeatures(provider)) {
+    if (!provider || !canManagePaidAdvertisementContent(provider)) {
       redirect(`/painel/anuncios/${advertisementId}/editar?error=${encodeURIComponent("Assine para gerenciar fotos do perfil")}`);
     }
     return advertisement;
@@ -382,9 +410,9 @@ export async function createAdvertisementAction(formData: FormData) {
     redirect("/painel/assinatura");
   }
 
-  const freeListing = isFreeListingProvider(provider);
+  const simpleListing = shouldUseSimpleFreeListingUx(provider);
 
-  const parsed = freeListing
+  const parsed = simpleListing
     ? createFreeAdvertisementSchema.safeParse({
         title: formData.get("title"),
         category: formData.get("category"),
@@ -428,7 +456,8 @@ export async function createAdvertisementAction(formData: FormData) {
   }
 
   let coverFile: File | null = null;
-  if (!freeListing) {
+  let logoFile: File | null = null;
+  if (!simpleListing) {
     const cover = formData.get("coverImage");
     if (!(cover instanceof File)) {
       redirect(
@@ -443,9 +472,20 @@ export async function createAdvertisementAction(formData: FormData) {
       );
     }
     coverFile = cover;
+
+    const logo = formData.get("logoImage");
+    if (logo instanceof File && logo.size > 0) {
+      const logoValidationError = validateImageFile(logo, "Logo da marca");
+      if (logoValidationError) {
+        redirect(
+          `/painel/anuncios/novo?error=${encodeURIComponent(logoValidationError)}`
+        );
+      }
+      logoFile = logo;
+    }
   }
 
-  const advertisementData = freeListing
+  const advertisementData = simpleListing
     ? {
         title: parsed.data.title,
         description: FREE_LISTING_DEFAULTS.description,
@@ -513,6 +553,42 @@ export async function createAdvertisementAction(formData: FormData) {
     }
   }
 
+  if (logoFile) {
+    try {
+      await replaceAdvertisementLogo(result.advertisement.id, logoFile);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível enviar a logomarca";
+      redirect(
+        `/painel/anuncios/novo?error=${encodeURIComponent(message)}`
+      );
+    }
+  }
+
+  if (
+    !simpleListing &&
+    isNewAdProfileEnabled() &&
+    canManagePaidAdvertisementContent(provider)
+  ) {
+    try {
+      await saveAdvertisementProfileExtrasFromForm(
+        provider.id,
+        result.advertisement.id,
+        formData
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar o perfil completo";
+      redirect(
+        `/painel/anuncios/novo?error=${encodeURIComponent(message)}`
+      );
+    }
+  }
+
   revalidatePath("/painel/anuncios");
   revalidatePath("/buscar");
   revalidatePath("/");
@@ -538,6 +614,10 @@ export async function createAdvertisementAction(formData: FormData) {
     redirect(`/pagamento/${payment.id}`);
   }
 
+  if (!simpleListing && isNewAdProfileEnabled()) {
+    redirectToEditImages(result.advertisement.id, { saved: "1" });
+  }
+
   redirect("/painel/anuncios");
 }
 
@@ -560,9 +640,9 @@ export async function updateAdvertisementAction(formData: FormData) {
     redirect("/painel/anuncios");
   }
 
-  const freeListing = isFreeListingProvider(provider);
+  const simpleListing = shouldUseSimpleFreeListingUx(provider);
 
-  const parsed = freeListing
+  const parsed = simpleListing
     ? updateFreeAdvertisementSchema.safeParse({
         advertisementId,
         title: formData.get("title"),
@@ -606,7 +686,7 @@ export async function updateAdvertisementAction(formData: FormData) {
     redirect(`${redirectBase}?error=${encodeURIComponent(locationError)}`);
   }
 
-  const existingAd = freeListing
+  const existingAd = simpleListing
     ? await prisma.advertisement.findFirst({
         where: { id: advertisementId, providerId: provider.id },
         select: {
@@ -622,10 +702,10 @@ export async function updateAdvertisementAction(formData: FormData) {
       providerId: provider.id,
       advertisementId: parsed.data.advertisementId,
       title: parsed.data.title,
-      description: freeListing
+      description: simpleListing
         ? (existingAd?.description ?? FREE_LISTING_DEFAULTS.description)
         : (parsed.data as CreateAdvertisementInput).description,
-      type: freeListing
+      type: simpleListing
         ? (existingAd?.type as typeof FREE_LISTING_DEFAULTS.type) ??
           FREE_LISTING_DEFAULTS.type
         : (parsed.data as CreateAdvertisementInput).type,
@@ -634,18 +714,18 @@ export async function updateAdvertisementAction(formData: FormData) {
       city: parsed.data.city,
       state: parsed.data.state,
       neighborhood: parsed.data.neighborhood,
-      serviceArea: freeListing
+      serviceArea: simpleListing
         ? ((existingAd?.serviceArea as typeof FREE_LISTING_DEFAULTS.serviceArea) ??
           FREE_LISTING_DEFAULTS.serviceArea)
         : (parsed.data as CreateAdvertisementInput).serviceArea,
       whatsappNumber: parsed.data.whatsappNumber,
-      whatsappLabel: freeListing
+      whatsappLabel: simpleListing
         ? undefined
         : (parsed.data as CreateAdvertisementInput).whatsappLabel,
-      secondaryWhatsappNumber: freeListing
+      secondaryWhatsappNumber: simpleListing
         ? undefined
         : (parsed.data as CreateAdvertisementInput).secondaryWhatsappNumber,
-      secondaryWhatsappLabel: freeListing
+      secondaryWhatsappLabel: simpleListing
         ? undefined
         : (parsed.data as CreateAdvertisementInput).secondaryWhatsappLabel,
     });
@@ -940,7 +1020,7 @@ function redirectToProfilePhotos(query: {
 export async function updateProviderCompanyImagesAction(formData: FormData) {
   const provider = await requireCurrentProvider();
 
-  if (!canProviderUsePaidFeatures(provider)) {
+  if (!canManagePaidAdvertisementContent(provider)) {
     redirectToProfilePhotos({
       error: "Assine para enviar fotos da empresa",
     });
@@ -1001,7 +1081,7 @@ export async function removeProviderCompanyImageAction(formData: FormData) {
     redirect("/painel/perfil");
   }
 
-  if (!canProviderUsePaidFeatures(provider)) {
+  if (!canManagePaidAdvertisementContent(provider)) {
     redirectToProfilePhotos({
       error: "Assine para gerenciar fotos da empresa",
     });
@@ -1082,7 +1162,7 @@ export async function updateAdvertisementProfileExtrasAction(
   formData: FormData
 ) {
   const provider = await requireCurrentProvider();
-  if (!canProviderUsePaidFeatures(provider)) {
+  if (!canManagePaidAdvertisementContent(provider)) {
     redirect("/painel/assinatura");
   }
 
@@ -1091,25 +1171,12 @@ export async function updateAdvertisementProfileExtrasAction(
     redirect("/painel/anuncios");
   }
 
-  const hours: Record<string, string | null> = {};
-  for (let day = 0; day < 7; day += 1) {
-    const raw = formData.get(`hours_${day}`);
-    const value = typeof raw === "string" ? raw.trim() : "";
-    hours[String(day)] = value || null;
-  }
-
   try {
-    const { updateAdvertisementProfileExtras } = await import(
-      "@/application/services/advertisement-catalog-items-service"
-    );
-    await updateAdvertisementProfileExtras({
-      providerId: provider.id,
+    await saveAdvertisementProfileExtrasFromForm(
+      provider.id,
       advertisementId,
-      streetAddress: String(formData.get("streetAddress") ?? "").trim() || null,
-      instagram: String(formData.get("instagram") ?? "").trim() || null,
-      website: String(formData.get("website") ?? "").trim() || null,
-      businessHoursJson: JSON.stringify(hours),
-    });
+      formData
+    );
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Não foi possível salvar o perfil";

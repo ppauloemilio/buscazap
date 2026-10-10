@@ -571,6 +571,7 @@ export async function createProviderAsAdmin(input: {
       role: UserRole.PROVIDER,
       referralCode,
       subscriptionExpiresAt,
+      ...(input.grantTrial ? { listingProfile: "FULL" as const } : {}),
     },
   });
 
