@@ -77,7 +77,10 @@ export async function downgradeProviderToBasicTier(providerId: string) {
 function resolveTierFromPaymentReference(
   referenceId: string | null | undefined
 ): SubscriptionTier {
-  if (referenceId === SUBSCRIPTION_TIER_REFERENCE.PLUS) {
+  if (
+    referenceId === SUBSCRIPTION_TIER_REFERENCE.PLUS ||
+    referenceId === SUBSCRIPTION_TIER_REFERENCE.PLUS_UPGRADE
+  ) {
     return SubscriptionTier.PLUS;
   }
   return SubscriptionTier.BASIC;
@@ -107,15 +110,27 @@ export async function activateSubscription(
   }
 
   const tier = resolveTierFromPaymentReference(payment.referenceId);
+  const isProRataUpgrade =
+    payment.referenceId === SUBSCRIPTION_TIER_REFERENCE.PLUS_UPGRADE;
 
-  const baseDate =
+  let expiresAt: Date;
+
+  if (
+    isProRataUpgrade &&
     provider.subscriptionExpiresAt &&
     provider.subscriptionExpiresAt.getTime() > paidAt.getTime()
-      ? provider.subscriptionExpiresAt
-      : paidAt;
+  ) {
+    expiresAt = new Date(provider.subscriptionExpiresAt);
+  } else {
+    const baseDate =
+      provider.subscriptionExpiresAt &&
+      provider.subscriptionExpiresAt.getTime() > paidAt.getTime()
+        ? provider.subscriptionExpiresAt
+        : paidAt;
 
-  const expiresAt = new Date(baseDate);
-  expiresAt.setDate(expiresAt.getDate() + PRICING.SUBSCRIPTION_DAYS);
+    expiresAt = new Date(baseDate);
+    expiresAt.setDate(expiresAt.getDate() + PRICING.SUBSCRIPTION_DAYS);
+  }
 
   await tx.subscription.create({
     data: {

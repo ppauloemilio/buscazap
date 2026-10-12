@@ -15,6 +15,10 @@ import {
   canRenewSubscription,
   hasActiveSubscription,
 } from "@/lib/provider-session";
+import {
+  calculateProRataUpgradeAmount,
+  isEligibleForProRataUpgrade,
+} from "@/lib/subscription-proration";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { activatePremiumBoost } from "@/application/services/premium-service";
 import { activateSubscription } from "@/application/services/subscription-service";
@@ -83,6 +87,7 @@ async function getProviderPaymentProfile(providerId: string) {
       whatsapp: true,
       role: true,
       subscriptionExpiresAt: true,
+      subscriptionTier: true,
     },
   });
 
@@ -100,6 +105,7 @@ async function getProviderPaymentProfile(providerId: string) {
     email: payerEmail,
     role: provider.role,
     subscriptionExpiresAt: provider.subscriptionExpiresAt,
+    subscriptionTier: provider.subscriptionTier,
   };
 }
 
@@ -117,14 +123,16 @@ export async function createSubscriptionPayment(
     throw new Error("Plano Pro indisponível no momento");
   }
 
-  const amount =
-    tier === SubscriptionTier.PLUS
-      ? PRICING.SUBSCRIPTION_PLUS_AMOUNT
-      : PRICING.SUBSCRIPTION_AMOUNT;
-
   const hasActive = hasActiveSubscription(provider.subscriptionExpiresAt);
-  const upgradingToPlusWhileActive =
-    tier === SubscriptionTier.PLUS && hasActive;
+  const proRataUpgrade =
+    tier === SubscriptionTier.PLUS &&
+    isEligibleForProRataUpgrade({
+      role: provider.role,
+      subscriptionExpiresAt: provider.subscriptionExpiresAt,
+      subscriptionTier: provider.subscriptionTier,
+    });
+
+  const upgradingToPlusWhileActive = tier === SubscriptionTier.PLUS && hasActive;
 
   if (
     !options?.bypassRenewalWindow &&
@@ -137,8 +145,24 @@ export async function createSubscriptionPayment(
     );
   }
 
-  const tierLabel =
-    tier === SubscriptionTier.PLUS ? "Plano Pro" : "Plano Básico";
+  let amount: number =
+    tier === SubscriptionTier.PLUS
+      ? PRICING.SUBSCRIPTION_PLUS_AMOUNT
+      : PRICING.SUBSCRIPTION_AMOUNT;
+  let referenceId: string =
+    tier === SubscriptionTier.PLUS
+      ? SUBSCRIPTION_TIER_REFERENCE.PLUS
+      : SUBSCRIPTION_TIER_REFERENCE.BASIC;
+  let description = `Assinatura mensal BuscaZapp — ${
+    tier === SubscriptionTier.PLUS ? "Plano Pro" : "Plano Básico"
+  }`;
+
+  if (proRataUpgrade && provider.subscriptionExpiresAt) {
+    amount = calculateProRataUpgradeAmount(provider.subscriptionExpiresAt);
+    referenceId = SUBSCRIPTION_TIER_REFERENCE.PLUS_UPGRADE;
+    const validUntil = provider.subscriptionExpiresAt.toLocaleDateString("pt-BR");
+    description = `Upgrade proporcional para Plano Pro (válido até ${validUntil})`;
+  }
 
   return initiatePayment({
     providerId,
@@ -146,11 +170,8 @@ export async function createSubscriptionPayment(
     providerName: provider.name,
     type: PaymentType.SUBSCRIPTION,
     amount,
-    description: `Assinatura mensal BuscaZapp — ${tierLabel}`,
-    referenceId:
-      tier === SubscriptionTier.PLUS
-        ? SUBSCRIPTION_TIER_REFERENCE.PLUS
-        : SUBSCRIPTION_TIER_REFERENCE.BASIC,
+    description,
+    referenceId,
   });
 }
 

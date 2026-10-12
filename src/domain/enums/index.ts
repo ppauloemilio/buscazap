@@ -61,6 +61,8 @@ export enum PaymentType {
 export const SUBSCRIPTION_TIER_REFERENCE = {
   BASIC: "BASIC",
   PLUS: "PLUS",
+  /** Upgrade Pro proporcional (mantém vencimento do ciclo atual). */
+  PLUS_UPGRADE: "PLUS_UPGRADE",
 } as const;
 
 export enum PaymentStatus {

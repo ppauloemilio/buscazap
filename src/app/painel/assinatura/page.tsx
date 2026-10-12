@@ -27,6 +27,10 @@ import {
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { SubscriptionTier } from "@/domain/enums";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
+import {
+  calculateProRataUpgradeAmount,
+  isEligibleForProRataUpgrade,
+} from "@/lib/subscription-proration";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,6 +76,19 @@ export default async function SubscriptionPage({
   const homepage = await getHomepageSettings();
   const plusOffer = homepage.plusPlanEnabled;
   const isPlus = status.subscriptionTier === SubscriptionTier.PLUS;
+  const proRataUpgrade =
+    status.active &&
+    !isPlus &&
+    status.expiresAt &&
+    isEligibleForProRataUpgrade({
+      role: provider.role,
+      subscriptionExpiresAt: status.expiresAt,
+      subscriptionTier: status.subscriptionTier,
+    });
+  const proRataAmount =
+    proRataUpgrade && status.expiresAt
+      ? calculateProRataUpgradeAmount(status.expiresAt)
+      : null;
 
   return (
     <PanelLayout>
@@ -231,11 +248,26 @@ export default async function SubscriptionPage({
                 </CardHeader>
                 <CardContent className="space-y-3 p-3 pt-0">
                   <p className="text-xl font-bold text-whatsapp">
-                    {formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}
+                    {proRataAmount != null
+                      ? formatPriceBRL(proRataAmount)
+                      : formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}
                     <span className="text-sm font-normal text-muted-foreground">
-                      /mês
+                      {proRataAmount != null ? " agora (proporcional)" : " /mês"}
                     </span>
                   </p>
+                  {proRataAmount != null && status.expiresAt ? (
+                    <p className="text-xs text-muted-foreground">
+                      Você paga só a diferença até{" "}
+                      {status.expiresAt.toLocaleDateString("pt-BR")}. O Plano Pro
+                      começa na hora, com a mesma data de vencimento. Na renovação,
+                      escolha Básico ou Pro.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Assinatura mensal completa. Na renovação, escolha Básico ou
+                      Pro.
+                    </p>
+                  )}
                   <ul className="space-y-1 text-sm text-muted-foreground">
                     {PRO_PLAN_EXTRA_BENEFITS.map((benefit) => (
                       <li
@@ -268,7 +300,11 @@ export default async function SubscriptionPage({
                   ) : !isPlus ? (
                     <SubscriptionPayButton
                       tier={SubscriptionTier.PLUS}
-                      label="Upgrade para Plano Pro"
+                      label={
+                        proRataAmount != null
+                          ? `Upgrade Pro (${formatPriceBRL(proRataAmount)})`
+                          : "Upgrade para Plano Pro"
+                      }
                     />
                   ) : status.canRenew ? (
                     <SubscriptionPayButton

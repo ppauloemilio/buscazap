@@ -22,6 +22,7 @@ import {
   getCurrentProvider,
   isAdminProvider,
 } from "@/lib/provider-session";
+import { calculateProRataUpgradeAmount } from "@/lib/subscription-proration";
 import { isFreeListingProvider } from "@/lib/free-listing";
 import { FreePanelOverview } from "@/features/panel/components/free-panel-overview";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
@@ -48,6 +49,10 @@ export default async function PanelPage() {
   const plusOffer = homepage.plusPlanEnabled;
   const showProUpgrade =
     plusOffer && subscription.active && !isPlus && !isAdmin;
+  const proRataAmount =
+    showProUpgrade && provider.subscriptionExpiresAt
+      ? calculateProRataUpgradeAmount(provider.subscriptionExpiresAt)
+      : null;
   const firstAd = advertisements[0];
 
   return (
@@ -180,10 +185,15 @@ export default async function PanelPage() {
             <CardContent className="p-3">
               <Sparkles className="mb-2 h-6 w-6 text-whatsapp" />
               <h3 className="text-sm font-semibold">
-                Plano Pro {formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}/mês
+                Upgrade Plano Pro
+                {proRataAmount != null
+                  ? ` — ${formatPriceBRL(proRataAmount)}`
+                  : ` — ${formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}/mês`}
               </h3>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Promoções na busca, limites ampliados e tudo do Básico.
+                {proRataAmount != null && provider.subscriptionExpiresAt
+                  ? `Pro-rata até ${provider.subscriptionExpiresAt.toLocaleDateString("pt-BR")}. Mesma data de vencimento; na renovação você escolhe Básico ou Pro.`
+                  : "Promoções na busca, limites ampliados e tudo do Básico."}
               </p>
               <ul className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
                 {PRO_PLAN_EXTRA_BENEFITS.slice(1, 4).map((item) => (
@@ -194,7 +204,9 @@ export default async function PanelPage() {
                 <form action={createSubscriptionPaymentAction}>
                   <input type="hidden" name="tier" value={SubscriptionTier.PLUS} />
                   <Button type="submit" variant="whatsapp" size="sm">
-                    Upgrade para Plano Pro
+                    {proRataAmount != null
+                      ? `Upgrade (${formatPriceBRL(proRataAmount)})`
+                      : "Upgrade para Plano Pro"}
                   </Button>
                 </form>
                 <Button variant="outline" size="sm" asChild>
