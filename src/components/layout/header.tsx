@@ -12,6 +12,7 @@ export async function Header() {
   const provider = await getCurrentProvider();
   const isAdmin = provider ? isAdminRole(provider.role) : false;
   const canPublish = provider ? canProviderPublish(provider) : false;
+  const plansHref = provider ? "/painel/assinatura" : "/anunciar";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -38,6 +39,12 @@ export async function Header() {
             Categorias
           </Link>
           <Link
+            href={plansHref}
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Planos
+          </Link>
+          <Link
             href="/como-funciona"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
@@ -58,6 +65,7 @@ export async function Header() {
             isLoggedIn={Boolean(provider)}
             isAdmin={isAdmin}
             canPublish={canPublish}
+            plansHref={plansHref}
           />
           {provider && canPublish && (
             <Button variant="whatsapp" size="sm" className="hidden md:inline-flex" asChild>

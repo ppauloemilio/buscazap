@@ -20,9 +20,15 @@ type MobileNavProps = {
   readonly isLoggedIn: boolean;
   readonly isAdmin: boolean;
   readonly canPublish: boolean;
+  readonly plansHref: string;
 };
 
-export function MobileNav({ isLoggedIn, isAdmin, canPublish }: MobileNavProps) {
+export function MobileNav({
+  isLoggedIn,
+  isAdmin,
+  canPublish,
+  plansHref,
+}: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const menuId = useId();
@@ -88,6 +94,13 @@ export function MobileNav({ isLoggedIn, isAdmin, canPublish }: MobileNavProps) {
                   className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
                 >
                   Categorias
+                </Link>
+                <Link
+                  href={plansHref}
+                  onClick={close}
+                  className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
+                >
+                  Planos
                 </Link>
                 <Link
                   href="/como-funciona"
