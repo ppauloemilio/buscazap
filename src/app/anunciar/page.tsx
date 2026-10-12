@@ -17,7 +17,7 @@ const FREE_BENEFITS = [
   "Listagem básica na busca",
   "Nome, categoria, bairro e WhatsApp",
   "Disponível nas cidades ativas do catálogo",
-  "Upgrade para o plano pago quando quiser",
+  "Upgrade para o Plano Básico quando quiser",
 ] as const;
 
 const PAID_BENEFITS = [
@@ -109,7 +109,7 @@ export default async function AdvertisePage() {
               </div>
               <Badge variant="secondary">Grátis</Badge>
             </div>
-            <h3 className="text-base font-semibold">Listagem grátis</h3>
+            <h3 className="text-base font-semibold">Plano Grátis</h3>
             <p className="mt-1 text-2xl font-bold">
               R$ 0
               <span className="text-sm font-normal text-muted-foreground">
@@ -133,7 +133,7 @@ export default async function AdvertisePage() {
             <div className="mt-4 flex flex-wrap gap-2">
               {provider ? (
                 <Button variant="outline" asChild>
-                  <Link href="/painel/anuncios/novo">Criar listagem grátis</Link>
+                  <Link href="/painel/anuncios/novo">Criar anúncio no Plano Grátis</Link>
                 </Button>
               ) : (
                 <>
@@ -160,7 +160,7 @@ export default async function AdvertisePage() {
               </div>
               <Badge variant="whatsapp">Recomendado</Badge>
             </div>
-            <h3 className="text-base font-semibold">Plano pago</h3>
+            <h3 className="text-base font-semibold">Plano Básico</h3>
             <p className="mt-1 text-2xl font-bold text-whatsapp">
               {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}
               <span className="text-sm font-normal text-muted-foreground">

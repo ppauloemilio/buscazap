@@ -83,7 +83,7 @@ export function AdvertisementListings({
         <AdvertisementSection
           variant="free"
           compact
-          title="Listagens grátis"
+          title="Plano Grátis"
           advertisements={free}
           viewAllHref={freeHref}
           returnTo={returnTo}

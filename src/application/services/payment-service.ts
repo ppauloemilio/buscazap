@@ -106,7 +106,7 @@ export async function createSubscriptionPayment(
   const tier = options?.tier ?? SubscriptionTier.BASIC;
 
   if (tier === SubscriptionTier.PLUS && !(await isPlusPlanOfferEnabled())) {
-    throw new Error("Plano Plus indisponível no momento");
+    throw new Error("Plano Pro indisponível no momento");
   }
 
   const amount =
@@ -130,7 +130,7 @@ export async function createSubscriptionPayment(
   }
 
   const tierLabel =
-    tier === SubscriptionTier.PLUS ? "Plano Plus" : "Plano pago";
+    tier === SubscriptionTier.PLUS ? "Plano Pro" : "Plano Básico";
 
   return initiatePayment({
     providerId,

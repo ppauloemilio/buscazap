@@ -82,9 +82,9 @@ function buildFilterPhrase(filters: SearchFilterParams): string {
   const planSuffix = filters.premium
     ? " · destaque premium"
     : filters.plan === "paid"
-      ? " · anúncios pagos"
+      ? " · Plano Básico"
       : filters.plan === "free"
-        ? " · listagens grátis"
+        ? " · Plano Grátis"
         : "";
 
   if (query && category && location) {
@@ -120,11 +120,11 @@ function buildFilterPhrase(filters: SearchFilterParams): string {
   }
 
   if (filters.plan === "paid") {
-    return "anúncios pagos";
+    return "Plano Básico";
   }
 
   if (filters.plan === "free") {
-    return "listagens grátis";
+    return "Plano Grátis";
   }
 
   return "filtros selecionados";
@@ -194,7 +194,7 @@ export function buildSearchFilterChips(
   if (filters.plan === "paid") {
     chips.push({
       id: "plan",
-      label: "Anúncios pagos",
+      label: "Plano Básico",
       clearHref: buildHref(filters, "plan"),
     });
   }
@@ -202,7 +202,7 @@ export function buildSearchFilterChips(
   if (filters.plan === "free") {
     chips.push({
       id: "plan",
-      label: "Listagens grátis",
+      label: "Plano Grátis",
       clearHref: buildHref(filters, "plan"),
     });
   }

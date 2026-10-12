@@ -29,7 +29,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
         title="Criar conta de anunciante"
         description={
           freemium
-            ? "Conta rápida — em seguida você publica a listagem grátis"
+            ? "Conta rápida — em seguida você publica no Plano Grátis"
             : "Cadastre-se e assine para publicar anúncios na sua cidade"
         }
       />

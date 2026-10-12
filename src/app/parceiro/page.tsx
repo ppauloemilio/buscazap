@@ -61,7 +61,7 @@ const BENEFITS = [
   {
     icon: Sparkles,
     title: "Destaque opcional",
-    text: `No plano pago, premium por ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias com prioridade e fotos extras no anúncio.`,
+    text: `No Plano Básico, premium por ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias com prioridade e fotos extras no anúncio.`,
   },
 ] as const;
 
@@ -69,7 +69,7 @@ const FREE_PLAN_BENEFITS = [
   "Listagem básica na busca",
   "Nome, categoria, bairro e WhatsApp",
   "Ideal para começar sem pagar",
-  "Upgrade para o plano pago quando quiser",
+  "Upgrade para o Plano Básico quando quiser",
 ] as const;
 
 const PAID_PLAN_BENEFITS = [
@@ -183,7 +183,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
           <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <Search className="h-3.5 w-3.5 text-whatsapp" />
             {freemium
-              ? `Grátis para começar · Plano pago ${priceLabel}/mês · PIX`
+              ? `Plano Grátis para começar · Plano Básico ${priceLabel}/mês · PIX`
               : `Assinatura ${priceLabel}/mês · 1 anúncio incluso · PIX`}
           </p>
 
@@ -262,7 +262,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                     </div>
                     <Badge variant="secondary">Grátis</Badge>
                   </div>
-                  <h3 className="text-base font-semibold">Listagem grátis</h3>
+                  <h3 className="text-base font-semibold">Plano Grátis</h3>
                   <p className="mt-1 text-2xl font-bold">
                     R$ 0
                     <span className="text-sm font-normal text-muted-foreground">
@@ -296,7 +296,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                     </div>
                     <Badge variant="whatsapp">Recomendado</Badge>
                   </div>
-                  <h3 className="text-base font-semibold">Plano pago</h3>
+                  <h3 className="text-base font-semibold">Plano Básico</h3>
                   <p className="mt-1 text-2xl font-bold text-whatsapp">
                     {priceLabel}
                     <span className="text-sm font-normal text-muted-foreground">
@@ -370,7 +370,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                 Deixe seus dados. Entramos em contato no WhatsApp para tirar
                 dúvidas
                 {freemium
-                  ? " e te ajudar a publicar (grátis ou plano pago)."
+                  ? " e te ajudar a publicar (Plano Grátis ou Plano Básico)."
                   : " e te ajudar a publicar."}
               </p>
             </div>
@@ -384,7 +384,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                 <p className="mt-1 pl-6 text-whatsapp/90">
                   Em breve falamos com você no WhatsApp
                   {freemium
-                    ? " para seguir com a listagem grátis ou o plano pago."
+                    ? " para seguir com o Plano Grátis ou o Plano Básico."
                     : " para seguir com o cadastro e a assinatura."}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2 pl-6">
@@ -510,7 +510,7 @@ export default async function PartnerLeadPage({ searchParams }: PartnerPageProps
                     required={!freemium}
                     hint={
                       freemium
-                        ? `Opcional. Útil se for para o plano pago. JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}`
+                        ? `Opcional. Útil se for para o Plano Básico. JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}`
                         : `JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}`
                     }
                   />

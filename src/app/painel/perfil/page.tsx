@@ -56,7 +56,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           <Card className="border-whatsapp/20 bg-whatsapp/5">
             <CardContent className="space-y-2 p-3 text-sm">
               <p>
-                No plano grátis, título, cidade, bairro, categoria e WhatsApp
+                No Plano Grátis, título, cidade, bairro, categoria e WhatsApp
                 ficam no seu anúncio.
               </p>
               <Button variant="whatsapp" size="sm" asChild>

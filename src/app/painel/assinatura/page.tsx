@@ -104,7 +104,7 @@ export default async function SubscriptionPage({
         <div className="space-y-3">
           {params.downgraded === "1" && (
             <div className="rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
-              Você voltou ao plano pago básico. As promoções deixam de aparecer
+              Você voltou ao Plano Básico. As promoções deixam de aparecer
               na busca até fazer upgrade novamente.
             </div>
           )}
@@ -114,17 +114,17 @@ export default async function SubscriptionPage({
               <CardHeader className="p-3 pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Gift className="h-4 w-4 text-whatsapp" />
-                  Seu plano atual: grátis
+                  Seu plano atual: Plano Grátis
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 p-3 pt-0">
                 <p className="text-sm text-muted-foreground">
-                  Listagem básica ativa. Escolha um plano pago abaixo para o
+                  Plano Grátis ativo. Escolha o Plano Básico abaixo para o
                   perfil completo
-                  {plusOffer ? " ou promoções no Plus" : ""}.
+                  {plusOffer ? " ou promoções no Plano Pro" : ""}.
                 </p>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/painel/anuncios/novo">Criar listagem grátis</Link>
+                  <Link href="/painel/anuncios/novo">Criar anúncio no Plano Grátis</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -141,7 +141,7 @@ export default async function SubscriptionPage({
               Assinatura válida até{" "}
               {status.expiresAt.toLocaleDateString("pt-BR")} · Plano atual:{" "}
               <span className="font-medium text-foreground">
-                {isPlus ? "Plus" : "Pago básico"}
+                {isPlus ? "Plano Pro" : "Plano Básico"}
               </span>
             </p>
           )}
@@ -160,7 +160,7 @@ export default async function SubscriptionPage({
               <CardHeader className="p-3 pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <CreditCard className="h-4 w-4 text-whatsapp" />
-                  Plano pago
+                  Plano Básico
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 p-3 pt-0">
@@ -182,16 +182,16 @@ export default async function SubscriptionPage({
                 {!status.active ? (
                   <SubscriptionPayButton
                     tier={SubscriptionTier.BASIC}
-                    label={freemium ? "Assinar plano pago" : "Fazer assinatura"}
+                    label={freemium ? "Assinar Plano Básico" : "Fazer assinatura"}
                   />
                 ) : status.canRenew && !isPlus ? (
                   <SubscriptionPayButton
                     tier={SubscriptionTier.BASIC}
-                    label="Renovar plano pago"
+                    label="Renovar Plano Básico"
                   />
                 ) : status.canRenew && isPlus ? (
                   <p className="text-xs text-muted-foreground">
-                    Para renovar no plano pago, volte ao básico ou renove no Plus.
+                    Para renovar no Plano Básico, volte ao básico ou renove no Plano Pro.
                   </p>
                 ) : status.active && !isPlus ? (
                   <p className="text-xs text-muted-foreground">
@@ -214,7 +214,7 @@ export default async function SubscriptionPage({
                 <CardHeader className="p-3 pb-2">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Sparkles className="h-4 w-4 text-whatsapp" />
-                    Plano Plus
+                    Plano Pro
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 p-3 pt-0">
@@ -225,7 +225,7 @@ export default async function SubscriptionPage({
                     </span>
                   </p>
                   <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li>Tudo do plano pago</li>
+                    <li>Tudo do Plano Básico</li>
                     <li className="flex items-center gap-1.5">
                       <Tag className="h-3.5 w-3.5 text-whatsapp" />
                       Até {PRICING.PLUS_MAX_PROMOTIONS} promoções divulgadas
@@ -237,17 +237,17 @@ export default async function SubscriptionPage({
                   {!status.active ? (
                     <SubscriptionPayButton
                       tier={SubscriptionTier.PLUS}
-                      label="Assinar Plano Plus"
+                      label="Assinar Plano Pro"
                     />
                   ) : !isPlus ? (
                     <SubscriptionPayButton
                       tier={SubscriptionTier.PLUS}
-                      label="Upgrade para Plus"
+                      label="Upgrade para Plano Pro"
                     />
                   ) : status.canRenew ? (
                     <SubscriptionPayButton
                       tier={SubscriptionTier.PLUS}
-                      label="Renovar Plano Plus"
+                      label="Renovar Plano Pro"
                     />
                   ) : (
                     <p className="text-xs text-muted-foreground">
@@ -258,7 +258,7 @@ export default async function SubscriptionPage({
                   {status.active && isPlus && (
                     <form action={downgradeToBasicPlanAction}>
                       <Button type="submit" variant="outline" size="sm">
-                        Voltar ao plano pago básico
+                        Voltar ao Plano Básico
                       </Button>
                     </form>
                   )}

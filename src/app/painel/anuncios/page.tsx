@@ -71,7 +71,7 @@ export default async function ProviderAdsPage({
             )}
             {!freeListing && !subscriptionActive && !isAdmin && freemium && (
               <Button variant="outline" size="sm" asChild>
-                <Link href="/painel/assinatura">Assinar plano pago</Link>
+                <Link href="/painel/assinatura">Assinar Plano Básico</Link>
               </Button>
             )}
             <Button variant="whatsapp" size="sm" asChild>

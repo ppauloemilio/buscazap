@@ -116,7 +116,7 @@ async function requirePlusProvider(providerId: string) {
   }
 
   if (!(await canUsePlusFeatures(provider))) {
-    throw new Error("Plano Plus necessário para gerenciar promoções");
+    throw new Error("Plano Pro necessário para gerenciar promoções");
   }
 
   return provider;

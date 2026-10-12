@@ -25,7 +25,7 @@ export function FreePanelOverview({
             <Megaphone className="mt-0.5 h-5 w-5 shrink-0 text-whatsapp" />
             <div>
               <h2 className="font-semibold">
-                {hasAd ? "Plano grátis — anúncio ativo" : "Comece sua listagem grátis"}
+                {hasAd ? "Plano Grátis — anúncio ativo" : "Comece no Plano Grátis"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {hasAd

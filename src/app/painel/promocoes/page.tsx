@@ -34,7 +34,7 @@ export default async function PromotionsPage({ searchParams }: PromotionsPagePro
             <CardTitle className="text-base">Promoções</CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0 text-sm text-muted-foreground">
-            O Plano Plus ainda não está disponível na plataforma.
+            O Plano Pro ainda não está disponível na plataforma.
           </CardContent>
         </Card>
       </PanelLayout>
@@ -48,13 +48,13 @@ export default async function PromotionsPage({ searchParams }: PromotionsPagePro
           <CardHeader className="p-3 pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Tag className="h-4 w-4 text-whatsapp" />
-              Promoções — Plano Plus
+              Promoções — Plano Pro
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 p-3 pt-0">
             <p className="text-sm text-muted-foreground">
               Divulgue até 3 promoções com foto, descrição, preço original e
-              promocional. Disponível no Plano Plus.
+              promocional. Disponível no Plano Pro.
             </p>
             <Button variant="whatsapp" size="sm" asChild>
               <Link href="/painel/assinatura">Ver planos e fazer upgrade</Link>

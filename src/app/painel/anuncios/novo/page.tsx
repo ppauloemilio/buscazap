@@ -63,7 +63,7 @@ export default async function NewAdvertisementPage({
   return (
     <PanelLayout>
       <h2 className="mb-3 text-lg font-semibold">
-        {simpleListing ? "Publicar listagem grátis" : "Novo anúncio"}
+        {simpleListing ? "Publicar no Plano Grátis" : "Novo anúncio"}
       </h2>
 
       {params.error && (

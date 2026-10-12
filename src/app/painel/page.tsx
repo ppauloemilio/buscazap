@@ -114,7 +114,7 @@ export default async function PanelPage() {
             <CreditCard className="mb-2 h-6 w-6 text-whatsapp" />
             <h3 className="text-sm font-semibold">
               {subscription.active
-                ? `Plano pago ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`
+                ? `Plano Básico ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`
                 : freemium
                   ? `Upgrade ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`
                   : `Assinatura ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`}
@@ -170,7 +170,7 @@ export default async function PanelPage() {
             <p>
               {freemium ? (
                 <>
-                  Você está no plano grátis.{" "}
+                  Você está no Plano Grátis.{" "}
                   <Link
                     href="/painel/assinatura"
                     className="font-medium text-whatsapp hover:underline"

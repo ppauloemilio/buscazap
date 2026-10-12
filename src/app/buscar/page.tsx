@@ -100,9 +100,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const regularTitle =
     plan === "paid"
-      ? "Anúncios"
+      ? "Plano Básico"
       : plan === "free"
-        ? "Listagens grátis"
+        ? "Plano Grátis"
         : "Resultados";
 
   return (

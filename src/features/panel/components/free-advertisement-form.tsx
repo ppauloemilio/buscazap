@@ -45,7 +45,7 @@ export function FreeAdvertisementForm({
 
       <p className="text-sm text-muted-foreground">
         Listagem básica na busca. Capa, descrição e fotos ficam disponíveis no
-        plano pago.
+        Plano Básico.
       </p>
 
       <div>

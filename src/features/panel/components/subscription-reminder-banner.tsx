@@ -36,7 +36,7 @@ export function SubscriptionReminderBanner({
         <div className="flex items-start gap-2 text-sm text-foreground">
           <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
           <p>
-            Plano grátis ativo na busca. Upgrade libera capa, fotos, descrição,
+            Plano Grátis ativo na busca. Upgrade libera capa, fotos, descrição,
             horário e selo verificado.
           </p>
         </div>

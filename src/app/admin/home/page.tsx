@@ -34,9 +34,9 @@ const TOGGLES = [
   },
   {
     name: "plusPlanEnabled",
-    label: "Plano Plus (promoções)",
+    label: "Plano Pro (promoções)",
     description:
-      "Permite upgrade Plus e menu Promoções no painel do anunciante.",
+      "Permite upgrade para Plano Pro e menu Promoções no painel do anunciante.",
     icon: Sparkles,
   },
 ] as const;

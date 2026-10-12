@@ -47,7 +47,7 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
           {isAdmin
             ? " — acesso administrativo (sem cobrança)"
             : simpleListing
-              ? " — plano grátis"
+              ? " — Plano Grátis"
               : subscriptionActive
                 ? subscription.isTrial
                   ? " — período grátis ativo"
@@ -55,7 +55,7 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
                 : fullProfile && freemium
                   ? " — assinatura vencida (vitrine básica)"
                   : freemium
-                    ? " — plano grátis"
+                    ? " — Plano Grátis"
                     : " — assinatura inativa"}
         </p>
       </div>
