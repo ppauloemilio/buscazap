@@ -1,11 +1,22 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CreditCard, Crown, Megaphone, Eye, MousePointerClick } from "lucide-react";
+import {
+  CreditCard,
+  Crown,
+  Megaphone,
+  Eye,
+  MousePointerClick,
+  Sparkles,
+} from "lucide-react";
+import { createSubscriptionPaymentAction } from "@/actions/provider-actions";
 import { findProviderAdvertisements } from "@/application/services/advertisement-service";
 import { getProviderAnalyticsReport } from "@/application/services/analytics-service";
+import { getHomepageSettings } from "@/application/services/homepage-settings-service";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import { PRO_PLAN_EXTRA_BENEFITS } from "@/config/plan-marketing";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
+import { SubscriptionTier } from "@/domain/enums";
 import {
   canPurchasePremiumBoost,
   getCurrentProvider,
@@ -21,10 +32,11 @@ export default async function PanelPage() {
   const provider = await getCurrentProvider();
   if (!provider) redirect("/entrar");
 
-  const [subscription, advertisements, stats] = await Promise.all([
+  const [subscription, advertisements, stats, homepage] = await Promise.all([
     getSubscriptionStatus(provider.id),
     findProviderAdvertisements(provider.id),
     getProviderAnalyticsReport(provider.id, 30),
+    getHomepageSettings(),
   ]);
 
   const premiumCount = advertisements.filter((ad) => ad.premiumActive).length;
@@ -32,6 +44,10 @@ export default async function PanelPage() {
   const freemium = isNewAdProfileEnabled();
   const freeListing = isFreeListingProvider(provider);
   const canBuyPremium = canPurchasePremiumBoost(provider);
+  const isPlus = subscription.subscriptionTier === SubscriptionTier.PLUS;
+  const plusOffer = homepage.plusPlanEnabled;
+  const showProUpgrade =
+    plusOffer && subscription.active && !isPlus && !isAdmin;
   const firstAd = advertisements[0];
 
   return (
@@ -56,7 +72,9 @@ export default async function PanelPage() {
               {isAdmin
                 ? "Admin"
                 : subscription.active
-                  ? "Pago"
+                  ? isPlus
+                    ? "Pro"
+                    : "Básico"
                   : freemium
                     ? "Grátis"
                     : "Inativo"}
@@ -113,20 +131,30 @@ export default async function PanelPage() {
         </Button>
       </div>
 
-      <div className="mt-3 grid gap-2 md:grid-cols-2">
+      <div
+        className={
+          showProUpgrade
+            ? "mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-3"
+            : "mt-3 grid gap-2 md:grid-cols-2"
+        }
+      >
         <Card>
           <CardContent className="p-3">
             <CreditCard className="mb-2 h-6 w-6 text-whatsapp" />
             <h3 className="text-sm font-semibold">
               {subscription.active
-                ? `Plano Básico ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`
+                ? isPlus
+                  ? `Plano Pro ${formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}/mês`
+                  : `Plano Básico ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`
                 : freemium
                   ? `Upgrade ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`
                   : `Assinatura ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês`}
             </h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {subscription.active
-                ? "Perfil completo ativo. Gerencie renovação e extras."
+                ? isPlus
+                  ? "Plano Pro ativo. Gerencie renovação e promoções."
+                  : "Perfil completo ativo. Gerencie renovação e extras."
                 : freemium
                   ? "Libere capa, fotos, horário, produtos e serviços."
                   : "Necessária para publicar anúncios na plataforma."}
@@ -147,6 +175,35 @@ export default async function PanelPage() {
             </Button>
           </CardContent>
         </Card>
+        {showProUpgrade ? (
+          <Card className="border-whatsapp/35 ring-1 ring-whatsapp/15">
+            <CardContent className="p-3">
+              <Sparkles className="mb-2 h-6 w-6 text-whatsapp" />
+              <h3 className="text-sm font-semibold">
+                Plano Pro {formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}/mês
+              </h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Promoções na busca, limites ampliados e tudo do Básico.
+              </p>
+              <ul className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
+                {PRO_PLAN_EXTRA_BENEFITS.slice(1, 4).map((item) => (
+                  <li key={item}>· {item}</li>
+                ))}
+              </ul>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <form action={createSubscriptionPaymentAction}>
+                  <input type="hidden" name="tier" value={SubscriptionTier.PLUS} />
+                  <Button type="submit" variant="whatsapp" size="sm">
+                    Upgrade para Plano Pro
+                  </Button>
+                </form>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/painel/assinatura">Ver detalhes</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
         <Card>
           <CardContent className="p-3">
             <Crown className="mb-2 h-6 w-6 text-whatsapp" />
