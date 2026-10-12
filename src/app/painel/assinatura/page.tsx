@@ -20,6 +20,8 @@ import {
   BASIC_PLAN_BENEFITS,
   FREE_PLAN_BENEFITS,
   FREE_PLAN_TAGLINE,
+  PREMIUM_BOOST_BENEFITS,
+  PREMIUM_BOOST_ELIGIBILITY,
   PRO_PLAN_EXTRA_BENEFITS,
 } from "@/config/plan-marketing";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
@@ -293,11 +295,28 @@ export default async function SubscriptionPage({
 
           <Card>
             <CardContent className="space-y-2 p-3 pt-3">
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <p className="flex items-center gap-2 text-sm font-medium">
                 <Crown className="h-3.5 w-3.5 text-whatsapp" />
-                Destaque premium: {formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/
-                {PRICING.PREMIUM_BOOST_DAYS}d (opcional, em Meus anúncios)
+                Destaque premium — {formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/
+                {PRICING.PREMIUM_BOOST_DAYS} dias (opcional)
               </p>
+              <p className="text-xs text-muted-foreground">
+                {PREMIUM_BOOST_ELIGIBILITY}
+              </p>
+              <ul className="space-y-0.5 text-xs text-muted-foreground">
+                {PREMIUM_BOOST_BENEFITS.map((item) => (
+                  <li key={item}>· {item}</li>
+                ))}
+              </ul>
+              {status.active ? (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/painel/anuncios">Destacar em Meus anúncios</Link>
+                </Button>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Assine o Plano Básico ou Pro para liberar o destaque.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

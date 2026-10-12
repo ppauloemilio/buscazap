@@ -6,7 +6,7 @@ import { syncReferralPremiumCredits } from "@/application/services/referral-serv
 import {
   getCurrentProvider,
   canProviderPublish,
-  canProviderUsePaidFeatures,
+  canPurchasePremiumBoost,
   isAdminProvider,
 } from "@/lib/provider-session";
 import { buildAbsoluteUrl } from "@/lib/site-url";
@@ -38,7 +38,7 @@ export default async function ProviderAdsPage({
   const params = await searchParams;
   const freemium = isNewAdProfileEnabled();
   const freeListing = isFreeListingProvider(provider);
-  const subscriptionActive = canProviderUsePaidFeatures(provider);
+  const canBuyPremium = canPurchasePremiumBoost(provider);
   const isAdmin = isAdminProvider(provider);
   const canCreateAd = canProviderPublish(provider);
   const [advertisements, hasAdSlot, referralCredits] = await Promise.all([
@@ -69,7 +69,7 @@ export default async function ProviderAdsPage({
                 <Link href="/painel/assinatura">Melhorar plano</Link>
               </Button>
             )}
-            {!freeListing && !subscriptionActive && !isAdmin && freemium && (
+            {!freeListing && !canBuyPremium && !isAdmin && freemium && (
               <Button variant="outline" size="sm" asChild>
                 <Link href="/painel/assinatura">Assinar Plano Básico</Link>
               </Button>
@@ -94,7 +94,7 @@ export default async function ProviderAdsPage({
         )}
       </div>
 
-      {!isAdmin && freeCredits > 0 && (
+      {!isAdmin && canBuyPremium && freeCredits > 0 && (
         <div className="mb-2 rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
           Você tem {freeCredits} crédito(s) de destaque grátis (
           {PRICING.REFERRAL_PREMIUM_DAYS} dias cada). Use em &quot;Usar crédito&quot;.
@@ -165,13 +165,20 @@ export default async function ProviderAdsPage({
                         Editar
                       </Link>
                     </Button>
-                    {!ad.premiumActive && subscriptionActive && (
+                    {!ad.premiumActive && canBuyPremium && (
                       <BoostAdvertisementForm
                         advertisementId={ad.id}
                         paidLabel={boostLabel}
                         freeCredits={freeCredits}
                         referralDays={PRICING.REFERRAL_PREMIUM_DAYS}
                       />
+                    )}
+                    {!ad.premiumActive && !canBuyPremium && !isAdmin && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/painel/assinatura">
+                          Destaque (Básico ou Pro)
+                        </Link>
+                      </Button>
                     )}
                     <DeleteAdvertisementForm
                       advertisementId={ad.id}

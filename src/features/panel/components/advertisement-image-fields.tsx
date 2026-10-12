@@ -7,10 +7,12 @@ import { ImagePlus } from "lucide-react";
 
 interface AdvertisementImageFieldsProps {
   readonly showLogo?: boolean;
+  readonly showPremiumOption?: boolean;
 }
 
 export function AdvertisementImageFields({
   showLogo = false,
+  showPremiumOption = false,
 }: AdvertisementImageFieldsProps) {
   return (
     <div className="space-y-2.5">
@@ -48,22 +50,24 @@ export function AdvertisementImageFields({
         </div>
       ) : null}
 
-      <label className="flex items-start gap-2 rounded-lg border p-2.5">
-        <input type="checkbox" name="withPremium" className="mt-0.5" />
-        <div>
-          <p className="text-sm font-medium">
-            Destacar este anúncio (+ R${" "}
-            {PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")} / 30 dias)
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Badge premium, seção de destaques, prioridade na busca e +
-            {PRICING.PREMIUM_AD_GALLERY} fotos neste anúncio (somam às{" "}
-            {PRICING.PROVIDER_MAX_COMPANY_PHOTOS} da empresa em Meu perfil =
-            total {PRICING.PREMIUM_MAX_GALLERY}) — adicione após ativar o
-            destaque.
-          </p>
-        </div>
-      </label>
+      {showPremiumOption ? (
+        <label className="flex items-start gap-2 rounded-lg border p-2.5">
+          <input type="checkbox" name="withPremium" className="mt-0.5" />
+          <div>
+            <p className="text-sm font-medium">
+              Destacar este anúncio (+ R${" "}
+              {PRICING.PREMIUM_BOOST_AMOUNT.toFixed(2).replace(".", ",")} / 30 dias)
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Badge premium, seção de destaques, prioridade na busca e +
+              {PRICING.PREMIUM_AD_GALLERY} fotos neste anúncio (somam às{" "}
+              {PRICING.PROVIDER_MAX_COMPANY_PHOTOS} da empresa em Meu perfil =
+              total {PRICING.PREMIUM_MAX_GALLERY}) — adicione após ativar o
+              destaque. Válido com Plano Básico ou Pro ativo.
+            </p>
+          </div>
+        </label>
+      ) : null}
     </div>
   );
 }

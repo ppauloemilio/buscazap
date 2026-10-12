@@ -11,6 +11,7 @@ import { isPlusPlanOfferEnabled } from "@/lib/plus-plan";
 import { getPixProvider } from "@/infrastructure/pix";
 import { prisma } from "@/lib/prisma";
 import {
+  canPurchasePremiumBoost,
   canRenewSubscription,
   hasActiveSubscription,
 } from "@/lib/provider-session";
@@ -76,7 +77,13 @@ async function initiatePayment(input: {
 async function getProviderPaymentProfile(providerId: string) {
   const provider = await prisma.provider.findUnique({
     where: { id: providerId },
-    select: { email: true, name: true, whatsapp: true, subscriptionExpiresAt: true },
+    select: {
+      email: true,
+      name: true,
+      whatsapp: true,
+      role: true,
+      subscriptionExpiresAt: true,
+    },
   });
 
   if (!provider) {
@@ -91,6 +98,7 @@ async function getProviderPaymentProfile(providerId: string) {
   return {
     name: provider.name,
     email: payerEmail,
+    role: provider.role,
     subscriptionExpiresAt: provider.subscriptionExpiresAt,
   };
 }
@@ -159,6 +167,15 @@ export async function createPremiumBoostPayment(
   }
 
   const provider = await getProviderPaymentProfile(providerId);
+
+  if (
+    !canPurchasePremiumBoost({
+      role: provider.role,
+      subscriptionExpiresAt: provider.subscriptionExpiresAt,
+    })
+  ) {
+    throw new Error("PREMIUM_REQUIRES_PAID_PLAN");
+  }
 
   return initiatePayment({
     providerId,

@@ -77,6 +77,19 @@ export function canProviderUsePaidFeatures(provider: ProviderAccessProfile): boo
   return canProviderPublish(provider);
 }
 
+/** Destaque premium: só com assinatura ativa (Plano Básico ou Pro). Bloqueado no Plano Grátis. */
+export function canPurchasePremiumBoost(provider: ProviderAccessProfile): boolean {
+  if (isAdminProvider(provider)) {
+    return true;
+  }
+
+  if (isNewAdProfileEnabled()) {
+    return hasActiveSubscription(provider.subscriptionExpiresAt);
+  }
+
+  return hasActiveSubscription(provider.subscriptionExpiresAt);
+}
+
 export function isPremiumActive(premiumExpiresAt: Date | null): boolean {
   if (!premiumExpiresAt) {
     return false;

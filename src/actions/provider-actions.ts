@@ -21,6 +21,7 @@ import {
 } from "@/lib/free-listing";
 import {
   canProviderPublish,
+  canPurchasePremiumBoost,
   getCurrentProvider,
   isAdminProvider,
   isPremiumActive,
@@ -160,10 +161,13 @@ function revalidateAdvertisementPaths(advertisementId: string) {
 }
 
 function redirectWithPaymentError(returnPath: string, error: unknown): never {
-  const message =
-    error instanceof Error
-      ? error.message
-      : "Não foi possível gerar o pagamento PIX";
+  let message = "Não foi possível gerar o pagamento PIX";
+  if (error instanceof Error) {
+    message =
+      error.message === "PREMIUM_REQUIRES_PAID_PLAN"
+        ? "Destaque premium disponível apenas com Plano Básico ou Pro ativo."
+        : error.message;
+  }
   redirect(`${returnPath}?error=${encodeURIComponent(message)}`);
 }
 
@@ -253,8 +257,12 @@ export async function redeemReferralPremiumAction(formData: FormData) {
     redirect("/painel/anuncios");
   }
 
-  if (!canProviderPublish(provider)) {
-    redirect("/painel/assinatura");
+  if (!canPurchasePremiumBoost(provider)) {
+    redirect(
+      `/painel/anuncios?error=${encodeURIComponent(
+        "Destaque premium disponível apenas com Plano Básico ou Pro ativo."
+      )}`
+    );
   }
 
   try {
@@ -373,8 +381,12 @@ export async function downgradeToBasicPlanAction() {
 export async function createPremiumPaymentAction(advertisementId: string) {
   const provider = await requireCurrentProvider();
 
-  if (!canProviderPublish(provider)) {
-    redirect("/painel/assinatura");
+  if (!canPurchasePremiumBoost(provider)) {
+    redirect(
+      `/painel/anuncios?error=${encodeURIComponent(
+        "Destaque premium disponível apenas com Plano Básico ou Pro ativo."
+      )}`
+    );
   }
 
   if (isAdminProvider(provider)) {
@@ -500,6 +512,8 @@ export async function createAdvertisementAction(formData: FormData) {
       }
     : (() => {
         const paid = parsed.data as CreateAdvertisementInput;
+        const wantsPremium =
+          paid.withPremium && canPurchasePremiumBoost(provider);
         return {
           title: paid.title,
           description: paid.description,
@@ -512,7 +526,7 @@ export async function createAdvertisementAction(formData: FormData) {
           whatsappLabel: paid.whatsappLabel,
           secondaryWhatsappNumber: paid.secondaryWhatsappNumber,
           secondaryWhatsappLabel: paid.secondaryWhatsappLabel,
-          withPremium: paid.withPremium,
+          withPremium: wantsPremium,
         };
       })();
 

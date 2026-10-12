@@ -6,7 +6,11 @@ import { getProviderAnalyticsReport } from "@/application/services/analytics-ser
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
-import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
+import {
+  canPurchasePremiumBoost,
+  getCurrentProvider,
+  isAdminProvider,
+} from "@/lib/provider-session";
 import { isFreeListingProvider } from "@/lib/free-listing";
 import { FreePanelOverview } from "@/features/panel/components/free-panel-overview";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
@@ -27,6 +31,7 @@ export default async function PanelPage() {
   const isAdmin = isAdminProvider(provider);
   const freemium = isNewAdProfileEnabled();
   const freeListing = isFreeListingProvider(provider);
+  const canBuyPremium = canPurchasePremiumBoost(provider);
   const firstAd = advertisements[0];
 
   return (
@@ -149,16 +154,29 @@ export default async function PanelPage() {
               Destaque R$ {PRICING.PREMIUM_BOOST_AMOUNT}/30 dias
             </h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Badge premium e prioridade na busca por anúncio.
+              {canBuyPremium || isAdmin
+                ? "Opcional no Plano Básico ou Pro: badge, prioridade na busca e fotos extras."
+                : "Disponível após assinar Plano Básico ou Pro (não no Plano Grátis)."}
             </p>
-            <Button
-              variant="whatsapp"
-              size="sm"
-              className="mt-2 w-full sm:w-auto"
-              asChild
-            >
-              <Link href="/painel/anuncios">Destacar anúncio</Link>
-            </Button>
+            {canBuyPremium || isAdmin ? (
+              <Button
+                variant="whatsapp"
+                size="sm"
+                className="mt-2 w-full sm:w-auto"
+                asChild
+              >
+                <Link href="/painel/anuncios">Destacar anúncio</Link>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 w-full sm:w-auto"
+                asChild
+              >
+                <Link href="/painel/assinatura">Ver planos pagos</Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

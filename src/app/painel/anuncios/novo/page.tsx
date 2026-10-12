@@ -12,6 +12,7 @@ import { DescriptionEditor } from "@/components/advertisement/description-editor
 import {
   getCurrentProvider,
   canProviderPublish,
+  canPurchasePremiumBoost,
   isAdminProvider,
 } from "@/lib/provider-session";
 import { hasFullListingProfile, shouldUseSimpleFreeListingUx } from "@/lib/free-listing";
@@ -55,6 +56,7 @@ export default async function NewAdvertisementPage({
   const simpleListing = shouldUseSimpleFreeListingUx(provider);
   const newProfile = isNewAdProfileEnabled();
   const fullProfile = hasFullListingProfile(provider);
+  const canBuyPremium = canPurchasePremiumBoost(provider);
   const [categories, locationOptions] = await Promise.all([
     getCategoriesWithCounts(),
     listActiveCatalogLocationOptions(),
@@ -150,7 +152,10 @@ export default async function NewAdvertisementPage({
             />
           </div>
 
-          <AdvertisementImageFields showLogo={newProfile && fullProfile} />
+          <AdvertisementImageFields
+            showLogo={newProfile && fullProfile}
+            showPremiumOption={canBuyPremium}
+          />
 
           {newProfile && fullProfile ? (
             <AdvertisementProfileExtrasFields />

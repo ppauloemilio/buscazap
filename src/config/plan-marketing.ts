@@ -29,3 +29,12 @@ export const PRO_PLAN_EXTRA_BENEFITS = [
   "+ Divulgação de 3 Produtos",
   "+ Divulgação de 3 Serviços",
 ] as const;
+
+export const PREMIUM_BOOST_ELIGIBILITY =
+  "Opcional para Plano Básico e Plano Pro (não disponível no Plano Grátis).";
+
+export const PREMIUM_BOOST_BENEFITS = [
+  "Seção de destaques e prioridade na busca",
+  `Badge premium por ${PRICING.PREMIUM_BOOST_DAYS} dias`,
+  `+${PRICING.PREMIUM_AD_GALLERY} fotos extras na galeria do anúncio`,
+] as const;
