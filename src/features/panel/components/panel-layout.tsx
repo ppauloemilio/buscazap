@@ -7,7 +7,7 @@ import {
 } from "@/lib/provider-session";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { PanelNav } from "@/features/panel/components/panel-nav";
-import { canUsePlusFeatures } from "@/lib/plus-plan";
+import { isPlusPlanOfferEnabled } from "@/lib/plus-plan";
 import {
   hasFullListingProfile,
   shouldUseSimpleFreeListingUx,
@@ -31,9 +31,11 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
   const subscriptionActive = canProviderUsePaidFeatures(provider);
   const isAdmin = isAdminProvider(provider);
   const subscription = await getSubscriptionStatus(provider.id);
-  const showPromotions = await canUsePlusFeatures(provider);
+  const plusOffer = await isPlusPlanOfferEnabled();
   const simpleListing = shouldUseSimpleFreeListingUx(provider);
   const fullProfile = hasFullListingProfile(provider);
+  const showPromotions =
+    plusOffer && !simpleListing && (isAdmin || subscriptionActive || fullProfile);
   const freemium = isNewAdProfileEnabled();
 
   return (

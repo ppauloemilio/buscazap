@@ -292,6 +292,9 @@ export async function updateHomepageSettingsAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/home");
+  revalidatePath("/anunciar");
+  revalidatePath("/painel/assinatura");
+  revalidatePath("/painel/promocoes");
   redirect("/admin/home?saved=1");
 }
 

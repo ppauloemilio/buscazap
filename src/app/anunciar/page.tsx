@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle, Gift, Megaphone, Sparkles } from "lucide-react";
+import { CheckCircle, Gift, Megaphone, Sparkles, Tag } from "lucide-react";
+import { getHomepageSettings } from "@/application/services/homepage-settings-service";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { getCurrentProvider } from "@/lib/provider-session";
@@ -30,6 +31,8 @@ const PAID_BENEFITS = [
 export default async function AdvertisePage() {
   const provider = await getCurrentProvider();
   const freemium = isNewAdProfileEnabled();
+  const homepage = await getHomepageSettings();
+  const plusOffer = homepage.plusPlanEnabled;
 
   const accountActions = provider ? (
     <Button variant="whatsapp" asChild>
@@ -101,7 +104,12 @@ export default async function AdvertisePage() {
           </p>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div
+          className={cn(
+            "grid gap-3",
+            plusOffer ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2"
+          )}
+        >
           <article className="flex flex-col rounded-xl border bg-card p-4 md:p-5">
             <div className="mb-3 flex items-start justify-between gap-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
@@ -203,6 +211,61 @@ export default async function AdvertisePage() {
               )}
             </div>
           </article>
+
+          {plusOffer && (
+            <article
+              className={cn(
+                "flex flex-col rounded-xl border border-whatsapp/30 bg-card p-4 md:p-5",
+                "ring-1 ring-whatsapp/15"
+              )}
+            >
+              <div className="mb-3 flex items-start justify-between gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-whatsapp/10">
+                  <Tag className="h-5 w-5 text-whatsapp" />
+                </div>
+                <Badge variant="outline" className="border-whatsapp/40 text-whatsapp">
+                  Pro
+                </Badge>
+              </div>
+              <h3 className="text-base font-semibold">Plano Pro</h3>
+              <p className="mt-1 text-2xl font-bold text-whatsapp">
+                {formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}
+                <span className="text-sm font-normal text-muted-foreground">
+                  /mês
+                </span>
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Tudo do Básico, limites ampliados e promoções na busca.
+              </p>
+              <ul className="mt-4 flex-1 space-y-1.5 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+                  Até {PRICING.PRO_MAX_COMPANY_PHOTOS} fotos, {PRICING.PRO_MAX_PRODUCTS}{" "}
+                  produtos e {PRICING.PRO_MAX_SERVICES} serviços
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+                  Até {PRICING.PLUS_MAX_PROMOTIONS} promoções divulgadas
+                </li>
+              </ul>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {provider ? (
+                  <Button variant="whatsapp" asChild>
+                    <Link href="/painel/assinatura">Assinar Plano Pro</Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="whatsapp" asChild>
+                      <Link href="/cadastro">Criar conta</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href="/entrar">Entrar</Link>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </article>
+          )}
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
