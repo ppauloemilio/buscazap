@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Star,
@@ -37,6 +36,8 @@ import {
   parseBusinessHoursJson,
 } from "@/shared/utils/business-hours";
 import { cn } from "@/lib/utils";
+import { ClickableImageThumb } from "@/components/advertisement/clickable-image-thumb";
+import { ImageLightbox } from "@/components/advertisement/image-lightbox";
 
 type ProfileTab =
   | "descricao"
@@ -63,11 +64,13 @@ export function AdvertisementProfileView({
   reviews,
 }: AdvertisementProfileViewProps) {
   const hasPromotions = (advertisement.promotions?.length ?? 0) > 0;
+  const isProPlan = advertisement.planTierLabel === "Pro";
+  const showPromocoesTab = isProPlan || hasPromotions;
   const tabs: { id: ProfileTab; label: string }[] = [
     { id: "descricao", label: "Descrição" },
     { id: "produtos", label: "Produtos" },
     { id: "servicos", label: "Serviços" },
-    ...(hasPromotions
+    ...(showPromocoesTab
       ? [{ id: "promocoes" as const, label: "Promoções" }]
       : []),
     { id: "avaliacoes", label: "Avaliações" },
@@ -220,58 +223,21 @@ export function AdvertisementProfileView({
             {gallery.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {gallery.map((url) => (
-                  <button
+                  <ClickableImageThumb
                     key={url}
-                    type="button"
-                    onClick={() => setLightboxUrl(url)}
-                    className="relative h-20 w-20 overflow-hidden rounded-md border bg-muted transition hover:opacity-90 sm:h-24 sm:w-24"
-                    aria-label="Ampliar foto da galeria"
-                  >
-                    <Image
-                      src={url}
-                      alt={advertisement.title}
-                      fill
-                      className="object-cover"
-                      sizes="96px"
-                    />
-                  </button>
+                    src={url}
+                    alt={advertisement.title}
+                    onOpen={setLightboxUrl}
+                  />
                 ))}
               </div>
             )}
 
-            {lightboxUrl && (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-                role="dialog"
-                aria-modal="true"
-                aria-label="Foto ampliada"
-                onClick={() => setLightboxUrl(null)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") setLightboxUrl(null);
-                }}
-              >
-                <button
-                  type="button"
-                  className="absolute right-4 top-4 rounded-md bg-white/90 px-3 py-1.5 text-sm font-medium text-foreground"
-                  onClick={() => setLightboxUrl(null)}
-                >
-                  Fechar
-                </button>
-                <div
-                  className="relative h-[min(80vh,720px)] w-full max-w-3xl"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <Image
-                    src={lightboxUrl}
-                    alt={advertisement.title}
-                    fill
-                    className="object-contain"
-                    sizes="(max-width:768px) 100vw, 768px"
-                    priority
-                  />
-                </div>
-              </div>
-            )}
+            <ImageLightbox
+              url={lightboxUrl}
+              alt={advertisement.title}
+              onClose={() => setLightboxUrl(null)}
+            />
 
             <div className="border-b">
               <nav className="flex gap-4 overflow-x-auto">
@@ -308,24 +274,26 @@ export function AdvertisementProfileView({
                       Nenhum produto cadastrado
                     </p>
                   ) : (
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
                       {advertisement.products?.map((product) => (
                         <div
                           key={product.id}
-                          className="overflow-hidden rounded-xl border bg-card"
+                          className="flex gap-3 rounded-xl border bg-card p-3"
                         >
-                          <div className="relative aspect-[4/3] bg-muted">
-                            {product.imageUrl ? (
-                              <Image
-                                src={product.imageUrl}
-                                alt={product.title}
-                                fill
-                                className="object-cover"
-                                sizes="200px"
-                              />
-                            ) : null}
-                          </div>
-                          <div className="space-y-1 p-3">
+                          {product.imageUrl ? (
+                            <ClickableImageThumb
+                              src={product.imageUrl}
+                              alt={product.title}
+                              onOpen={setLightboxUrl}
+                              className="shrink-0"
+                            />
+                          ) : (
+                            <div
+                              className="h-20 w-20 shrink-0 rounded-md border bg-muted sm:h-24 sm:w-24"
+                              aria-hidden
+                            />
+                          )}
+                          <div className="min-w-0 space-y-1">
                             <p className="text-sm font-semibold">
                               {product.title}
                             </p>
@@ -353,17 +321,19 @@ export function AdvertisementProfileView({
                           key={service.id}
                           className="flex gap-3 rounded-xl border bg-card p-3"
                         >
-                          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                            {service.imageUrl ? (
-                              <Image
-                                src={service.imageUrl}
-                                alt={service.title}
-                                fill
-                                className="object-cover"
-                                sizes="64px"
-                              />
-                            ) : null}
-                          </div>
+                          {service.imageUrl ? (
+                            <ClickableImageThumb
+                              src={service.imageUrl}
+                              alt={service.title}
+                              onOpen={setLightboxUrl}
+                              className="shrink-0"
+                            />
+                          ) : (
+                            <div
+                              className="h-20 w-20 shrink-0 rounded-md border bg-muted sm:h-24 sm:w-24"
+                              aria-hidden
+                            />
+                          )}
                           <div className="min-w-0">
                             <p className="font-semibold">{service.title}</p>
                             <p className="line-clamp-2 text-xs text-muted-foreground">
@@ -383,28 +353,35 @@ export function AdvertisementProfileView({
               )}
 
               {tab === "promocoes" && (
+                <div>
+                  {!hasPromotions ? (
+                    <p className="py-10 text-center text-sm text-muted-foreground">
+                      Nenhuma promoção ativa no momento.
+                    </p>
+                  ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   {advertisement.promotions?.map((promo) => (
                     <article
                       key={promo.id}
-                      className="overflow-hidden rounded-xl border bg-card"
+                      className="rounded-xl border bg-card p-4"
                     >
-                      {promo.imageUrl ? (
-                        <div className="relative aspect-[16/10] bg-muted">
-                          <Image
+                      <div className="mb-3 flex flex-wrap items-start gap-3">
+                        {promo.imageUrl ? (
+                          <ClickableImageThumb
                             src={promo.imageUrl}
                             alt={promo.title}
-                            fill
-                            className="object-cover"
-                            sizes="320px"
+                            onOpen={setLightboxUrl}
+                            className="shrink-0"
                           />
-                        </div>
-                      ) : null}
-                      <div className="space-y-2 p-4">
+                        ) : null}
+                        <div className="min-w-0 flex-1 space-y-2">
                         <h3 className="font-semibold">{promo.title}</h3>
                         <p className="text-sm text-muted-foreground">
                           {promo.description}
                         </p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
                         <div className="flex flex-wrap items-baseline gap-2">
                           <span className="text-sm text-muted-foreground line-through">
                             {formatPriceBRL(promo.priceOriginal)}
@@ -420,6 +397,8 @@ export function AdvertisementProfileView({
                       </div>
                     </article>
                   ))}
+                </div>
+                  )}
                 </div>
               )}
 

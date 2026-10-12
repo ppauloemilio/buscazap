@@ -9,7 +9,6 @@ import {
   saveAdvertisementServiceAction,
   updateAdvertisementProfileExtrasAction,
 } from "@/actions/provider-actions";
-import { AdvertisementImage } from "@/components/advertisement/advertisement-image";
 import {
   ImageFileInput,
   validateFormImageInputs,
@@ -19,6 +18,12 @@ import { Input } from "@/components/ui/input";
 import { PRICING, formatPriceBRL } from "@/config/pricing";
 import { getWeekdayLabels } from "@/shared/utils/business-hours";
 import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
+import {
+  ClickableImageThumb,
+  IMAGE_THUMB_CLASS,
+} from "@/components/advertisement/clickable-image-thumb";
+import { ImageLightbox } from "@/components/advertisement/image-lightbox";
+import { cn } from "@/lib/utils";
 
 interface ProductItem {
   readonly id: string;
@@ -74,6 +79,7 @@ export function AdvertisementPaidProfileEditor({
   maxServices,
 }: AdvertisementPaidProfileEditorProps) {
   const [error, setError] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const hourDefaults = parseHoursDefaults(businessHoursJson);
   const dayLabels = getWeekdayLabels();
@@ -107,6 +113,11 @@ export function AdvertisementPaidProfileEditor({
 
   return (
     <div className="max-w-xl space-y-6 border-t pt-4">
+      <ImageLightbox
+        url={lightboxUrl}
+        alt="Foto ampliada"
+        onClose={() => setLightboxUrl(null)}
+      />
       <div>
         <h3 className="text-base font-semibold">
           Perfil completo — endereço, horários e contatos
@@ -209,17 +220,19 @@ export function AdvertisementPaidProfileEditor({
               className="flex items-center justify-between gap-2 rounded-md border px-2 py-1.5"
             >
               <div className="flex min-w-0 items-center gap-2">
-                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded border bg-muted">
-                  {product.imageUrl ? (
-                    <AdvertisementImage
-                      src={product.imageUrl}
-                      alt={product.title}
-                      fill
-                      className="object-cover"
-                      sizes="40px"
-                    />
-                  ) : null}
-                </div>
+                {product.imageUrl ? (
+                  <ClickableImageThumb
+                    src={product.imageUrl}
+                    alt={product.title}
+                    onOpen={setLightboxUrl}
+                    className="shrink-0"
+                  />
+                ) : (
+                  <div
+                    className={cn(IMAGE_THUMB_CLASS, "shrink-0")}
+                    aria-hidden
+                  />
+                )}
                 <span className="truncate">
                   {product.title} — {formatPriceBRL(product.price)}
                 </span>
@@ -290,17 +303,19 @@ export function AdvertisementPaidProfileEditor({
               className="flex items-center justify-between gap-2 rounded-md border px-2 py-1.5"
             >
               <div className="flex min-w-0 items-center gap-2">
-                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded border bg-muted">
-                  {service.imageUrl ? (
-                    <AdvertisementImage
-                      src={service.imageUrl}
-                      alt={service.title}
-                      fill
-                      className="object-cover"
-                      sizes="40px"
-                    />
-                  ) : null}
-                </div>
+                {service.imageUrl ? (
+                  <ClickableImageThumb
+                    src={service.imageUrl}
+                    alt={service.title}
+                    onOpen={setLightboxUrl}
+                    className="shrink-0"
+                  />
+                ) : (
+                  <div
+                    className={cn(IMAGE_THUMB_CLASS, "shrink-0")}
+                    aria-hidden
+                  />
+                )}
                 <span className="truncate">
                   {service.title}
                   {typeof service.priceFrom === "number"

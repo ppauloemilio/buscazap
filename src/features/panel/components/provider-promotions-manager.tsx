@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { useState } from "react";
 import { Tag } from "lucide-react";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 import {
@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { isPromotionPubliclyActive } from "@/shared/utils/promotion";
+import { ClickableImageThumb } from "@/components/advertisement/clickable-image-thumb";
+import { ImageLightbox } from "@/components/advertisement/image-lightbox";
 
 export type PanelPromotion = {
   readonly id: string;
@@ -62,10 +64,16 @@ interface ProviderPromotionsManagerProps {
 export function ProviderPromotionsManager({
   promotions,
 }: ProviderPromotionsManagerProps) {
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const canCreate = promotions.length < PRICING.PLUS_MAX_PROMOTIONS;
 
   return (
     <div className="space-y-4">
+      <ImageLightbox
+        url={lightboxUrl}
+        alt="Foto da promoção"
+        onClose={() => setLightboxUrl(null)}
+      />
       <p className="text-sm text-muted-foreground">
         Até {PRICING.PLUS_MAX_PROMOTIONS} promoções por empresa. Após a data
         final, a promoção é desativada automaticamente — você pode editar as
@@ -102,13 +110,11 @@ export function ProviderPromotionsManager({
             </div>
 
             {promo.imageUrl ? (
-              <div className="relative mb-3 h-32 w-full max-w-xs overflow-hidden rounded-lg border bg-muted">
-                <Image
+              <div className="mb-3">
+                <ClickableImageThumb
                   src={promo.imageUrl}
                   alt={promo.title}
-                  fill
-                  className="object-cover"
-                  sizes="320px"
+                  onOpen={setLightboxUrl}
                 />
               </div>
             ) : null}
