@@ -1,5 +1,9 @@
-import { PRICING } from "@/config/pricing";
 import { canManagePaidAdvertisementContent } from "@/lib/provider-plan";
+import {
+  getMaxProductsForTier,
+  getMaxServicesForTier,
+} from "@/lib/subscription-limits";
+import { getProviderSubscriptionTier } from "@/lib/plus-plan";
 import { prisma } from "@/lib/prisma";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 
@@ -13,6 +17,7 @@ async function requirePaidOwnedAdvertisement(
       id: true,
       role: true,
       subscriptionExpiresAt: true,
+      subscriptionTier: true,
       listingProfile: true,
       status: true,
     },
@@ -35,7 +40,7 @@ async function requirePaidOwnedAdvertisement(
     throw new Error("Anúncio não encontrado");
   }
 
-  return advertisement;
+  return { advertisement, provider };
 }
 
 export async function listAdvertisementProductsForEdit(
@@ -84,7 +89,13 @@ export async function upsertAdvertisementProduct(input: {
   readonly price: number;
   readonly imageUrl?: string | null;
 }) {
-  await requirePaidOwnedAdvertisement(input.providerId, input.advertisementId);
+  const { provider } = await requirePaidOwnedAdvertisement(
+    input.providerId,
+    input.advertisementId
+  );
+  const maxProducts = getMaxProductsForTier(
+    getProviderSubscriptionTier(provider)
+  );
 
   if (input.productId) {
     const existing = await prisma.advertisementProduct.findFirst({
@@ -108,8 +119,8 @@ export async function upsertAdvertisementProduct(input: {
   const count = await prisma.advertisementProduct.count({
     where: { advertisementId: input.advertisementId },
   });
-  if (count >= PRICING.PAID_MAX_PRODUCTS) {
-    throw new Error(`Limite de ${PRICING.PAID_MAX_PRODUCTS} produtos atingido`);
+  if (count >= maxProducts) {
+    throw new Error(`Limite de ${maxProducts} produtos atingido`);
   }
 
   return prisma.advertisementProduct.create({
@@ -150,7 +161,13 @@ export async function upsertAdvertisementService(input: {
   readonly priceFrom?: number | null;
   readonly imageUrl?: string | null;
 }) {
-  await requirePaidOwnedAdvertisement(input.providerId, input.advertisementId);
+  const { provider } = await requirePaidOwnedAdvertisement(
+    input.providerId,
+    input.advertisementId
+  );
+  const maxServices = getMaxServicesForTier(
+    getProviderSubscriptionTier(provider)
+  );
 
   if (input.serviceId) {
     const existing = await prisma.advertisementService.findFirst({
@@ -175,8 +192,8 @@ export async function upsertAdvertisementService(input: {
   const count = await prisma.advertisementService.count({
     where: { advertisementId: input.advertisementId },
   });
-  if (count >= PRICING.PAID_MAX_SERVICES) {
-    throw new Error(`Limite de ${PRICING.PAID_MAX_SERVICES} serviços atingido`);
+  if (count >= maxServices) {
+    throw new Error(`Limite de ${maxServices} serviços atingido`);
   }
 
   return prisma.advertisementService.create({

@@ -38,6 +38,7 @@ function mapListedAdvertisement(
     readonly provider?: {
       readonly role?: string;
       readonly subscriptionExpiresAt?: Date | null;
+      readonly subscriptionTier?: string | null;
     };
   }
 ) {
@@ -206,8 +207,8 @@ export async function findPublicAdvertisements(
   filters: SearchFilters & {
     readonly premium?: boolean;
     readonly nonPremiumOnly?: boolean;
-    /** Freemium: só pagos (sem premium) ou só listagens grátis. */
-    readonly plan?: "paid" | "free";
+    /** Freemium: pagos, grátis, básico ou pro (sem destaque premium). */
+    readonly plan?: "paid" | "free" | "basic" | "pro";
     readonly sort?: string;
     readonly take?: number;
     readonly knownCategorySlugs?:
@@ -240,11 +241,28 @@ export async function findPublicAdvertisements(
       : PUBLIC_SEARCH_MAX_RESULTS;
 
   const planFilter =
-    !filters.premium && (filters.plan === "paid" || filters.plan === "free")
+    !filters.premium &&
+    (filters.plan === "paid" ||
+      filters.plan === "free" ||
+      filters.plan === "basic" ||
+      filters.plan === "pro")
       ? filters.plan
       : undefined;
   const excludePremium =
-    Boolean(filters.nonPremiumOnly) || planFilter === "paid" || planFilter === "free";
+    Boolean(filters.nonPremiumOnly) ||
+    planFilter === "paid" ||
+    planFilter === "free" ||
+    planFilter === "basic" ||
+    planFilter === "pro";
+  const activePaidProviderFilter = {
+    provider: {
+      status: "ACTIVE",
+      OR: [
+        { role: UserRole.ADMIN },
+        { subscriptionExpiresAt: { gt: now } },
+      ],
+    },
+  };
 
   const advertisements = await prisma.advertisement.findMany({
     where: {
@@ -273,16 +291,10 @@ export async function findPublicAdvertisements(
             ],
           }
         : {}),
-      ...(planFilter === "paid"
-        ? {
-            provider: {
-              status: "ACTIVE",
-              OR: [
-                { role: UserRole.ADMIN },
-                { subscriptionExpiresAt: { gt: now } },
-              ],
-            },
-          }
+      ...(planFilter === "paid" ||
+      planFilter === "basic" ||
+      planFilter === "pro"
+        ? activePaidProviderFilter
         : {}),
       ...(planFilter === "free"
         ? {
@@ -318,6 +330,7 @@ export async function findPublicAdvertisements(
         select: {
           role: true,
           subscriptionExpiresAt: true,
+          subscriptionTier: true,
         },
       },
     },
@@ -376,6 +389,14 @@ export async function findPublicAdvertisements(
         neighborhoodQuery
       )
     );
+  }
+
+  if (planFilter === "basic") {
+    results = results.filter((ad) => ad.planTierLabel === "Básico");
+  } else if (planFilter === "pro") {
+    results = results.filter((ad) => ad.planTierLabel === "Pro");
+  } else if (planFilter === "paid") {
+    results = results.filter((ad) => ad.plan === "paid");
   }
 
   if (filters.sort === "recent") {

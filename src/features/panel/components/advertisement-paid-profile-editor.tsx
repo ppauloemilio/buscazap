@@ -43,6 +43,8 @@ interface AdvertisementPaidProfileEditorProps {
   readonly businessHoursJson?: string | null;
   readonly products: readonly ProductItem[];
   readonly services: readonly ServiceItem[];
+  readonly maxProducts: number;
+  readonly maxServices: number;
 }
 
 function parseHoursDefaults(raw: string | null | undefined): Record<string, string> {
@@ -68,6 +70,8 @@ export function AdvertisementPaidProfileEditor({
   businessHoursJson,
   products,
   services,
+  maxProducts,
+  maxServices,
 }: AdvertisementPaidProfileEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -193,10 +197,10 @@ export function AdvertisementPaidProfileEditor({
 
       <div className="space-y-2">
         <h4 className="text-sm font-semibold">
-          Produtos ({products.length}/{PRICING.PAID_MAX_PRODUCTS})
+          Produtos ({products.length}/{maxProducts})
         </h4>
         <p className="text-xs text-muted-foreground">
-          Até {PRICING.PAID_MAX_PRODUCTS} produtos, cada um com foto, nome e preço.
+          Até {maxProducts} produtos, cada um com foto, nome e preço.
         </p>
         <ul className="space-y-2 text-sm">
           {products.map((product) => (
@@ -238,7 +242,7 @@ export function AdvertisementPaidProfileEditor({
             </li>
           ))}
         </ul>
-        {products.length < PRICING.PAID_MAX_PRODUCTS && (
+        {products.length < maxProducts && (
           <form
             encType="multipart/form-data"
             className="space-y-2 rounded-lg border border-dashed p-3"
@@ -273,10 +277,10 @@ export function AdvertisementPaidProfileEditor({
 
       <div className="space-y-2">
         <h4 className="text-sm font-semibold">
-          Serviços ({services.length}/{PRICING.PAID_MAX_SERVICES})
+          Serviços ({services.length}/{maxServices})
         </h4>
         <p className="text-xs text-muted-foreground">
-          Até {PRICING.PAID_MAX_SERVICES} serviços, cada um com foto, nome,
+          Até {maxServices} serviços, cada um com foto, nome,
           descrição e preço.
         </p>
         <ul className="space-y-2 text-sm">
@@ -322,7 +326,7 @@ export function AdvertisementPaidProfileEditor({
             </li>
           ))}
         </ul>
-        {services.length < PRICING.PAID_MAX_SERVICES && (
+        {services.length < maxServices && (
           <form
             encType="multipart/form-data"
             className="space-y-2 rounded-lg border border-dashed p-3"

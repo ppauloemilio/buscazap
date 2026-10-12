@@ -1,4 +1,5 @@
-import { PRICING } from "@/config/pricing";
+import { getMaxCompanyPhotosForTier } from "@/lib/subscription-limits";
+import { getProviderSubscriptionTier } from "@/lib/plus-plan";
 import { uploadProviderImage } from "@/lib/image-upload";
 import { prisma } from "@/lib/prisma";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
@@ -31,8 +32,22 @@ export async function addProviderCompanyImages(
     return;
   }
 
+  const provider = await prisma.provider.findUnique({
+    where: { id: providerId },
+    select: {
+      role: true,
+      subscriptionExpiresAt: true,
+      subscriptionTier: true,
+    },
+  });
+  if (!provider) {
+    throw new Error("Conta não encontrada");
+  }
+
   const currentCount = await countProviderCompanyImages(providerId);
-  const maxPhotos = PRICING.PROVIDER_MAX_COMPANY_PHOTOS;
+  const maxPhotos = getMaxCompanyPhotosForTier(
+    getProviderSubscriptionTier(provider)
+  );
   const availableSlots = maxPhotos - currentCount;
 
   if (availableSlots <= 0) {

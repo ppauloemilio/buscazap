@@ -44,7 +44,7 @@ export function NeighborhoodSelect({
       >
         <option value="">
           {disabled
-            ? "Cidade"
+            ? "Bairro"
             : options.length === 0
               ? "Sem bairros"
               : "Bairro"}

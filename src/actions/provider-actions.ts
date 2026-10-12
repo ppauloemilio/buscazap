@@ -71,6 +71,7 @@ import {
 } from "@/application/services/category-matching-service";
 import { ADVERTISEMENT_IMAGE_LIMITS } from "@/config/advertisement-images";
 import { PRICING } from "@/config/pricing";
+import { getLimitsForProvider } from "@/lib/subscription-limits";
 import {
   parseImageFiles,
   validateImageFile,
@@ -1034,9 +1035,10 @@ export async function updateProviderCompanyImagesAction(formData: FormData) {
     });
   }
 
-  if (galleryFiles.length > PRICING.PROVIDER_MAX_COMPANY_PHOTOS) {
+  const maxCompanyPhotos = getLimitsForProvider(provider).maxCompanyPhotos;
+  if (galleryFiles.length > maxCompanyPhotos) {
     redirectToProfilePhotos({
-      error: `Envie no máximo ${PRICING.PROVIDER_MAX_COMPANY_PHOTOS} fotos por vez`,
+      error: `Envie no máximo ${maxCompanyPhotos} fotos por vez`,
     });
   }
 

@@ -39,7 +39,12 @@ export const metadata: Metadata = {
 };
 
 function parsePlanFilter(value: string | undefined): SearchPlanFilter | undefined {
-  if (value === "paid" || value === "free") {
+  if (
+    value === "paid" ||
+    value === "free" ||
+    value === "basic" ||
+    value === "pro"
+  ) {
     return value;
   }
   return undefined;
@@ -100,10 +105,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const regularTitle =
     plan === "paid"
-      ? "Plano Básico"
-      : plan === "free"
-        ? "Plano Grátis"
-        : "Resultados";
+      ? "Anúncios pagos"
+      : plan === "basic"
+        ? "Plano Básico"
+        : plan === "pro"
+          ? "Plano Pro"
+          : plan === "free"
+            ? "Plano Grátis"
+            : "Resultados";
 
   return (
     <>

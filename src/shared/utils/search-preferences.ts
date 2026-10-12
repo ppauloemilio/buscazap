@@ -27,7 +27,7 @@ export function setPreferredCity(city: string): void {
   }
 }
 
-export type SearchPlanFilter = "paid" | "free";
+export type SearchPlanFilter = "paid" | "free" | "basic" | "pro";
 
 export function buildSearchHref(input: {
   readonly query?: string;
@@ -51,7 +51,12 @@ export function buildSearchHref(input: {
   if (input.type && input.type !== "all") params.set("type", input.type);
   if (input.premium) {
     params.set("premium", "true");
-  } else if (input.plan === "paid" || input.plan === "free") {
+  } else if (
+    input.plan === "paid" ||
+    input.plan === "free" ||
+    input.plan === "basic" ||
+    input.plan === "pro"
+  ) {
     params.set("plan", input.plan);
   }
   if (input.sort?.trim()) params.set("sort", input.sort.trim());

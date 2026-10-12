@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdvertisementType } from "@/domain/enums";
 import { canProviderUsePaidFeatures, getCurrentProvider } from "@/lib/provider-session";
+import { getLimitsForProvider } from "@/lib/subscription-limits";
 import {
   hasFullListingProfile,
   shouldUseSimpleFreeListingUx,
@@ -42,6 +43,7 @@ export default async function EditAdvertisementPage({
 }: EditAdvertisementPageProps) {
   const provider = await getCurrentProvider();
   if (!provider) redirect("/entrar");
+  const { maxProducts, maxServices } = getLimitsForProvider(provider);
 
   const { id } = await params;
   const query = await searchParams;
@@ -319,6 +321,8 @@ export default async function EditAdvertisementPage({
           businessHoursJson={advertisement.businessHoursJson}
           products={advertisement.editProducts}
           services={advertisement.editServices}
+          maxProducts={maxProducts}
+          maxServices={maxServices}
         />
       )}
 

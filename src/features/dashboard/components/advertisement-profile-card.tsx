@@ -29,6 +29,29 @@ interface AdvertisementProfileCardProps {
   readonly emphasizePremium?: boolean;
 }
 
+function PlanTierBadge({
+  label,
+}: {
+  readonly label: Advertisement["planTierLabel"];
+}) {
+  if (!label) {
+    return null;
+  }
+
+  const className =
+    label === "Pro"
+      ? "border-whatsapp/40 bg-whatsapp/10 text-whatsapp"
+      : label === "Básico"
+        ? "border-sky-300 bg-sky-50 text-sky-900"
+        : "border-muted-foreground/30 bg-muted/50 text-muted-foreground";
+
+  return (
+    <Badge variant="outline" className={cn("px-1.5 py-0 text-[9px] leading-4", className)}>
+      {label === "Grátis" ? "Plano Grátis" : `Plano ${label}`}
+    </Badge>
+  );
+}
+
 export function AdvertisementProfileCard({
   advertisement,
   returnTo,
@@ -66,6 +89,9 @@ export function AdvertisementProfileCard({
             <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
               {advertisement.category}
             </p>
+            <div className="mt-1">
+              <PlanTierBadge label={advertisement.planTierLabel ?? "Grátis"} />
+            </div>
           </div>
           <FavoriteButton advertisementId={advertisement.id} />
         </div>
@@ -139,6 +165,7 @@ export function AdvertisementProfileCard({
         </div>
 
         <div className="flex min-h-[18px] flex-wrap gap-1">
+          <PlanTierBadge label={advertisement.planTierLabel} />
           {advertisement.subscriptionActive && (
             <Badge
               variant="outline"

@@ -1,9 +1,13 @@
 export const PRICING = {
   SUBSCRIPTION_AMOUNT: 9.99,
-  /** Plano Plus: perfil pago + até 3 promoções divulgadas. */
+  /** Plano Pro: perfil pago + promoções + limites ampliados. */
   SUBSCRIPTION_PLUS_AMOUNT: 14.99,
   PLUS_MAX_PROMOTIONS: 3,
-  /** Fotos da empresa no Meu perfil (assinatura paga). */
+  /** Plano Pro: fotos da empresa no Meu perfil. */
+  PRO_MAX_COMPANY_PHOTOS: 10,
+  PRO_MAX_PRODUCTS: 6,
+  PRO_MAX_SERVICES: 6,
+  /** Fotos da empresa no Meu perfil (Plano Básico). */
   PROVIDER_MAX_COMPANY_PHOTOS: 4,
   /** Fotos extras na galeria do anúncio com destaque premium. */
   PREMIUM_AD_GALLERY: 5,

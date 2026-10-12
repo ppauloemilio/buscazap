@@ -10,7 +10,7 @@ import {
 export async function searchAdvertisements(
   filters: SearchFilters & {
     readonly premium?: boolean;
-    readonly plan?: "paid" | "free";
+    readonly plan?: "paid" | "free" | "basic" | "pro";
     readonly sort?: string;
     readonly knownCategorySlugs?:
       | ReadonlyMap<string, string>

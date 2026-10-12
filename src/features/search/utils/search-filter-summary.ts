@@ -82,10 +82,14 @@ function buildFilterPhrase(filters: SearchFilterParams): string {
   const planSuffix = filters.premium
     ? " · destaque premium"
     : filters.plan === "paid"
-      ? " · Plano Básico"
-      : filters.plan === "free"
-        ? " · Plano Grátis"
-        : "";
+      ? " · todos pagos"
+      : filters.plan === "basic"
+        ? " · Plano Básico"
+        : filters.plan === "pro"
+          ? " · Plano Pro"
+          : filters.plan === "free"
+            ? " · Plano Grátis"
+            : "";
 
   if (query && category && location) {
     return `"${query}" em ${category} ${location}${planSuffix}`;
@@ -120,7 +124,15 @@ function buildFilterPhrase(filters: SearchFilterParams): string {
   }
 
   if (filters.plan === "paid") {
+    return "Anúncios pagos";
+  }
+
+  if (filters.plan === "basic") {
     return "Plano Básico";
+  }
+
+  if (filters.plan === "pro") {
+    return "Plano Pro";
   }
 
   if (filters.plan === "free") {
@@ -194,7 +206,23 @@ export function buildSearchFilterChips(
   if (filters.plan === "paid") {
     chips.push({
       id: "plan",
+      label: "Todos pagos",
+      clearHref: buildHref(filters, "plan"),
+    });
+  }
+
+  if (filters.plan === "basic") {
+    chips.push({
+      id: "plan",
       label: "Plano Básico",
+      clearHref: buildHref(filters, "plan"),
+    });
+  }
+
+  if (filters.plan === "pro") {
+    chips.push({
+      id: "plan",
+      label: "Plano Pro",
       clearHref: buildHref(filters, "plan"),
     });
   }

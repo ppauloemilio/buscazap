@@ -11,6 +11,7 @@ import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { ProviderCompanyImagesEditor } from "@/features/panel/components/provider-company-images-editor";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { getCurrentProvider } from "@/lib/provider-session";
+import { getLimitsForProvider } from "@/lib/subscription-limits";
 import {
   hasFullListingProfile,
   shouldUseSimpleFreeListingUx,
@@ -43,6 +44,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const newProfile = isNewAdProfileEnabled();
   const simpleListing = shouldUseSimpleFreeListingUx(provider);
   const canManageCompanyPhotos = hasFullListingProfile(provider);
+  const { maxCompanyPhotos } = getLimitsForProvider(provider);
   const [states, cities, companyImages] = await Promise.all([
     listActiveStates(),
     listActiveCities(),
@@ -232,6 +234,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
               <ProviderCompanyImagesEditor
                 images={companyImages}
                 paidActive={canManageCompanyPhotos}
+                maxPhotos={maxCompanyPhotos}
               />
             </CardContent>
           </Card>

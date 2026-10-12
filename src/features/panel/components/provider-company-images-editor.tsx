@@ -28,16 +28,18 @@ interface CompanyImage {
 interface ProviderCompanyImagesEditorProps {
   readonly images: readonly CompanyImage[];
   readonly paidActive: boolean;
+  readonly maxPhotos: number;
 }
 
 export function ProviderCompanyImagesEditor({
   images,
   paidActive,
+  maxPhotos,
 }: ProviderCompanyImagesEditorProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [removingImageId, setRemovingImageId] = useState<string | null>(null);
-  const limit = PRICING.PROVIDER_MAX_COMPANY_PHOTOS;
+  const limit = maxPhotos;
   const remainingSlots = Math.max(0, limit - images.length);
 
   if (!paidActive) {

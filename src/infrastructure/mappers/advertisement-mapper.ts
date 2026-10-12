@@ -14,6 +14,12 @@ import { ADVERTISEMENT_IMAGE_KIND } from "@/config/advertisement-images";
 import { PRICING } from "@/config/pricing";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
+import {
+  getMaxCompanyPhotosForTier,
+  getMaxPublicGalleryForTier,
+  resolveProviderSubscriptionTier,
+  resolvePublicPlanTierLabel,
+} from "@/lib/subscription-limits";
 import { isPremiumActive } from "@/lib/provider-session";
 
 type PrismaAdvertisementWithImages = PrismaAdvertisement & {
@@ -22,6 +28,7 @@ type PrismaAdvertisementWithImages = PrismaAdvertisement & {
   readonly services?: readonly PrismaAdvertisementService[];
   readonly provider?: {
     readonly subscriptionExpiresAt?: Date | null;
+    readonly subscriptionTier?: string | null;
     readonly role?: string;
     readonly companyImages?: readonly { readonly url: string; readonly sortOrder: number }[];
   };
@@ -88,11 +95,22 @@ export function mapAdvertisementToEntity(
   const adGalleryUrls = resolveGalleryImageUrls(ad.images).map(
     resolveAdvertisementImageUrl
   );
+  const subscriptionTier = ad.provider
+    ? resolveProviderSubscriptionTier({
+        role: ad.provider.role ?? "PROVIDER",
+        subscriptionExpiresAt: ad.provider.subscriptionExpiresAt ?? null,
+        subscriptionTier: ad.provider.subscriptionTier,
+      })
+    : null;
+  const maxCompanyPhotos = subscriptionTier
+    ? getMaxCompanyPhotosForTier(subscriptionTier)
+    : PRICING.PROVIDER_MAX_COMPANY_PHOTOS;
+
   const companyUrls = (ad.provider?.companyImages ?? [])
     .slice()
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((image) => resolveAdvertisementImageUrl(image.url))
-    .slice(0, PRICING.PROVIDER_MAX_COMPANY_PHOTOS);
+    .slice(0, maxCompanyPhotos);
 
   let galleryImages: readonly string[] = [];
   if (showPaidExtras) {
@@ -100,12 +118,12 @@ export function mapAdvertisementToEntity(
       const premiumExtras = premiumActive
         ? adGalleryUrls.slice(0, PRICING.PREMIUM_AD_GALLERY)
         : [];
-      galleryImages = [...companyUrls, ...premiumExtras].slice(
-        0,
-        premiumActive
+      const galleryCap = subscriptionTier
+        ? getMaxPublicGalleryForTier(subscriptionTier, premiumActive)
+        : premiumActive
           ? PRICING.PREMIUM_MAX_GALLERY
-          : PRICING.PROVIDER_MAX_COMPANY_PHOTOS
-      );
+          : PRICING.PROVIDER_MAX_COMPANY_PHOTOS;
+      galleryImages = [...companyUrls, ...premiumExtras].slice(0, galleryCap);
     } else {
       galleryImages = adGalleryUrls;
     }
@@ -157,6 +175,12 @@ export function mapAdvertisementToEntity(
     isPremium: showPaidExtras && premiumActive,
     premiumExpiresAt: ad.premiumExpiresAt?.toISOString(),
     plan,
+    planTierLabel: resolvePublicPlanTierLabel({
+      role: ad.provider?.role,
+      subscriptionExpiresAt: ad.provider?.subscriptionExpiresAt ?? null,
+      subscriptionTier: ad.provider?.subscriptionTier,
+      publicPlan: plan,
+    }),
     subscriptionActive: options?.subscriptionActive,
     hasActivePromotions: options?.hasActivePromotions,
     promotions:

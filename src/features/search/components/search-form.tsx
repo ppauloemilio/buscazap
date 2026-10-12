@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CitySelect } from "@/features/search/components/city-select";
 import { NeighborhoodSelect } from "@/features/search/components/neighborhood-select";
+import { PlanSelect } from "@/features/search/components/plan-select";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 import {
   buildSearchHref,
@@ -42,6 +43,9 @@ export function SearchForm({
   const [query, setQuery] = useState(initialQuery);
   const [city, setCity] = useState(initialCity);
   const [neighborhood, setNeighborhood] = useState(initialNeighborhood);
+  const [plan, setPlan] = useState<SearchPlanFilter | "">(
+    initialPlan ?? ""
+  );
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -50,6 +54,10 @@ export function SearchForm({
   useEffect(() => {
     setNeighborhood(initialNeighborhood);
   }, [initialNeighborhood]);
+
+  useEffect(() => {
+    setPlan(initialPlan ?? "");
+  }, [initialPlan]);
 
   useEffect(() => {
     if (initialCity) {
@@ -72,10 +80,12 @@ export function SearchForm({
     readonly query?: string;
     readonly city?: string;
     readonly neighborhood?: string;
+    readonly plan?: SearchPlanFilter | "";
   }) {
     const resolvedQuery = next?.query ?? query;
     const resolvedCity = next?.city ?? city;
     const resolvedNeighborhood = next?.neighborhood ?? neighborhood;
+    const resolvedPlan = next?.plan !== undefined ? next.plan : plan;
 
     setPreferredCity(resolvedCity);
 
@@ -85,7 +95,7 @@ export function SearchForm({
       neighborhood: resolvedCity ? resolvedNeighborhood : undefined,
       category: initialCategory,
       premium: initialPremium,
-      plan: initialPlan,
+      plan: resolvedPlan || undefined,
       sort: initialSort,
     });
 
@@ -139,6 +149,18 @@ export function SearchForm({
           id="search-neighborhood"
           className="sm:w-28"
         />
+        {!initialPremium && (
+          <PlanSelect
+            value={plan}
+            compact
+            onChange={(nextPlan) => {
+              setPlan(nextPlan);
+              navigate({ plan: nextPlan });
+            }}
+            id="search-plan"
+            className="sm:w-32"
+          />
+        )}
         <Button
           type="submit"
           variant="whatsapp"

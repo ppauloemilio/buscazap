@@ -72,6 +72,8 @@ export interface Advertisement {
   readonly premiumExpiresAt?: string;
   /** Plano público exibido (freemium). Ausente = legado/pago. */
   readonly plan?: "free" | "paid";
+  /** Selo no card: Grátis, Básico ou Pro. */
+  readonly planTierLabel?: "Grátis" | "Básico" | "Pro";
   readonly subscriptionActive?: boolean;
   readonly hasActivePromotions?: boolean;
   readonly promotions?: readonly ProviderPromotionItem[];

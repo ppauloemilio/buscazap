@@ -173,6 +173,11 @@ export default async function SubscriptionPage({
                 <ul className="space-y-1 text-sm text-muted-foreground">
                   <li>Perfil completo e produtos/serviços</li>
                   <li>
+                    Até {PRICING.PROVIDER_MAX_COMPANY_PHOTOS} fotos da empresa,{" "}
+                    {PRICING.PAID_MAX_PRODUCTS} produtos e{" "}
+                    {PRICING.PAID_MAX_SERVICES} serviços
+                  </li>
+                  <li>
                     {PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio incluso
                   </li>
                 </ul>
@@ -226,6 +231,11 @@ export default async function SubscriptionPage({
                   </p>
                   <ul className="space-y-1 text-sm text-muted-foreground">
                     <li>Tudo do Plano Básico</li>
+                    <li>
+                      Até {PRICING.PRO_MAX_COMPANY_PHOTOS} fotos da empresa,{" "}
+                      {PRICING.PRO_MAX_PRODUCTS} produtos e{" "}
+                      {PRICING.PRO_MAX_SERVICES} serviços
+                    </li>
                     <li className="flex items-center gap-1.5">
                       <Tag className="h-3.5 w-3.5 text-whatsapp" />
                       Até {PRICING.PLUS_MAX_PROMOTIONS} promoções divulgadas

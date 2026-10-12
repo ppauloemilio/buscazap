@@ -87,11 +87,15 @@ export function AdvertisementProfileView({
   const open = isOpenNow(hours);
   const hoursList = formatBusinessHoursList(hours);
   // Galeria pública: 4 do perfil (+ 5 do anúncio se premium)
+  const companyPhotoCap =
+    advertisement.planTierLabel === "Pro"
+      ? PRICING.PRO_MAX_COMPANY_PHOTOS
+      : PRICING.PROVIDER_MAX_COMPANY_PHOTOS;
   const gallery = (advertisement.galleryImages ?? []).slice(
     0,
     advertisement.isPremium
-      ? PRICING.PREMIUM_MAX_GALLERY
-      : PRICING.PROVIDER_MAX_COMPANY_PHOTOS
+      ? companyPhotoCap + PRICING.PREMIUM_AD_GALLERY
+      : companyPhotoCap
   );
   const hasReviews = advertisement.reviewCount > 0;
 
