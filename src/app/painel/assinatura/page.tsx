@@ -16,6 +16,12 @@ import {
 import { getHomepageSettings } from "@/application/services/homepage-settings-service";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import {
+  BASIC_PLAN_BENEFITS,
+  FREE_PLAN_BENEFITS,
+  FREE_PLAN_TAGLINE,
+  PRO_PLAN_EXTRA_BENEFITS,
+} from "@/config/plan-marketing";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { SubscriptionTier } from "@/domain/enums";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
@@ -118,11 +124,12 @@ export default async function SubscriptionPage({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 p-3 pt-0">
-                <p className="text-sm text-muted-foreground">
-                  Plano Grátis ativo. Escolha o Plano Básico abaixo para o
-                  perfil completo
-                  {plusOffer ? " ou promoções no Plano Pro" : ""}.
-                </p>
+                <p className="text-sm text-muted-foreground">{FREE_PLAN_TAGLINE}</p>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {FREE_PLAN_BENEFITS.map((benefit) => (
+                    <li key={benefit}>{benefit}</li>
+                  ))}
+                </ul>
                 <Button variant="outline" size="sm" asChild>
                   <Link href="/painel/anuncios/novo">Criar anúncio no Plano Grátis</Link>
                 </Button>
@@ -171,14 +178,12 @@ export default async function SubscriptionPage({
                   </span>
                 </p>
                 <ul className="space-y-1 text-sm text-muted-foreground">
-                  <li>Perfil completo e produtos/serviços</li>
+                  {BASIC_PLAN_BENEFITS.map((benefit) => (
+                    <li key={benefit}>{benefit}</li>
+                  ))}
                   <li>
-                    Até {PRICING.PROVIDER_MAX_COMPANY_PHOTOS} fotos da empresa,{" "}
-                    {PRICING.PAID_MAX_PRODUCTS} produtos e{" "}
-                    {PRICING.PAID_MAX_SERVICES} serviços
-                  </li>
-                  <li>
-                    {PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio incluso
+                    {PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio incluso na
+                    mensalidade
                   </li>
                 </ul>
                 {status.active && !isPlus ? (
@@ -230,16 +235,25 @@ export default async function SubscriptionPage({
                     </span>
                   </p>
                   <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li>Tudo do Plano Básico</li>
-                    <li>
-                      Até {PRICING.PRO_MAX_COMPANY_PHOTOS} fotos da empresa,{" "}
-                      {PRICING.PRO_MAX_PRODUCTS} produtos e{" "}
-                      {PRICING.PRO_MAX_SERVICES} serviços
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <Tag className="h-3.5 w-3.5 text-whatsapp" />
-                      Até {PRICING.PLUS_MAX_PROMOTIONS} promoções divulgadas
-                    </li>
+                    {PRO_PLAN_EXTRA_BENEFITS.map((benefit) => (
+                      <li
+                        key={benefit}
+                        className={
+                          benefit.includes("PROMOÇÕES")
+                            ? "flex items-center gap-1.5 font-medium"
+                            : undefined
+                        }
+                      >
+                        {benefit.includes("PROMOÇÕES") ? (
+                          <>
+                            <Tag className="h-3.5 w-3.5 shrink-0 text-whatsapp" />
+                            {benefit}
+                          </>
+                        ) : (
+                          benefit
+                        )}
+                      </li>
+                    ))}
                   </ul>
                   {status.active && isPlus ? (
                     <Badge variant="whatsapp">Seu plano</Badge>

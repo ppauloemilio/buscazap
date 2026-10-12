@@ -3,6 +3,12 @@ import Link from "next/link";
 import { CheckCircle, Gift, Megaphone, Sparkles, Tag } from "lucide-react";
 import { getHomepageSettings } from "@/application/services/homepage-settings-service";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import {
+  BASIC_PLAN_BENEFITS,
+  FREE_PLAN_BENEFITS,
+  FREE_PLAN_TAGLINE,
+  PRO_PLAN_EXTRA_BENEFITS,
+} from "@/config/plan-marketing";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { getCurrentProvider } from "@/lib/provider-session";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,20 +19,6 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Anunciar",
 };
-
-const FREE_BENEFITS = [
-  "Listagem básica na busca",
-  "Nome, categoria, bairro e WhatsApp",
-  "Disponível nas cidades ativas do catálogo",
-  "Upgrade para o Plano Básico quando quiser",
-] as const;
-
-const PAID_BENEFITS = [
-  "Perfil completo com capa, logo e fotos da empresa",
-  "Horário, Instagram, site, produtos e serviços",
-  `${PRICING.ADS_INCLUDED_PER_SUBSCRIPTION} anúncio incluso na mensalidade`,
-  `Destaque premium opcional: ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias`,
-] as const;
 
 export default async function AdvertisePage() {
   const provider = await getCurrentProvider();
@@ -99,8 +91,8 @@ export default async function AdvertisePage() {
             Escolha como anunciar
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Os dois planos usam a mesma conta. No painel você sobe do grátis para o
-            pago quando quiser.
+            Todos os planos usam a mesma conta. No painel você evolui do grátis para
+            o pago quando quiser.
           </p>
         </div>
 
@@ -125,10 +117,10 @@ export default async function AdvertisePage() {
               </span>
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Ideal para começar rápido e aparecer na busca.
+              {FREE_PLAN_TAGLINE}
             </p>
             <ul className="mt-4 flex-1 space-y-1.5">
-              {FREE_BENEFITS.map((benefit) => (
+              {FREE_PLAN_BENEFITS.map((benefit) => (
                 <li
                   key={benefit}
                   className="flex items-start gap-2 text-sm text-muted-foreground"
@@ -175,11 +167,8 @@ export default async function AdvertisePage() {
                 /mês
               </span>
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Perfil completo via PIX. Destaque premium opcional.
-            </p>
             <ul className="mt-4 flex-1 space-y-1.5">
-              {PAID_BENEFITS.map((benefit) => (
+              {BASIC_PLAN_BENEFITS.map((benefit) => (
                 <li
                   key={benefit}
                   className="flex items-start gap-2 text-sm text-muted-foreground"
@@ -189,15 +178,10 @@ export default async function AdvertisePage() {
                 </li>
               ))}
             </ul>
-            <div className="mt-4 rounded-lg border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-              Destaque premium: {formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/
-              {PRICING.PREMIUM_BOOST_DAYS} dias (ou {PRICING.REFERRAL_PREMIUM_DAYS}{" "}
-              dias por indicação)
-            </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {provider ? (
                 <Button variant="whatsapp" asChild>
-                  <Link href="/painel/assinatura">Assinar no painel</Link>
+                  <Link href="/painel/assinatura">Assinar Plano Básico</Link>
                 </Button>
               ) : (
                 <>
@@ -234,19 +218,16 @@ export default async function AdvertisePage() {
                   /mês
                 </span>
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Tudo do Básico, limites ampliados e promoções na busca.
-              </p>
-              <ul className="mt-4 flex-1 space-y-1.5 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
-                  Até {PRICING.PRO_MAX_COMPANY_PHOTOS} fotos, {PRICING.PRO_MAX_PRODUCTS}{" "}
-                  produtos e {PRICING.PRO_MAX_SERVICES} serviços
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
-                  Até {PRICING.PLUS_MAX_PROMOTIONS} promoções divulgadas
-                </li>
+              <ul className="mt-4 flex-1 space-y-1.5">
+                {PRO_PLAN_EXTRA_BENEFITS.map((benefit) => (
+                  <li
+                    key={benefit}
+                    className="flex items-start gap-2 text-sm text-muted-foreground"
+                  >
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-whatsapp" />
+                    {benefit}
+                  </li>
+                ))}
               </ul>
               <div className="mt-4 flex flex-wrap gap-2">
                 {provider ? (
