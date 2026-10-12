@@ -138,9 +138,9 @@ export default async function AdvertisePage() {
               ) : (
                 <>
                   <Button variant="outline" asChild>
-                    <Link href="/cadastro">Começar grátis</Link>
+                    <Link href="/cadastro">Começar Grátis</Link>
                   </Button>
-                  <Button variant="ghost" size="sm" asChild>
+                  <Button variant="outline" asChild>
                     <Link href="/entrar">Já tenho conta</Link>
                   </Button>
                 </>
@@ -186,7 +186,7 @@ export default async function AdvertisePage() {
               ) : (
                 <>
                   <Button variant="whatsapp" asChild>
-                    <Link href="/cadastro">Criar conta e assinar</Link>
+                    <Link href="/cadastro">Criar conta e Assinar</Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link href="/entrar">Já tenho conta</Link>
@@ -237,10 +237,10 @@ export default async function AdvertisePage() {
                 ) : (
                   <>
                     <Button variant="whatsapp" asChild>
-                      <Link href="/cadastro">Criar conta</Link>
+                      <Link href="/cadastro">Criar conta e Assinar</Link>
                     </Button>
                     <Button variant="outline" asChild>
-                      <Link href="/entrar">Entrar</Link>
+                      <Link href="/entrar">Já tenho conta</Link>
                     </Button>
                   </>
                 )}
