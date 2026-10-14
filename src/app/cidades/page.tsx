@@ -6,7 +6,9 @@ import { cityNameToSlug, buildCitySeoPath } from "@/application/services/city-se
 import { PageHeader } from "@/components/layout/page-header";
 
 export const metadata: Metadata = {
-  title: "Cidades",
+  title: "Cidades — guia de contatos WhatsApp",
+  description:
+    "Escolha sua cidade e encontre WhatsApp, telefone e Zap de empresas, prestadores e serviços locais no BuscaZapp.",
 };
 
 export default async function CitiesPage() {
@@ -16,7 +18,7 @@ export default async function CitiesPage() {
     <>
       <PageHeader
         title="Cidades"
-        description="Encontre profissionais e serviços na sua região"
+        description="Guia de contatos WhatsApp, telefone e Zap por cidade"
       />
       <section className="container mx-auto px-4 py-10">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

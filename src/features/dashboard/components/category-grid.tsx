@@ -14,6 +14,8 @@ interface CategoryGridProps {
   /** Quando true, não usa container externo (ex.: página /buscar). */
   readonly embedded?: boolean;
   readonly activeCategorySlug?: string;
+  /** Slug da cidade padrão para landings SEO (`/{cidade}/{categoria}`). */
+  readonly defaultCitySlug?: string;
 }
 
 function resolveColumns(width: number): number {
@@ -27,6 +29,7 @@ export function CategoryGrid({
   categories,
   embedded = false,
   activeCategorySlug,
+  defaultCitySlug,
 }: CategoryGridProps) {
   const [page, setPage] = useState(0);
   const [columns, setColumns] = useState(3);
@@ -88,7 +91,11 @@ export function CategoryGrid({
           return (
             <Link
               key={category.id}
-              href={`/buscar?category=${category.slug}`}
+              href={
+                defaultCitySlug
+                  ? `/${defaultCitySlug}/${category.slug}`
+                  : `/buscar?category=${encodeURIComponent(category.slug)}`
+              }
               className={cn(
                 "group flex h-full min-h-[7.5rem] flex-col items-center gap-1.5 rounded-lg border bg-card p-2.5 text-center transition-all hover:border-whatsapp/50 hover:shadow-md",
                 isActive && "border-whatsapp ring-1 ring-whatsapp/40"

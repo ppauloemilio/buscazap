@@ -18,12 +18,22 @@ import { buildSearchHref } from "@/shared/utils/search-preferences";
 
 export function buildCityMetadata(city: SeoCity): Metadata {
   const path = buildCitySeoPath(city.slug);
-  const title = `WhatsApp em ${city.name}/${city.stateUf} — serviços locais`;
-  const description = `Encontre anunciantes e serviços em ${city.name} no BuscaZapp. Gás, delivery, profissionais e muito mais — contato direto via WhatsApp.`;
+  const title = `Guia de contatos WhatsApp em ${city.name}/${city.stateUf} — empresas e serviços`;
+  const description = `Telefones úteis, WhatsApp e Zap de empresas, prestadores e serviços em ${city.name}. Encontre categorias e contatos locais no BuscaZapp.`;
 
   return {
     title,
     description,
+    keywords: [
+      `Guia de contatos WhatsApp ${city.name}`,
+      `Telefones úteis ${city.name}`,
+      `WhatsApp ${city.name}`,
+      `Zap ${city.name}`,
+      "contato",
+      "empresas",
+      "serviços",
+      "BuscaZapp",
+    ],
     alternates: { canonical: path },
     openGraph: {
       title,
@@ -52,8 +62,8 @@ export async function CityLandingPage({ city }: { readonly city: SeoCity }) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: `BuscaZapp — ${city.name}`,
-    description: `Anúncios e serviços em ${city.name} com contato via WhatsApp`,
+    name: `Guia de contatos WhatsApp em ${city.name}`,
+    description: `Telefones, WhatsApp e contatos de empresas e serviços em ${city.name}`,
     url: `${getSiteUrl()}${pagePath}`,
     about: {
       "@type": "Place",
@@ -80,11 +90,11 @@ export async function CityLandingPage({ city }: { readonly city: SeoCity }) {
             {city.name} — {city.stateUf}
           </p>
           <h1 className="mb-2 text-2xl font-bold md:text-3xl">
-            WhatsApp em {city.name}: serviços, delivery e profissionais
+            Guia de contatos WhatsApp em {city.name}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Encontre anunciantes locais no BuscaZapp e chame direto no WhatsApp.
-            Rápido, sem app extra.
+            Telefones úteis, Zap e WhatsApp de empresas, prestadores e serviços
+            locais. Chame direto pelo BuscaZapp, sem app extra.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="whatsapp" size="sm" asChild>

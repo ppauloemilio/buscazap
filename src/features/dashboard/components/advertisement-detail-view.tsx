@@ -22,6 +22,7 @@ import {
   getServiceAreaLabel,
 } from "@/config/service-area";
 import type { Advertisement } from "@/domain/entities";
+import { buildAdvertisementJsonLd } from "@/lib/seo/advertisement-seo";
 import { buildAbsoluteUrl } from "@/lib/site-url";
 import {
   buildWhatsAppLink,
@@ -37,13 +38,23 @@ export async function AdvertisementDetailView({
   advertisement,
 }: AdvertisementDetailViewProps) {
   const reviews = await listAdvertisementReviews(advertisement.id);
+  const jsonLd = buildAdvertisementJsonLd(advertisement);
+  const jsonLdScript = (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
 
   if (isNewAdProfileEnabled()) {
     return (
-      <AdvertisementProfileView
-        advertisement={advertisement}
-        reviews={reviews}
-      />
+      <>
+        {jsonLdScript}
+        <AdvertisementProfileView
+          advertisement={advertisement}
+          reviews={reviews}
+        />
+      </>
     );
   }
 
@@ -78,6 +89,8 @@ export async function AdvertisementDetailView({
   const shareUrl = buildAbsoluteUrl(sharePath);
 
   return (
+    <>
+      {jsonLdScript}
     <section className="container mx-auto px-4 py-6 pb-24 md:pb-8">
       <TrackAdView advertisementId={advertisement.id} />
       <div className="mb-4 flex items-center justify-between gap-2">
@@ -256,5 +269,6 @@ export async function AdvertisementDetailView({
         contacts={stickyContacts}
       />
     </section>
+    </>
   );
 }

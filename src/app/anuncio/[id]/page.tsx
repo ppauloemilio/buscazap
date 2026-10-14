@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getAdvertisementById } from "@/application/services/search-service";
 import { AdvertisementDetailView } from "@/features/dashboard/components/advertisement-detail-view";
+import { buildAdvertisementMetadata } from "@/lib/seo/advertisement-seo";
 
 interface AdvertisementPageProps {
   readonly params: Promise<{ readonly id: string }>;
@@ -17,13 +18,7 @@ export async function generateMetadata({
     return { title: "Anúncio não encontrado" };
   }
 
-  return {
-    title: advertisement.title,
-    description: advertisement.description,
-    alternates: advertisement.publicHref
-      ? { canonical: advertisement.publicHref }
-      : undefined,
-  };
+  return buildAdvertisementMetadata(advertisement);
 }
 
 /** Mantém /anuncio/:id e redireciona para URL SEO quando disponível. */

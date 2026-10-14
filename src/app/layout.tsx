@@ -13,23 +13,31 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "BuscaZapp - Encontre profissionais e serviços no WhatsApp",
+    default:
+      "BuscaZapp — WhatsApp, telefone e contatos de empresas em Belém",
     template: "%s | BuscaZapp",
   },
   description:
-    "Busque profissionais, empresas, produtos e serviços na sua cidade. Contato direto via WhatsApp. Avaliações, favoritos e muito mais.",
+    "Guia de contatos WhatsApp em Belém e região. Encontre telefone, Zap e WhatsApp de empresas, prestadores, categorias e serviços locais.",
   keywords: [
-    "whatsapp",
-    "profissionais",
-    "serviços",
+    "WhatsApp Belém",
+    "Guia de contatos WhatsApp Belém",
+    "Telefones úteis Belém",
+    "Zap Belém",
+    "telefone",
+    "contato",
     "empresas",
+    "prestadores",
+    "serviços",
+    "Ananindeua",
     "busca local",
-    "anúncios",
+    "BuscaZapp",
   ],
   openGraph: {
-    title: "BuscaZapp - Encontre profissionais e serviços no WhatsApp",
+    title:
+      "BuscaZapp — WhatsApp, telefone e contatos de empresas em Belém",
     description:
-      "Busque profissionais, empresas, produtos e serviços na sua cidade.",
+      "Encontre WhatsApp, telefone e Zap de empresas e serviços em Belém e região.",
     type: "website",
     locale: "pt_BR",
     images: [{ url: "/buscazapp-mark.png", alt: "BuscaZapp" }],

@@ -29,12 +29,19 @@ export function buildCategoryCityMetadata({
   category,
 }: CategoryCityLandingProps): Metadata {
   const path = buildCategoryCitySeoPath(city.slug, category.slug);
-  const title = `${category.name} em ${city.name} — WhatsApp | BuscaZapp`;
-  const description = `Encontre ${category.name.toLowerCase()} em ${city.name}/${city.stateUf} no BuscaZapp. Veja anúncios locais e fale direto no WhatsApp.`;
+  const title = `${category.name} em ${city.name} — WhatsApp, telefone e contatos`;
+  const description = `WhatsApp, telefone e Zap de ${category.name.toLowerCase()} em ${city.name}/${city.stateUf}. Veja empresas e prestadores no BuscaZapp e fale direto.`;
 
   return {
     title,
     description,
+    keywords: [
+      `${category.name} em ${city.name} WhatsApp`,
+      `${category.name} ${city.name} telefone`,
+      `Zap ${category.name} ${city.name}`,
+      "contato",
+      "BuscaZapp",
+    ],
     alternates: { canonical: path },
     openGraph: {
       title,
@@ -65,8 +72,8 @@ export async function CategoryCityLandingPage({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: `${category.name} em ${city.name}`,
-    description: `Anúncios de ${category.name} em ${city.name} no BuscaZapp`,
+    name: `${category.name} em ${city.name} — WhatsApp e contatos`,
+    description: `Telefone, WhatsApp e Zap de ${category.name} em ${city.name}`,
     url: `${getSiteUrl()}${pagePath}`,
     about: {
       "@type": "Place",
@@ -97,11 +104,11 @@ export async function CategoryCityLandingPage({
             {category.name} · {city.name}/{city.stateUf}
           </p>
           <h1 className="mb-2 text-2xl font-bold md:text-3xl">
-            {category.name} em {city.name} — contato via WhatsApp
+            {category.name} em {city.name} — WhatsApp e contatos
           </h1>
           <p className="text-sm text-muted-foreground">
-            Veja anúncios de {category.name.toLowerCase()} em {city.name} e fale
-            direto com o anunciante no WhatsApp, sem intermediários.
+            Telefone, Zap e WhatsApp de {category.name.toLowerCase()} em{" "}
+            {city.name}. Fale direto com o anunciante, sem intermediários.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="whatsapp" size="sm" asChild>

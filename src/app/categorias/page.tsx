@@ -1,31 +1,56 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { getCategoriesWithCounts } from "@/application/services/catalog-service";
+import {
+  getCategoriesWithCounts,
+  listActiveCities,
+} from "@/application/services/catalog-service";
+import {
+  buildCategoryCitySeoPath,
+  cityNameToSlug,
+} from "@/application/services/city-seo-service";
 import { CategoryIcon } from "@/components/category/category-icon";
 import { PageHeader } from "@/components/layout/page-header";
 import { formatNumber } from "@/shared/utils/format";
+import { getDefaultCatalogLocation } from "@/shared/utils/catalog-location";
 
 export const metadata: Metadata = {
-  title: "Categorias",
+  title: "Categorias — empresas e serviços com WhatsApp",
+  description:
+    "Explore categorias de empresas e prestadores com telefone, WhatsApp e Zap no BuscaZapp. Contatos locais por área de atuação.",
 };
 
 export default async function CategoriesPage() {
-  const categories = await getCategoriesWithCounts();
+  const [categories, cities] = await Promise.all([
+    getCategoriesWithCounts(),
+    listActiveCities(),
+  ]);
+
+  const defaultLocation = getDefaultCatalogLocation(
+    cities.map((city) => ({ name: city.name, state: city.state.uf })),
+    cities.map((city) => ({ uf: city.state.uf }))
+  );
+  const defaultCitySlug = defaultLocation.city
+    ? cityNameToSlug(defaultLocation.city)
+    : null;
 
   return (
     <>
       <PageHeader
         compact
         title="Categorias"
-        description="Explore anúncios por área de atuação"
+        description="Empresas e serviços com WhatsApp, telefone e contato direto"
       />
       <section className="container mx-auto px-4 py-5">
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {categories.map((category) => (
             <Link
               key={category.id}
-              href={`/buscar?category=${category.slug}`}
+              href={
+                defaultCitySlug
+                  ? buildCategoryCitySeoPath(defaultCitySlug, category.slug)
+                  : `/buscar?category=${encodeURIComponent(category.slug)}`
+              }
               className="group flex items-center gap-2 rounded-lg border bg-card px-2 py-2 transition-all hover:border-whatsapp/50 hover:shadow-md"
             >
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-whatsapp/10 group-hover:bg-whatsapp/20">

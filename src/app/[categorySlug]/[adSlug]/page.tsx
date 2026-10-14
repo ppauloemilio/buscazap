@@ -7,6 +7,7 @@ import {
   buildCategoryCityMetadata,
   CategoryCityLandingPage,
 } from "@/features/cities/category-city-landing";
+import { buildAdvertisementMetadata } from "@/lib/seo/advertisement-seo";
 import { isReservedTopLevelSegment } from "@/lib/slug";
 
 interface SeoAdvertisementPageProps {
@@ -42,19 +43,7 @@ export async function generateMetadata({
     return { title: "Anúncio não encontrado" };
   }
 
-  return {
-    title: advertisement.title,
-    description: advertisement.description,
-    alternates: {
-      canonical: advertisement.publicHref,
-    },
-    openGraph: {
-      title: advertisement.title,
-      description: advertisement.description,
-      type: "website",
-      url: advertisement.publicHref,
-    },
-  };
+  return buildAdvertisementMetadata(advertisement);
 }
 
 export default async function SeoAdvertisementPage({

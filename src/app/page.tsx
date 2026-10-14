@@ -1,4 +1,5 @@
 import { getDashboardData } from "@/application/services/dashboard-service";
+import { cityNameToSlug } from "@/application/services/city-seo-service";
 import { HeroSearch } from "@/features/dashboard/components/hero-search";
 import { UrgentSearches } from "@/features/dashboard/components/urgent-searches";
 import { StatsSection } from "@/features/dashboard/components/stats-section";
@@ -9,11 +10,21 @@ import { CityExplorer } from "@/features/dashboard/components/city-explorer";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 
+function resolveDefaultCitySlug(cityNames: readonly string[]): string | undefined {
+  const preferred =
+    cityNames.find(
+      (name) =>
+        name.localeCompare("Belém", "pt-BR", { sensitivity: "base" }) === 0
+    ) ?? cityNames[0];
+  return preferred ? cityNameToSlug(preferred) : undefined;
+}
+
 export default async function HomePage() {
   const provider = await getCurrentProvider();
   const isAdmin = provider ? isAdminProvider(provider) : false;
   const data = await getDashboardData({ includeStats: isAdmin });
   const { homepageSettings } = data;
+  const defaultCitySlug = resolveDefaultCitySlug(data.cityNames);
 
   return (
     <>
@@ -22,7 +33,10 @@ export default async function HomePage() {
         neighborhoodsByCity={data.neighborhoodsByCity}
       />
       {homepageSettings.showPopularCategories && (
-        <CategoryGrid categories={data.popularCategories} />
+        <CategoryGrid
+          categories={data.popularCategories}
+          defaultCitySlug={defaultCitySlug}
+        />
       )}
       {homepageSettings.showUrgentSearches && <UrgentSearches />}
       {isAdmin && <StatsSection stats={data.stats} />}

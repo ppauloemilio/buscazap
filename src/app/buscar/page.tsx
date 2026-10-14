@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { getPopularCategories } from "@/application/services/analytics-service";
+import { cityNameToSlug } from "@/application/services/city-seo-service";
 import { searchAdvertisements } from "@/application/services/search-service";
 import {
   categoryNameFromCatalog,
@@ -35,7 +36,9 @@ interface SearchPageProps {
 }
 
 export const metadata: Metadata = {
-  title: "Buscar",
+  title: "Buscar WhatsApp, telefone e contatos",
+  description:
+    "Busque empresas, prestadores e serviços por WhatsApp, telefone ou Zap na sua cidade no BuscaZapp.",
 };
 
 function parsePlanFilter(value: string | undefined): SearchPlanFilter | undefined {
@@ -79,6 +82,21 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const cityNames = catalog.cityNames;
   const neighborhoods = neighborhoodNamesFromCatalog(catalog, params.city);
+  const seoCityName =
+    (params.city &&
+      cityNames.find(
+        (name) =>
+          name.localeCompare(params.city!, "pt-BR", { sensitivity: "base" }) ===
+          0
+      )) ||
+    cityNames.find(
+      (name) =>
+        name.localeCompare("Belém", "pt-BR", { sensitivity: "base" }) === 0
+    ) ||
+    cityNames[0];
+  const defaultCitySlug = seoCityName
+    ? cityNameToSlug(seoCityName)
+    : undefined;
 
   const filterParams = {
     query: params.q,
@@ -134,6 +152,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           categories={popularCategories}
           embedded
           activeCategorySlug={params.category}
+          defaultCitySlug={defaultCitySlug}
         />
 
         <SearchFilterSummary filters={filterParams} count={results.length} />

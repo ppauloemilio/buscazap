@@ -78,8 +78,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
+  const defaultCity = seoCities.find(
+    (city) =>
+      city.name.localeCompare("Belém", "pt-BR", { sensitivity: "base" }) === 0
+  ) ?? seoCities[0];
+
   const categoryEntries: MetadataRoute.Sitemap = categories.map((category) => ({
-    url: `${base}/buscar?category=${encodeURIComponent(category.slug)}`,
+    url: defaultCity
+      ? `${base}${buildCategoryCitySeoPath(defaultCity.slug, category.slug)}`
+      : `${base}/buscar?category=${encodeURIComponent(category.slug)}`,
     lastModified: category.updatedAt,
     changeFrequency: "daily",
     priority: 0.75,
