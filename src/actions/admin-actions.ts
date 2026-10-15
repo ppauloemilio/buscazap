@@ -19,7 +19,11 @@ import {
   updateReportStatusAsAdmin,
 } from "@/application/services/admin-service";
 import { resetAdvertisementProviderPasswordForNotify } from "@/application/services/advertisement-notify-service";
-import { updateHomepageSettings } from "@/application/services/homepage-settings-service";
+import {
+  DEFAULT_SECTION_ORDER,
+  parseSectionOrder,
+  updateHomepageSettings,
+} from "@/application/services/homepage-settings-service";
 import {
   parseManualPaymentMethod,
   registerManualPremiumBoostAsAdmin,
@@ -283,14 +287,30 @@ export async function updateHomepageSettingsAction(formData: FormData) {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/entrar");
 
+  const rawOrder = String(formData.get("sectionOrder") ?? "");
+  const sectionOrder = rawOrder.includes(",")
+    ? parseSectionOrder(
+        JSON.stringify(
+          rawOrder
+            .split(",")
+            .map((part) => part.trim())
+            .filter(Boolean)
+        )
+      )
+    : parseSectionOrder(rawOrder || undefined);
+
   await updateHomepageSettings({
     showUrgentSearches: formData.get("showUrgentSearches") === "on",
     showPopularCategories: formData.get("showPopularCategories") === "on",
     showCityExplorer: formData.get("showCityExplorer") === "on",
+    showPromotions: formData.get("showPromotions") === "on",
     plusPlanEnabled: formData.get("plusPlanEnabled") === "on",
+    sectionOrder:
+      sectionOrder.length > 0 ? sectionOrder : [...DEFAULT_SECTION_ORDER],
   });
 
   revalidatePath("/");
+  revalidatePath("/promocoes");
   revalidatePath("/admin/home");
   revalidatePath("/anunciar");
   revalidatePath("/painel/assinatura");

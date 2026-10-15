@@ -21,6 +21,7 @@ const STATIC_PATHS = [
   "/cadastro",
   "/entrar",
   "/ajuda",
+  "/promocoes",
   "/quem-somos",
   "/privacidade",
   "/termos",

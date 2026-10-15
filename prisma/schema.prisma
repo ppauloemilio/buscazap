@@ -321,6 +321,9 @@ model HomepageSetting {
   showUrgentSearches    Boolean  @default(false)
   showPopularCategories Boolean  @default(false)
   showCityExplorer      Boolean  @default(false)
+  showPromotions        Boolean  @default(false)
+  /** JSON array de ids: popularCategories, urgentSearches, promotions, advertisements, cityExplorer */
+  sectionOrderJson      String   @default("[\"popularCategories\",\"urgentSearches\",\"promotions\",\"advertisements\",\"cityExplorer\"]")
   plusPlanEnabled       Boolean  @default(false)
   updatedAt             DateTime @updatedAt
 }
