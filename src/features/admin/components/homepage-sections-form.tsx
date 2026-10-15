@@ -4,6 +4,7 @@ import { useMemo, useState, type ComponentType } from "react";
 import {
   ChevronDown,
   ChevronUp,
+  Crown,
   LayoutGrid,
   MapPin,
   Megaphone,
@@ -28,7 +29,9 @@ const SECTION_ICONS: Record<
   popularCategories: LayoutGrid,
   urgentSearches: Zap,
   promotions: Tag,
-  advertisements: Megaphone,
+  premiumAds: Crown,
+  paidAds: Megaphone,
+  freeAds: Megaphone,
   cityExplorer: MapPin,
 };
 
@@ -36,6 +39,9 @@ const TOGGLEABLE: ReadonlySet<HomepageSectionId> = new Set([
   "popularCategories",
   "urgentSearches",
   "promotions",
+  "premiumAds",
+  "paidAds",
+  "freeAds",
   "cityExplorer",
 ]);
 
@@ -43,7 +49,9 @@ const DESCRIPTIONS: Record<HomepageSectionId, string> = {
   popularCategories: "Grade de categorias na página inicial.",
   urgentSearches: "Atalhos rápidos de Gás, Água, Delivery e outros.",
   promotions: "Cards de ofertas ativas de anunciantes Plano Pro.",
-  advertisements: "Sempre visível quando houver anúncios (Premium, pagos e grátis).",
+  premiumAds: "Anúncios com destaque premium ativo.",
+  paidAds: "Anúncios de assinantes (Plano Básico ou Pro).",
+  freeAds: "Listagens do Plano Grátis.",
   cityExplorer: "Lista de cidades para explorar anúncios.",
 };
 
@@ -51,6 +59,9 @@ type VisibilityState = {
   popularCategories: boolean;
   urgentSearches: boolean;
   promotions: boolean;
+  premiumAds: boolean;
+  paidAds: boolean;
+  freeAds: boolean;
   cityExplorer: boolean;
 };
 
@@ -66,6 +77,9 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
     popularCategories: settings.showPopularCategories,
     urgentSearches: settings.showUrgentSearches,
     promotions: settings.showPromotions,
+    premiumAds: settings.showPremiumAds,
+    paidAds: settings.showPaidAds,
+    freeAds: settings.showFreeAds,
     cityExplorer: settings.showCityExplorer,
   });
   const [plusPlanEnabled, setPlusPlanEnabled] = useState(
@@ -97,6 +111,15 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
       {visibility.promotions && (
         <input type="hidden" name="showPromotions" value="on" />
       )}
+      {visibility.premiumAds && (
+        <input type="hidden" name="showPremiumAds" value="on" />
+      )}
+      {visibility.paidAds && (
+        <input type="hidden" name="showPaidAds" value="on" />
+      )}
+      {visibility.freeAds && (
+        <input type="hidden" name="showFreeAds" value="on" />
+      )}
       {visibility.cityExplorer && (
         <input type="hidden" name="showCityExplorer" value="on" />
       )}
@@ -110,8 +133,8 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="mb-3 text-xs text-muted-foreground">
-            Use as setas para definir a ordem na home. Marque para exibir os
-            blocos opcionais.
+            Use as setas para definir a ordem na home. Marque para exibir cada
+            bloco.
           </p>
           {order.map((id, index) => {
             const Icon = SECTION_ICONS[id];

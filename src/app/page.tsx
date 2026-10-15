@@ -7,12 +7,15 @@ import { HeroSearch } from "@/features/dashboard/components/hero-search";
 import { UrgentSearches } from "@/features/dashboard/components/urgent-searches";
 import { StatsSection } from "@/features/dashboard/components/stats-section";
 import { CategoryGrid } from "@/features/dashboard/components/category-grid";
-import { AdvertisementListings } from "@/features/dashboard/components/advertisement-listings";
 import { AdvertisementSection } from "@/features/dashboard/components/advertisement-section";
 import { CityExplorer } from "@/features/dashboard/components/city-explorer";
 import { PromotionsSection } from "@/features/dashboard/components/promotions-section";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
+import {
+  splitAdvertisementsByPlan,
+  splitAdvertisementsByPremium,
+} from "@/shared/utils/advertisement-listings";
 
 function resolveDefaultCitySlug(cityNames: readonly string[]): string | undefined {
   const preferred =
@@ -33,6 +36,16 @@ export default async function HomePage() {
     : { items: [], total: 0 };
   const defaultCitySlug = resolveDefaultCitySlug(data.cityNames);
 
+  const allHomeAds = [
+    ...data.homePremiumAdvertisements,
+    ...data.homeRegularAdvertisements,
+  ];
+  const { premium, regular } = splitAdvertisementsByPremium(allHomeAds);
+  const freemium = isNewAdProfileEnabled();
+  const { paid, free } = freemium
+    ? splitAdvertisementsByPlan(regular)
+    : { paid: regular, free: [] };
+
   const sectionRenderers: Record<HomepageSectionId, () => ReactNode> = {
     popularCategories: () =>
       homepageSettings.showPopularCategories ? (
@@ -50,40 +63,38 @@ export default async function HomePage() {
           total={homePromotions.total}
         />
       ) : null,
-    advertisements: () =>
-      isNewAdProfileEnabled() ? (
-        <AdvertisementListings
-          advertisements={[
-            ...data.homePremiumAdvertisements,
-            ...data.homeRegularAdvertisements,
-          ]}
-          regularTitle="Anúncios"
-          premiumViewAllHref="/buscar?premium=true"
-          paidViewAllHref="/buscar?plan=paid"
-          freeViewAllHref="/buscar?plan=free"
+    premiumAds: () =>
+      homepageSettings.showPremiumAds && premium.length > 0 ? (
+        <AdvertisementSection
+          variant="premium"
+          title="Destaques Premium"
+          description="Anunciantes em destaque — contato direto pelo WhatsApp"
+          advertisements={premium}
+          viewAllHref="/buscar?premium=true"
+          returnTo="/"
+          emphasizePremium
+        />
+      ) : null,
+    paidAds: () =>
+      homepageSettings.showPaidAds && paid.length > 0 ? (
+        <AdvertisementSection
+          title="Anúncios"
+          advertisements={paid}
+          viewAllHref={freemium ? "/buscar?plan=paid" : "/buscar"}
           returnTo="/"
         />
-      ) : (
-        <>
-          {data.homePremiumAdvertisements.length > 0 && (
-            <AdvertisementSection
-              variant="premium"
-              title="Destaques Premium"
-              description="Anunciantes em destaque — contato direto pelo WhatsApp"
-              advertisements={data.homePremiumAdvertisements}
-              viewAllHref="/buscar?premium=true"
-              emphasizePremium
-            />
-          )}
-          {data.homeRegularAdvertisements.length > 0 && (
-            <AdvertisementSection
-              title="Anúncios"
-              advertisements={data.homeRegularAdvertisements}
-              viewAllHref="/buscar"
-            />
-          )}
-        </>
-      ),
+      ) : null,
+    freeAds: () =>
+      homepageSettings.showFreeAds && free.length > 0 ? (
+        <AdvertisementSection
+          variant="free"
+          compact
+          title="Plano Grátis"
+          advertisements={free}
+          viewAllHref="/buscar?plan=free"
+          returnTo="/"
+        />
+      ) : null,
     cityExplorer: () =>
       homepageSettings.showCityExplorer ? (
         <CityExplorer cities={data.cityNames} />

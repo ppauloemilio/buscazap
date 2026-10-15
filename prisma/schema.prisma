@@ -322,8 +322,11 @@ model HomepageSetting {
   showPopularCategories Boolean  @default(false)
   showCityExplorer      Boolean  @default(false)
   showPromotions        Boolean  @default(false)
-  /** JSON array de ids: popularCategories, urgentSearches, promotions, advertisements, cityExplorer */
-  sectionOrderJson      String   @default("[\"popularCategories\",\"urgentSearches\",\"promotions\",\"advertisements\",\"cityExplorer\"]")
+  showPremiumAds        Boolean  @default(true)
+  showPaidAds           Boolean  @default(true)
+  showFreeAds           Boolean  @default(true)
+  /** JSON array de ids: popularCategories, urgentSearches, promotions, premiumAds, paidAds, freeAds, cityExplorer */
+  sectionOrderJson      String   @default("[\"popularCategories\",\"urgentSearches\",\"promotions\",\"premiumAds\",\"paidAds\",\"freeAds\",\"cityExplorer\"]")
   plusPlanEnabled       Boolean  @default(false)
   updatedAt             DateTime @updatedAt
 }

@@ -304,6 +304,9 @@ export async function updateHomepageSettingsAction(formData: FormData) {
     showPopularCategories: formData.get("showPopularCategories") === "on",
     showCityExplorer: formData.get("showCityExplorer") === "on",
     showPromotions: formData.get("showPromotions") === "on",
+    showPremiumAds: formData.get("showPremiumAds") === "on",
+    showPaidAds: formData.get("showPaidAds") === "on",
+    showFreeAds: formData.get("showFreeAds") === "on",
     plusPlanEnabled: formData.get("plusPlanEnabled") === "on",
     sectionOrder:
       sectionOrder.length > 0 ? sectionOrder : [...DEFAULT_SECTION_ORDER],

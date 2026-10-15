@@ -5,17 +5,25 @@ export const HOMEPAGE_SECTION_IDS = [
   "popularCategories",
   "urgentSearches",
   "promotions",
-  "advertisements",
+  "premiumAds",
+  "paidAds",
+  "freeAds",
   "cityExplorer",
 ] as const;
 
 export type HomepageSectionId = (typeof HOMEPAGE_SECTION_IDS)[number];
+
+/** Id legado — expandido para premium/paid/free na leitura. */
+const LEGACY_ADVERTISEMENTS_SECTION = "advertisements";
 
 export type HomepageSettings = {
   readonly showUrgentSearches: boolean;
   readonly showPopularCategories: boolean;
   readonly showCityExplorer: boolean;
   readonly showPromotions: boolean;
+  readonly showPremiumAds: boolean;
+  readonly showPaidAds: boolean;
+  readonly showFreeAds: boolean;
   readonly plusPlanEnabled: boolean;
   readonly sectionOrder: readonly HomepageSectionId[];
 };
@@ -24,7 +32,9 @@ export const DEFAULT_SECTION_ORDER: readonly HomepageSectionId[] = [
   "popularCategories",
   "urgentSearches",
   "promotions",
-  "advertisements",
+  "premiumAds",
+  "paidAds",
+  "freeAds",
   "cityExplorer",
 ];
 
@@ -33,6 +43,9 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   showPopularCategories: false,
   showCityExplorer: false,
   showPromotions: false,
+  showPremiumAds: true,
+  showPaidAds: true,
+  showFreeAds: true,
   plusPlanEnabled: false,
   sectionOrder: DEFAULT_SECTION_ORDER,
 };
@@ -41,7 +54,9 @@ export const HOMEPAGE_SECTION_LABELS: Record<HomepageSectionId, string> = {
   popularCategories: "Categorias populares",
   urgentSearches: "Precisa agora?",
   promotions: "Promoções",
-  advertisements: "Anúncios (Premium, pagos e grátis)",
+  premiumAds: "Destaques Premium",
+  paidAds: "Anúncios pagos",
+  freeAds: "Plano Grátis",
   cityExplorer: "Buscar por cidade",
 };
 
@@ -50,6 +65,26 @@ function isHomepageSectionId(value: unknown): value is HomepageSectionId {
     typeof value === "string" &&
     (HOMEPAGE_SECTION_IDS as readonly string[]).includes(value)
   );
+}
+
+function expandLegacySectionIds(parsed: unknown[]): HomepageSectionId[] {
+  const expanded: HomepageSectionId[] = [];
+
+  for (const item of parsed) {
+    if (item === LEGACY_ADVERTISEMENTS_SECTION) {
+      for (const id of ["premiumAds", "paidAds", "freeAds"] as const) {
+        if (!expanded.includes(id)) {
+          expanded.push(id);
+        }
+      }
+      continue;
+    }
+    if (isHomepageSectionId(item) && !expanded.includes(item)) {
+      expanded.push(item);
+    }
+  }
+
+  return expanded;
 }
 
 export function parseSectionOrder(raw: string | null | undefined): HomepageSectionId[] {
@@ -63,7 +98,7 @@ export function parseSectionOrder(raw: string | null | undefined): HomepageSecti
       return [...DEFAULT_SECTION_ORDER];
     }
 
-    const valid = parsed.filter(isHomepageSectionId);
+    const valid = expandLegacySectionIds(parsed);
     const missing = DEFAULT_SECTION_ORDER.filter((id) => !valid.includes(id));
     return [...valid, ...missing];
   } catch {
@@ -105,6 +140,9 @@ export async function getHomepageSettings(): Promise<HomepageSettings> {
       showPopularCategories: settings.showPopularCategories,
       showCityExplorer: settings.showCityExplorer,
       showPromotions: settings.showPromotions,
+      showPremiumAds: settings.showPremiumAds,
+      showPaidAds: settings.showPaidAds,
+      showFreeAds: settings.showFreeAds,
       plusPlanEnabled: settings.plusPlanEnabled,
       sectionOrder: parseSectionOrder(settings.sectionOrderJson),
     };
@@ -125,6 +163,9 @@ export async function updateHomepageSettings(input: HomepageSettings) {
       showPopularCategories: input.showPopularCategories,
       showCityExplorer: input.showCityExplorer,
       showPromotions: input.showPromotions,
+      showPremiumAds: input.showPremiumAds,
+      showPaidAds: input.showPaidAds,
+      showFreeAds: input.showFreeAds,
       plusPlanEnabled: input.plusPlanEnabled,
       sectionOrderJson,
     },
@@ -133,6 +174,9 @@ export async function updateHomepageSettings(input: HomepageSettings) {
       showPopularCategories: input.showPopularCategories,
       showCityExplorer: input.showCityExplorer,
       showPromotions: input.showPromotions,
+      showPremiumAds: input.showPremiumAds,
+      showPaidAds: input.showPaidAds,
+      showFreeAds: input.showFreeAds,
       plusPlanEnabled: input.plusPlanEnabled,
       sectionOrderJson,
     },
