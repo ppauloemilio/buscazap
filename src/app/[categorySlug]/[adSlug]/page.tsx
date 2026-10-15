@@ -17,6 +17,8 @@ interface SeoAdvertisementPageProps {
   }>;
   readonly searchParams: Promise<{
     readonly from?: string;
+    readonly tab?: string;
+    readonly promo?: string;
   }>;
 }
 
@@ -51,11 +53,18 @@ export default async function SeoAdvertisementPage({
   searchParams,
 }: SeoAdvertisementPageProps) {
   const { categorySlug, adSlug } = await params;
-  const { from } = await searchParams;
+  const { from, tab, promo } = await searchParams;
 
   // Remove ?from= da URL pública (SEO) — o Voltar usa sessionStorage.
+  // Mantém tab/promo para deep-link da seção de promoções.
   if (from) {
-    permanentRedirect(`/${categorySlug}/${adSlug}`);
+    const preserved = new URLSearchParams();
+    if (tab) preserved.set("tab", tab);
+    if (promo) preserved.set("promo", promo);
+    const query = preserved.toString();
+    permanentRedirect(
+      query ? `/${categorySlug}/${adSlug}?${query}` : `/${categorySlug}/${adSlug}`
+    );
   }
 
   const categoryCity = await resolveCategoryCityLanding(categorySlug, adSlug);

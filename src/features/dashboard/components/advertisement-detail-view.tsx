@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Star, MapPin, MessageCircle, Crown, Clock, Zap } from "lucide-react";
 import { listAdvertisementReviews } from "@/application/services/review-service";
 import { AdvertisementCover } from "@/components/advertisement/advertisement-cover";
@@ -50,10 +51,12 @@ export async function AdvertisementDetailView({
     return (
       <>
         {jsonLdScript}
-        <AdvertisementProfileView
-          advertisement={advertisement}
-          reviews={reviews}
-        />
+        <Suspense fallback={null}>
+          <AdvertisementProfileView
+            advertisement={advertisement}
+            reviews={reviews}
+          />
+        </Suspense>
       </>
     );
   }

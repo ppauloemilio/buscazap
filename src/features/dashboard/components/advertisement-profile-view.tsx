@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Star,
   MapPin,
@@ -46,6 +47,18 @@ type ProfileTab =
   | "promocoes"
   | "avaliacoes";
 
+const PROFILE_TABS: readonly ProfileTab[] = [
+  "descricao",
+  "produtos",
+  "servicos",
+  "promocoes",
+  "avaliacoes",
+];
+
+function isProfileTab(value: string | null): value is ProfileTab {
+  return Boolean(value && (PROFILE_TABS as readonly string[]).includes(value));
+}
+
 interface ReviewItem {
   readonly id: string;
   readonly authorName: string;
@@ -63,6 +76,7 @@ export function AdvertisementProfileView({
   advertisement,
   reviews,
 }: AdvertisementProfileViewProps) {
+  const searchParams = useSearchParams();
   const hasPromotions = (advertisement.promotions?.length ?? 0) > 0;
   const isProPlan = advertisement.planTierLabel === "Pro";
   const showPromocoesTab = isProPlan || hasPromotions;
@@ -75,9 +89,40 @@ export function AdvertisementProfileView({
       : []),
     { id: "avaliacoes", label: "Avaliações" },
   ];
-  const [tab, setTab] = useState<ProfileTab>("descricao");
+  const requestedTab = searchParams.get("tab");
+  const focusPromoId = searchParams.get("promo");
+  const [tab, setTab] = useState<ProfileTab>(() => {
+    if (
+      isProfileTab(requestedTab) &&
+      (requestedTab !== "promocoes" || showPromocoesTab)
+    ) {
+      return requestedTab;
+    }
+    return "descricao";
+  });
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const isFree = advertisement.plan === "free";
+
+  useEffect(() => {
+    if (
+      isProfileTab(requestedTab) &&
+      (requestedTab !== "promocoes" || showPromocoesTab)
+    ) {
+      setTab(requestedTab);
+    }
+  }, [requestedTab, showPromocoesTab]);
+
+  useEffect(() => {
+    if (tab !== "promocoes" || !focusPromoId) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      document
+        .getElementById(`promo-${focusPromoId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [tab, focusPromoId]);
 
   const message = `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZapp e gostaria de mais informações.`;
   const whatsappLink = buildWhatsAppLink(advertisement.whatsappNumber, message);
@@ -362,8 +407,13 @@ export function AdvertisementProfileView({
                 <div className="grid gap-4 sm:grid-cols-2">
                   {advertisement.promotions?.map((promo) => (
                     <article
+                      id={`promo-${promo.id}`}
                       key={promo.id}
-                      className="rounded-xl border bg-card p-4"
+                      className={cn(
+                        "scroll-mt-24 rounded-xl border bg-card p-4",
+                        focusPromoId === promo.id &&
+                          "ring-2 ring-whatsapp/60"
+                      )}
                     >
                       <div className="mb-3 flex flex-wrap items-start gap-3">
                         {promo.imageUrl ? (

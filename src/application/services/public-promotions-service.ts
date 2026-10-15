@@ -104,9 +104,10 @@ export async function listPublicPromotionCards(options?: {
 
     const categorySlug =
       categorySlugs.get(ad.category) ?? (slugify(ad.category) || "geral");
-    const href = ad.slug
+    const baseHref = ad.slug
       ? `/${categorySlug}/${ad.slug}`
       : `/anuncio/${ad.id}`;
+    const href = `${baseHref}?tab=promocoes&promo=${encodeURIComponent(row.id)}`;
 
     const promoImage = row.imageUrl
       ? resolveAdvertisementImageUrl(row.imageUrl)
