@@ -3,6 +3,8 @@ export const PRICING = {
   /** Plano Pro: perfil pago + promoções + limites ampliados. */
   SUBSCRIPTION_PLUS_AMOUNT: 14.99,
   PLUS_MAX_PROMOTIONS: 3,
+  /** Plano Pro: cupons de desconto ativos por empresa. */
+  PLUS_MAX_COUPONS: 5,
   /** Plano Pro: fotos da empresa no Meu perfil. */
   PRO_MAX_COMPANY_PHOTOS: 10,
   PRO_MAX_PRODUCTS: 6,

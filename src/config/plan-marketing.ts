@@ -25,6 +25,7 @@ export const BASIC_PLAN_BENEFITS = [
 export const PRO_PLAN_EXTRA_BENEFITS = [
   "Tudo do Plano Básico",
   `+ Divulgação de ${PRICING.PLUS_MAX_PROMOTIONS} PROMOÇÕES`,
+  `+ Até ${PRICING.PLUS_MAX_COUPONS} CUPONS com estoque e código`,
   "+ 6 Fotos da Empresa",
   "+ Divulgação de 3 Produtos",
   "+ Divulgação de 3 Serviços",

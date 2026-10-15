@@ -12,6 +12,7 @@ import {
   Sparkles,
   BarChart3,
   Tag,
+  Ticket,
   KeyRound,
   type LucideIcon,
 } from "lucide-react";
@@ -70,6 +71,7 @@ export function PanelNav({
     items = [
       ...NAV_ITEMS.slice(0, 3),
       { href: "/painel/promocoes", label: "Promoções", icon: Tag },
+      { href: "/painel/cupons", label: "Cupons", icon: Ticket },
       ...NAV_ITEMS.slice(3),
     ];
   }

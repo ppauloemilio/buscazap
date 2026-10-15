@@ -1504,3 +1504,114 @@ export async function toggleProviderPromotionAction(formData: FormData) {
   revalidatePath("/buscar");
   redirectToPromotions({ saved: "1" });
 }
+
+function redirectToCoupons(query?: { error?: string; saved?: string }): never {
+  const params = new URLSearchParams();
+  if (query?.error) params.set("error", query.error);
+  if (query?.saved) params.set("saved", "1");
+  const qs = params.toString();
+  redirect(qs ? `/painel/cupons?${qs}` : "/painel/cupons");
+}
+
+export async function saveProviderCouponAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const couponId = String(formData.get("couponId") ?? "").trim() || undefined;
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const badgeLabel = String(formData.get("badgeLabel") ?? "").trim();
+  const quantityTotal = Number(formData.get("quantityTotal"));
+  const startsAtRaw = String(formData.get("startsAt") ?? "").trim();
+  const endsAtRaw = String(formData.get("endsAt") ?? "").trim();
+
+  if (!startsAtRaw || !endsAtRaw) {
+    redirectToCoupons({ error: "Informe datas de início e fim válidas" });
+  }
+
+  const startsAtValue = new Date(startsAtRaw);
+  const endsAtValue = new Date(endsAtRaw);
+
+  if (
+    Number.isNaN(startsAtValue.getTime()) ||
+    Number.isNaN(endsAtValue.getTime())
+  ) {
+    redirectToCoupons({ error: "Informe datas de início e fim válidas" });
+  }
+
+  try {
+    const { upsertProviderCoupon } = await import(
+      "@/application/services/provider-coupon-service"
+    );
+    await upsertProviderCoupon({
+      providerId: provider.id,
+      couponId,
+      title,
+      description,
+      badgeLabel,
+      quantityTotal,
+      startsAt: startsAtValue,
+      endsAt: endsAtValue,
+    });
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    const message =
+      error instanceof Error ? error.message : "Não foi possível salvar o cupom";
+    redirectToCoupons({ error: message });
+  }
+
+  revalidatePath("/painel/cupons");
+  revalidatePath("/cupons");
+  revalidatePath("/");
+  redirectToCoupons({ saved: "1" });
+}
+
+export async function deleteProviderCouponAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const couponId = String(formData.get("couponId") ?? "").trim();
+  if (!couponId) redirect("/painel/cupons");
+
+  try {
+    const { deleteProviderCoupon } = await import(
+      "@/application/services/provider-coupon-service"
+    );
+    await deleteProviderCoupon({
+      providerId: provider.id,
+      couponId,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível excluir";
+    redirectToCoupons({ error: message });
+  }
+
+  revalidatePath("/painel/cupons");
+  revalidatePath("/cupons");
+  revalidatePath("/");
+  redirectToCoupons({ saved: "1" });
+}
+
+export async function toggleProviderCouponAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+  const couponId = String(formData.get("couponId") ?? "").trim();
+  const enabled = formData.get("enabled") === "true";
+  if (!couponId) redirect("/painel/cupons");
+
+  try {
+    const { setProviderCouponEnabled } = await import(
+      "@/application/services/provider-coupon-service"
+    );
+    await setProviderCouponEnabled({
+      providerId: provider.id,
+      couponId,
+      enabled,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível atualizar";
+    redirectToCoupons({ error: message });
+  }
+
+  revalidatePath("/painel/cupons");
+  revalidatePath("/cupons");
+  revalidatePath("/");
+  redirectToCoupons({ saved: "1" });
+}

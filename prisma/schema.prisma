@@ -38,6 +38,7 @@ model Provider {
   advertisements        Advertisement[]
   companyImages         ProviderImage[]
   promotions            ProviderPromotion[]
+  coupons               ProviderCoupon[]
   payments              Payment[]
   subscriptions         Subscription[]
   auditLogs             AuditLog[]
@@ -74,6 +75,44 @@ model ProviderPromotion {
   updatedAt     DateTime @updatedAt
 
   @@index([providerId, sortOrder])
+}
+
+model ProviderCoupon {
+  id                String             @id @default(cuid())
+  providerId        String
+  provider          Provider           @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  title             String
+  description       String
+  /** Texto do selo (ex.: "10% OFF", "R$20 OFF"). */
+  badgeLabel        String
+  quantityTotal     Int
+  quantityRemaining Int
+  startsAt          DateTime
+  endsAt            DateTime
+  isEnabled         Boolean            @default(true)
+  sortOrder         Int                @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  redemptions       CouponRedemption[]
+
+  @@index([providerId, sortOrder])
+  @@index([isEnabled, endsAt])
+}
+
+model CouponRedemption {
+  id        String         @id @default(cuid())
+  couponId  String
+  coupon    ProviderCoupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  /** Código único exibido ao cliente (ex.: BZ-A9K2). */
+  code      String         @unique
+  /** ISSUED | USED */
+  status    String         @default("ISSUED")
+  issuedAt  DateTime       @default(now())
+  usedAt    DateTime?
+  createdAt DateTime       @default(now())
+
+  @@index([couponId, status])
+  @@index([issuedAt])
 }
 
 model PasswordResetToken {
@@ -322,11 +361,12 @@ model HomepageSetting {
   showPopularCategories Boolean  @default(false)
   showCityExplorer      Boolean  @default(false)
   showPromotions        Boolean  @default(false)
+  showCoupons           Boolean  @default(false)
   showPremiumAds        Boolean  @default(true)
   showPaidAds           Boolean  @default(true)
   showFreeAds           Boolean  @default(true)
-  /** JSON array de ids: popularCategories, urgentSearches, promotions, premiumAds, paidAds, freeAds, cityExplorer */
-  sectionOrderJson      String   @default("[\"popularCategories\",\"urgentSearches\",\"promotions\",\"premiumAds\",\"paidAds\",\"freeAds\",\"cityExplorer\"]")
+  /** JSON array de ids das seções da home */
+  sectionOrderJson      String   @default("[\"popularCategories\",\"urgentSearches\",\"promotions\",\"coupons\",\"premiumAds\",\"paidAds\",\"freeAds\",\"cityExplorer\"]")
   plusPlanEnabled       Boolean  @default(false)
   updatedAt             DateTime @updatedAt
 }

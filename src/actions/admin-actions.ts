@@ -304,6 +304,7 @@ export async function updateHomepageSettingsAction(formData: FormData) {
     showPopularCategories: formData.get("showPopularCategories") === "on",
     showCityExplorer: formData.get("showCityExplorer") === "on",
     showPromotions: formData.get("showPromotions") === "on",
+    showCoupons: formData.get("showCoupons") === "on",
     showPremiumAds: formData.get("showPremiumAds") === "on",
     showPaidAds: formData.get("showPaidAds") === "on",
     showFreeAds: formData.get("showFreeAds") === "on",
@@ -314,6 +315,7 @@ export async function updateHomepageSettingsAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/promocoes");
+  revalidatePath("/cupons");
   revalidatePath("/admin/home");
   revalidatePath("/anunciar");
   revalidatePath("/painel/assinatura");

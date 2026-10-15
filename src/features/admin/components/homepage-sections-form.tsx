@@ -10,6 +10,7 @@ import {
   Megaphone,
   Sparkles,
   Tag,
+  Ticket,
   Zap,
 } from "lucide-react";
 import { updateHomepageSettingsAction } from "@/actions/admin-actions";
@@ -29,6 +30,7 @@ const SECTION_ICONS: Record<
   popularCategories: LayoutGrid,
   urgentSearches: Zap,
   promotions: Tag,
+  coupons: Ticket,
   premiumAds: Crown,
   paidAds: Megaphone,
   freeAds: Megaphone,
@@ -39,6 +41,7 @@ const TOGGLEABLE: ReadonlySet<HomepageSectionId> = new Set([
   "popularCategories",
   "urgentSearches",
   "promotions",
+  "coupons",
   "premiumAds",
   "paidAds",
   "freeAds",
@@ -49,6 +52,7 @@ const DESCRIPTIONS: Record<HomepageSectionId, string> = {
   popularCategories: "Grade de categorias na página inicial.",
   urgentSearches: "Atalhos rápidos de Gás, Água, Delivery e outros.",
   promotions: "Cards de ofertas ativas de anunciantes Plano Pro.",
+  coupons: "Cupons resgatáveis com estoque e código único.",
   premiumAds: "Anúncios com destaque premium ativo.",
   paidAds: "Anúncios de assinantes (Plano Básico ou Pro).",
   freeAds: "Listagens do Plano Grátis.",
@@ -59,6 +63,7 @@ type VisibilityState = {
   popularCategories: boolean;
   urgentSearches: boolean;
   promotions: boolean;
+  coupons: boolean;
   premiumAds: boolean;
   paidAds: boolean;
   freeAds: boolean;
@@ -77,6 +82,7 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
     popularCategories: settings.showPopularCategories,
     urgentSearches: settings.showUrgentSearches,
     promotions: settings.showPromotions,
+    coupons: settings.showCoupons,
     premiumAds: settings.showPremiumAds,
     paidAds: settings.showPaidAds,
     freeAds: settings.showFreeAds,
@@ -110,6 +116,9 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
       )}
       {visibility.promotions && (
         <input type="hidden" name="showPromotions" value="on" />
+      )}
+      {visibility.coupons && (
+        <input type="hidden" name="showCoupons" value="on" />
       )}
       {visibility.premiumAds && (
         <input type="hidden" name="showPremiumAds" value="on" />

@@ -24,6 +24,8 @@ export const RESERVED_TOP_LEVEL_SEGMENTS = new Set([
   "categorias",
   "cidades",
   "como-funciona",
+  "cupom",
+  "cupons",
   "denunciar",
   "entrar",
   "esqueci-senha",

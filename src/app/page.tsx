@@ -3,6 +3,7 @@ import { getDashboardData } from "@/application/services/dashboard-service";
 import type { HomepageSectionId } from "@/application/services/homepage-settings-service";
 import { cityNameToSlug } from "@/application/services/city-seo-service";
 import { listHomePromotionCards } from "@/application/services/public-promotions-service";
+import { listHomeCouponCards } from "@/application/services/public-coupons-service";
 import { HeroSearch } from "@/features/dashboard/components/hero-search";
 import { UrgentSearches } from "@/features/dashboard/components/urgent-searches";
 import { StatsSection } from "@/features/dashboard/components/stats-section";
@@ -10,6 +11,7 @@ import { CategoryGrid } from "@/features/dashboard/components/category-grid";
 import { AdvertisementSection } from "@/features/dashboard/components/advertisement-section";
 import { CityExplorer } from "@/features/dashboard/components/city-explorer";
 import { PromotionsSection } from "@/features/dashboard/components/promotions-section";
+import { CouponsSection } from "@/features/dashboard/components/coupons-section";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 import {
@@ -33,6 +35,9 @@ export default async function HomePage() {
   const { homepageSettings } = data;
   const homePromotions = homepageSettings.showPromotions
     ? await listHomePromotionCards()
+    : { items: [], total: 0 };
+  const homeCoupons = homepageSettings.showCoupons
+    ? await listHomeCouponCards()
     : { items: [], total: 0 };
   const defaultCitySlug = resolveDefaultCitySlug(data.cityNames);
 
@@ -61,6 +66,13 @@ export default async function HomePage() {
         <PromotionsSection
           promotions={homePromotions.items}
           total={homePromotions.total}
+        />
+      ) : null,
+    coupons: () =>
+      homepageSettings.showCoupons ? (
+        <CouponsSection
+          coupons={homeCoupons.items}
+          total={homeCoupons.total}
         />
       ) : null,
     premiumAds: () =>
