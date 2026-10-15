@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Tag } from "lucide-react";
+import { Pencil, Tag, X } from "lucide-react";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 import {
   deleteProviderPromotionAction,
@@ -65,6 +65,7 @@ export function ProviderPromotionsManager({
   promotions,
 }: ProviderPromotionsManagerProps) {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const canCreate = promotions.length < PRICING.PLUS_MAX_PROMOTIONS;
 
   return (
@@ -75,9 +76,8 @@ export function ProviderPromotionsManager({
         onClose={() => setLightboxUrl(null)}
       />
       <p className="text-sm text-muted-foreground">
-        Até {PRICING.PLUS_MAX_PROMOTIONS} promoções por empresa. Após a data
-        final, a promoção é desativada automaticamente — você pode editar as
-        datas, reativar ou excluir.
+        Até {PRICING.PLUS_MAX_PROMOTIONS} promoções por empresa. Clique em{" "}
+        <strong>Editar</strong> para alterar título, preços, datas ou foto.
       </p>
 
       {promotions.map((promo) => {
@@ -85,6 +85,7 @@ export function ProviderPromotionsManager({
         const endsAt = new Date(promo.endsAt);
         const canReactivate =
           endsAt.getTime() >= Date.now() && !promo.isEnabled;
+        const isEditing = editingId === promo.id;
 
         return (
           <article
@@ -92,9 +93,9 @@ export function ProviderPromotionsManager({
             className="rounded-xl border bg-card p-4 shadow-sm"
           >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-whatsapp" />
-                <h3 className="font-semibold">{promo.title}</h3>
+              <div className="flex min-w-0 items-center gap-2">
+                <Tag className="h-4 w-4 shrink-0 text-whatsapp" />
+                <h3 className="truncate font-semibold">{promo.title}</h3>
               </div>
               <Badge
                 variant={
@@ -109,130 +110,170 @@ export function ProviderPromotionsManager({
               </Badge>
             </div>
 
-            {promo.imageUrl ? (
-              <div className="mb-3">
-                <ClickableImageThumb
-                  src={promo.imageUrl}
-                  alt={promo.title}
-                  onOpen={setLightboxUrl}
-                />
-              </div>
-            ) : null}
-
-            <form
-              action={saveProviderPromotionAction}
-              className="space-y-3"
-              encType="multipart/form-data"
-            >
-              <input type="hidden" name="promotionId" value={promo.id} />
-              <div>
-                <label className="mb-1 block text-xs font-medium">Título</label>
-                <Input name="title" defaultValue={promo.title} required />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium">
-                  Descrição
-                </label>
-                <textarea
-                  name="description"
-                  defaultValue={promo.description}
-                  required
-                  rows={3}
-                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs font-medium">
-                    Preço original (R$)
-                  </label>
-                  <Input
-                    name="priceOriginal"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    defaultValue={promo.priceOriginal}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium">
-                    Preço promocional (R$)
-                  </label>
-                  <Input
-                    name="pricePromo"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    defaultValue={promo.pricePromo}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs font-medium">Início</label>
-                  <Input
-                    name="startsAt"
-                    type="datetime-local"
-                    defaultValue={toDatetimeLocalValue(promo.startsAt)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium">Fim</label>
-                  <Input
-                    name="endsAt"
-                    type="datetime-local"
-                    defaultValue={toDatetimeLocalValue(promo.endsAt)}
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium">
-                  Nova foto (opcional)
-                </label>
-                <Input name="image" type="file" accept="image/*" />
-              </div>
-              <Button type="submit" variant="whatsapp" size="sm">
-                Salvar
-              </Button>
-            </form>
-
-            <div className="mt-2 flex flex-wrap gap-2">
-              {canReactivate && (
-                <form action={toggleProviderPromotionAction}>
-                  <input type="hidden" name="promotionId" value={promo.id} />
-                  <input type="hidden" name="enabled" value="true" />
-                  <Button type="submit" variant="outline" size="sm">
-                    Reativar
+            {!isEditing ? (
+              <>
+                {promo.imageUrl ? (
+                  <div className="mb-3">
+                    <ClickableImageThumb
+                      src={promo.imageUrl}
+                      alt={promo.title}
+                      onOpen={setLightboxUrl}
+                    />
+                  </div>
+                ) : null}
+                <p className="mb-2 text-sm text-muted-foreground">
+                  {promo.description}
+                </p>
+                <p className="mb-3 text-sm">
+                  De {formatPriceBRL(promo.priceOriginal)} por{" "}
+                  <span className="font-semibold text-whatsapp">
+                    {formatPriceBRL(promo.pricePromo)}
+                  </span>
+                </p>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  {new Date(promo.startsAt).toLocaleString("pt-BR")} —{" "}
+                  {new Date(promo.endsAt).toLocaleString("pt-BR")}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="whatsapp"
+                    size="sm"
+                    onClick={() => setEditingId(promo.id)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editar
                   </Button>
-                </form>
-              )}
-              {promo.isEnabled && endsAt.getTime() >= Date.now() && (
-                  <form action={toggleProviderPromotionAction}>
+                  {canReactivate && (
+                    <form action={toggleProviderPromotionAction}>
+                      <input type="hidden" name="promotionId" value={promo.id} />
+                      <input type="hidden" name="enabled" value="true" />
+                      <Button type="submit" variant="outline" size="sm">
+                        Reativar
+                      </Button>
+                    </form>
+                  )}
+                  {promo.isEnabled && endsAt.getTime() >= Date.now() && (
+                    <form action={toggleProviderPromotionAction}>
+                      <input type="hidden" name="promotionId" value={promo.id} />
+                      <input type="hidden" name="enabled" value="false" />
+                      <Button type="submit" variant="outline" size="sm">
+                        Desativar
+                      </Button>
+                    </form>
+                  )}
+                  <form action={deleteProviderPromotionAction}>
                     <input type="hidden" name="promotionId" value={promo.id} />
-                    <input type="hidden" name="enabled" value="false" />
-                    <Button type="submit" variant="outline" size="sm">
-                      Desativar
+                    <Button type="submit" variant="destructive" size="sm">
+                      Excluir
                     </Button>
                   </form>
-                )}
-              <form action={deleteProviderPromotionAction}>
+                </div>
+              </>
+            ) : (
+              <form
+                action={saveProviderPromotionAction}
+                className="space-y-3"
+                encType="multipart/form-data"
+              >
                 <input type="hidden" name="promotionId" value={promo.id} />
-                <Button type="submit" variant="destructive" size="sm">
-                  Excluir
-                </Button>
+                <div>
+                  <label className="mb-1 block text-xs font-medium">Título</label>
+                  <Input name="title" defaultValue={promo.title} required />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium">
+                    Descrição
+                  </label>
+                  <textarea
+                    name="description"
+                    defaultValue={promo.description}
+                    required
+                    rows={3}
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">
+                      Preço original (R$)
+                    </label>
+                    <Input
+                      name="priceOriginal"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      defaultValue={promo.priceOriginal}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">
+                      Preço promocional (R$)
+                    </label>
+                    <Input
+                      name="pricePromo"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      defaultValue={promo.pricePromo}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">
+                      Início
+                    </label>
+                    <Input
+                      name="startsAt"
+                      type="datetime-local"
+                      defaultValue={toDatetimeLocalValue(promo.startsAt)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">Fim</label>
+                    <Input
+                      name="endsAt"
+                      type="datetime-local"
+                      defaultValue={toDatetimeLocalValue(promo.endsAt)}
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium">
+                    Nova foto (opcional)
+                  </label>
+                  {promo.imageUrl ? (
+                    <div className="mb-2">
+                      <ClickableImageThumb
+                        src={promo.imageUrl}
+                        alt={promo.title}
+                        onOpen={setLightboxUrl}
+                      />
+                    </div>
+                  ) : null}
+                  <Input name="image" type="file" accept="image/*" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="submit" variant="whatsapp" size="sm">
+                    Salvar alterações
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingId(null)}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Cancelar
+                  </Button>
+                </div>
               </form>
-            </div>
-
-            <p className="mt-2 text-xs text-muted-foreground">
-              De {formatPriceBRL(promo.priceOriginal)} por{" "}
-              <span className="font-semibold text-whatsapp">
-                {formatPriceBRL(promo.pricePromo)}
-              </span>
-            </p>
+            )}
           </article>
         );
       })}

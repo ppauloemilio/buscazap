@@ -1,6 +1,7 @@
 "use client";
 
-import { Ticket } from "lucide-react";
+import { useState } from "react";
+import { Pencil, Ticket, X } from "lucide-react";
 import { PRICING } from "@/config/pricing";
 import {
   deleteProviderCouponAction,
@@ -48,35 +49,34 @@ export function ProviderCouponsManager({
   coupons,
   redemptions,
 }: ProviderCouponsManagerProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
   const canCreate = coupons.length < PRICING.PLUS_MAX_COUPONS;
   const nowIso = new Date().toISOString();
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
-        Até {PRICING.PLUS_MAX_COUPONS} cupons por empresa. Cada clique em
-        &quot;Pegar cupom&quot; gera um código único e reduz o estoque. Valide
-        pelo código no WhatsApp ou em /cupom/CODIGO.
+        Até {PRICING.PLUS_MAX_COUPONS} cupons por empresa. Clique em{" "}
+        <strong>Editar</strong> para alterar título, selo, estoque ou datas.
+        Cada &quot;Pegar cupom&quot; gera um código único e reduz o estoque.
       </p>
 
       {coupons.map((coupon) => {
         const expired = new Date(coupon.endsAt).getTime() < Date.now();
+        const isEditing = editingId === coupon.id;
+
         return (
           <article
             key={coupon.id}
             className="rounded-xl border bg-card p-4 shadow-sm"
           >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Ticket className="h-4 w-4 text-emerald-600" />
-                <h3 className="font-semibold">{coupon.title}</h3>
+              <div className="flex min-w-0 items-center gap-2">
+                <Ticket className="h-4 w-4 shrink-0 text-emerald-600" />
+                <h3 className="truncate font-semibold">{coupon.title}</h3>
                 <Badge variant="outline">{coupon.badgeLabel}</Badge>
               </div>
-              <Badge
-                variant={
-                  coupon.isEnabled && !expired ? "default" : "secondary"
-                }
-              >
+              <Badge variant={coupon.isEnabled && !expired ? "default" : "secondary"}>
                 {expired
                   ? "Expirado"
                   : coupon.isEnabled
@@ -84,77 +84,140 @@ export function ProviderCouponsManager({
                     : "Desativado"}
               </Badge>
             </div>
-            <p className="mb-2 text-sm text-muted-foreground">
-              {coupon.description}
-            </p>
-            <p className="mb-3 text-xs text-muted-foreground">
-              Estoque: {coupon.quantityRemaining}/{coupon.quantityTotal}
-            </p>
 
-            <form action={saveProviderCouponAction} className="space-y-2">
-              <input type="hidden" name="couponId" value={coupon.id} />
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Input name="title" defaultValue={coupon.title} required />
-                <Input
-                  name="badgeLabel"
-                  defaultValue={coupon.badgeLabel}
-                  placeholder="Ex.: 10% OFF"
-                  required
-                />
-              </div>
-              <Input
-                name="description"
-                defaultValue={coupon.description}
-                required
-              />
-              <div className="grid gap-2 sm:grid-cols-3">
-                <Input
-                  name="quantityTotal"
-                  type="number"
-                  min={1}
-                  max={9999}
-                  defaultValue={coupon.quantityTotal}
-                  required
-                />
-                <Input
-                  name="startsAt"
-                  type="datetime-local"
-                  defaultValue={toDatetimeLocalValue(coupon.startsAt)}
-                  required
-                />
-                <Input
-                  name="endsAt"
-                  type="datetime-local"
-                  defaultValue={toDatetimeLocalValue(coupon.endsAt)}
-                  required
-                />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button type="submit" size="sm" variant="whatsapp">
-                  Salvar
-                </Button>
-                {!expired && (
+            {!isEditing ? (
+              <>
+                <p className="mb-2 text-sm text-muted-foreground">
+                  {coupon.description}
+                </p>
+                <p className="mb-1 text-xs text-muted-foreground">
+                  Estoque: {coupon.quantityRemaining}/{coupon.quantityTotal}
+                </p>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  {new Date(coupon.startsAt).toLocaleString("pt-BR")} —{" "}
+                  {new Date(coupon.endsAt).toLocaleString("pt-BR")}
+                </p>
+                <div className="flex flex-wrap gap-2">
                   <Button
-                    type="submit"
+                    type="button"
+                    size="sm"
+                    variant="whatsapp"
+                    onClick={() => setEditingId(coupon.id)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editar
+                  </Button>
+                  {!expired && (
+                    <form action={toggleProviderCouponAction}>
+                      <input type="hidden" name="couponId" value={coupon.id} />
+                      <input
+                        type="hidden"
+                        name="enabled"
+                        value={coupon.isEnabled ? "false" : "true"}
+                      />
+                      <Button type="submit" size="sm" variant="outline">
+                        {coupon.isEnabled ? "Desativar" : "Reativar"}
+                      </Button>
+                    </form>
+                  )}
+                  <form action={deleteProviderCouponAction}>
+                    <input type="hidden" name="couponId" value={coupon.id} />
+                    <Button type="submit" size="sm" variant="destructive">
+                      Excluir
+                    </Button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <form action={saveProviderCouponAction} className="space-y-3">
+                <input type="hidden" name="couponId" value={coupon.id} />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">
+                      Título
+                    </label>
+                    <Input name="title" defaultValue={coupon.title} required />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">
+                      Selo
+                    </label>
+                    <Input
+                      name="badgeLabel"
+                      defaultValue={coupon.badgeLabel}
+                      placeholder="Ex.: 10% OFF"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium">
+                    Descrição
+                  </label>
+                  <textarea
+                    name="description"
+                    defaultValue={coupon.description}
+                    required
+                    rows={3}
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">
+                      Quantidade total
+                    </label>
+                    <Input
+                      name="quantityTotal"
+                      type="number"
+                      min={1}
+                      max={9999}
+                      defaultValue={coupon.quantityTotal}
+                      required
+                    />
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      Já usados:{" "}
+                      {coupon.quantityTotal - coupon.quantityRemaining}. O
+                      restante será recalculado.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">
+                      Início
+                    </label>
+                    <Input
+                      name="startsAt"
+                      type="datetime-local"
+                      defaultValue={toDatetimeLocalValue(coupon.startsAt)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">Fim</label>
+                    <Input
+                      name="endsAt"
+                      type="datetime-local"
+                      defaultValue={toDatetimeLocalValue(coupon.endsAt)}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="submit" size="sm" variant="whatsapp">
+                    Salvar alterações
+                  </Button>
+                  <Button
+                    type="button"
                     size="sm"
                     variant="outline"
-                    formAction={toggleProviderCouponAction}
-                    name="enabled"
-                    value={coupon.isEnabled ? "false" : "true"}
+                    onClick={() => setEditingId(null)}
                   >
-                    {coupon.isEnabled ? "Desativar" : "Reativar"}
+                    <X className="h-3.5 w-3.5" />
+                    Cancelar
                   </Button>
-                )}
-                <Button
-                  type="submit"
-                  size="sm"
-                  variant="destructive"
-                  formAction={deleteProviderCouponAction}
-                >
-                  Excluir
-                </Button>
-              </div>
-            </form>
+                </div>
+              </form>
+            )}
           </article>
         );
       })}
@@ -162,44 +225,67 @@ export function ProviderCouponsManager({
       {canCreate && (
         <article className="rounded-xl border border-dashed p-4">
           <h3 className="mb-3 font-semibold">Novo cupom</h3>
-          <form action={saveProviderCouponAction} className="space-y-2">
+          <form action={saveProviderCouponAction} className="space-y-3">
             <div className="grid gap-2 sm:grid-cols-2">
-              <Input name="title" placeholder="Título da oferta" required />
+              <div>
+                <label className="mb-1 block text-xs font-medium">Título</label>
+                <Input name="title" placeholder="Título da oferta" required />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">Selo</label>
+                <Input
+                  name="badgeLabel"
+                  placeholder="Selo (ex.: 10% OFF)"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium">
+                Descrição
+              </label>
               <Input
-                name="badgeLabel"
-                placeholder="Selo (ex.: 10% OFF)"
+                name="description"
+                placeholder="Condições / descrição"
                 required
               />
             </div>
-            <Input
-              name="description"
-              placeholder="Condições / descrição"
-              required
-            />
             <div className="grid gap-2 sm:grid-cols-3">
-              <Input
-                name="quantityTotal"
-                type="number"
-                min={1}
-                max={9999}
-                defaultValue={50}
-                placeholder="Quantidade"
-                required
-              />
-              <Input
-                name="startsAt"
-                type="datetime-local"
-                defaultValue={toDatetimeLocalValue(nowIso)}
-                required
-              />
-              <Input
-                name="endsAt"
-                type="datetime-local"
-                defaultValue={toDatetimeLocalValue(
-                  new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                )}
-                required
-              />
+              <div>
+                <label className="mb-1 block text-xs font-medium">
+                  Quantidade
+                </label>
+                <Input
+                  name="quantityTotal"
+                  type="number"
+                  min={1}
+                  max={9999}
+                  defaultValue={50}
+                  required
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">Início</label>
+                <Input
+                  name="startsAt"
+                  type="datetime-local"
+                  defaultValue={toDatetimeLocalValue(nowIso)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">Fim</label>
+                <Input
+                  name="endsAt"
+                  type="datetime-local"
+                  defaultValue={toDatetimeLocalValue(
+                    new Date(
+                      Date.now() + 30 * 24 * 60 * 60 * 1000
+                    ).toISOString()
+                  )}
+                  required
+                />
+              </div>
             </div>
             <Button type="submit" size="sm" variant="whatsapp">
               Criar cupom
@@ -236,7 +322,11 @@ export function ProviderCouponsManager({
                 ) : (
                   <form action={markCouponUsedAction}>
                     <input type="hidden" name="code" value={item.code} />
-                    <input type="hidden" name="returnTo" value="/painel/cupons?saved=1" />
+                    <input
+                      type="hidden"
+                      name="returnTo"
+                      value="/painel/cupons?saved=1"
+                    />
                     <Button type="submit" size="sm" variant="outline">
                       Marcar usado
                     </Button>
