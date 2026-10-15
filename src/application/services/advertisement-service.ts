@@ -427,9 +427,10 @@ export async function findPublicAdvertisements(
 
   return results.map((ad) => ({
     ...ad,
-    hasActivePromotions: ad.providerId
-      ? providersWithPromotions.has(ad.providerId)
-      : false,
+    hasActivePromotions:
+      ad.planTierLabel === "Pro" && ad.providerId
+        ? providersWithPromotions.has(ad.providerId)
+        : false,
   }));
 }
 

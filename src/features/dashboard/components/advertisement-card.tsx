@@ -39,11 +39,13 @@ export function AdvertisementCard({
 }: AdvertisementCardProps) {
   if (isNewAdProfileEnabled()) {
     return (
-      <AdvertisementProfileCard
-        advertisement={advertisement}
-        returnTo={returnTo}
-        emphasizePremium={emphasizePremium}
-      />
+      <div className="h-full">
+        <AdvertisementProfileCard
+          advertisement={advertisement}
+          returnTo={returnTo}
+          emphasizePremium={emphasizePremium}
+        />
+      </div>
     );
   }
 
@@ -83,7 +85,7 @@ export function AdvertisementCard({
   return (
     <Card
       className={cn(
-        "group overflow-hidden transition-shadow hover:shadow-md",
+        "group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md",
         showPremiumEmphasis &&
           "ring-2 ring-amber-400/70 shadow-sm hover:shadow-lg dark:ring-amber-500/50"
       )}
@@ -116,7 +118,8 @@ export function AdvertisementCard({
         </div>
       </div>
 
-      <CardContent className="space-y-1.5 p-2.5">
+      <CardContent className="flex flex-1 flex-col space-y-1.5 p-2.5">
+        <div className="flex min-h-0 flex-1 flex-col space-y-1.5">
         <div className="flex items-center gap-1.5">
           <Badge variant="outline" className="px-1.5 py-0 text-[10px] leading-4">
             {advertisement.category}
@@ -155,8 +158,9 @@ export function AdvertisementCard({
             </p>
           )}
         </div>
+        </div>
 
-        <div className="flex gap-1.5 pt-0.5">
+        <div className="mt-auto flex gap-1.5 pt-0.5">
             <Button
               variant="whatsapp"
               size="sm"

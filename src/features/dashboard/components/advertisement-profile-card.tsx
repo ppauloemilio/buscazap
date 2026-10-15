@@ -29,35 +29,15 @@ interface AdvertisementProfileCardProps {
   readonly emphasizePremium?: boolean;
 }
 
-function PlanTierBadge({
-  label,
-}: {
-  readonly label: Advertisement["planTierLabel"];
-}) {
-  if (!label) {
-    return null;
-  }
-
-  const className =
-    label === "Pro"
-      ? "border-whatsapp/40 bg-whatsapp/10 text-whatsapp"
-      : label === "Básico"
-        ? "border-sky-300 bg-sky-50 text-sky-900"
-        : "border-muted-foreground/30 bg-muted/50 text-muted-foreground";
-
-  return (
-    <Badge variant="outline" className={cn("px-1.5 py-0 text-[9px] leading-4", className)}>
-      {label === "Grátis" ? "Plano Grátis" : `Plano ${label}`}
-    </Badge>
-  );
-}
-
 export function AdvertisementProfileCard({
   advertisement,
   returnTo,
   emphasizePremium = false,
 }: AdvertisementProfileCardProps) {
   const isFree = advertisement.plan === "free";
+  const isPro = advertisement.planTierLabel === "Pro";
+  const showPromotionsBadge =
+    isPro && Boolean(advertisement.hasActivePromotions);
   const whatsappLink = buildWhatsAppLink(
     advertisement.whatsappNumber,
     `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZapp e gostaria de mais informações.`
@@ -81,28 +61,27 @@ export function AdvertisementProfileCard({
   if (isFree) {
     return (
       <article className="flex h-full flex-col overflow-hidden rounded-lg border bg-card p-2.5 shadow-sm">
-        <div className="mb-1.5 flex items-start justify-between gap-1.5">
-          <div className="min-w-0">
-            <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-semibold leading-snug">
-              {advertisement.title}
-            </h3>
-            <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-              {advertisement.category}
-            </p>
-            <div className="mt-1">
-              <PlanTierBadge label={advertisement.planTierLabel ?? "Grátis"} />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="mb-1.5 flex items-start justify-between gap-1.5">
+            <div className="min-w-0">
+              <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-semibold leading-snug">
+                {advertisement.title}
+              </h3>
+              <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                {advertisement.category}
+              </p>
             </div>
+            <FavoriteButton advertisementId={advertisement.id} />
           </div>
-          <FavoriteButton advertisementId={advertisement.id} />
-        </div>
-        <div className="mb-2 flex items-center gap-1 text-[10px] text-muted-foreground">
-          <MapPin className="h-2.5 w-2.5 shrink-0" />
-          <span className="line-clamp-1">{locationLabel}</span>
+          <div className="mb-2 flex items-center gap-1 text-[10px] text-muted-foreground">
+            <MapPin className="h-2.5 w-2.5 shrink-0" />
+            <span className="line-clamp-1">{locationLabel}</span>
+          </div>
         </div>
         <Button
           variant="whatsapp"
           size="sm"
-          className="mt-auto h-7 w-full px-2 text-[11px]"
+          className="mt-auto h-7 w-full shrink-0 px-2 text-[11px]"
           asChild
         >
           <TrackedWhatsAppLink
@@ -126,7 +105,7 @@ export function AdvertisementProfileCard({
           "ring-2 ring-amber-400/70"
       )}
     >
-      <div className="relative aspect-[16/9] overflow-hidden rounded-t-xl bg-muted">
+      <div className="relative aspect-[16/9] shrink-0 overflow-hidden rounded-t-xl bg-muted">
         <AdvertisementCover
           title={advertisement.title}
           category={advertisement.category}
@@ -139,90 +118,91 @@ export function AdvertisementProfileCard({
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col space-y-1.5 px-2.5 pb-2.5 pt-2.5">
-        <div className="flex min-w-0 items-start gap-2">
-          {advertisement.logoUrl ? (
-            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
-              <AdvertisementCover
-                title={advertisement.title}
-                category={advertisement.category}
-                imageUrl={advertisement.logoUrl}
-                compact
-                fit="cover"
-              />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col px-2.5 pb-2.5 pt-2.5">
+        <div className="flex min-h-0 flex-1 flex-col space-y-1.5">
+          <div className="flex min-w-0 items-start gap-2">
+            {advertisement.logoUrl ? (
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
+                <AdvertisementCover
+                  title={advertisement.title}
+                  category={advertisement.category}
+                  imageUrl={advertisement.logoUrl}
+                  compact
+                  fit="cover"
+                />
+              </div>
+            ) : null}
+            <div className="min-w-0">
+              <Link href={detailHref} onClick={handleOpenDetail}>
+                <h3 className="line-clamp-1 text-sm font-semibold hover:text-whatsapp">
+                  {advertisement.title}
+                </h3>
+              </Link>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {advertisement.category}
+              </p>
             </div>
-          ) : null}
-          <div className="min-w-0">
-            <Link href={detailHref} onClick={handleOpenDetail}>
-              <h3 className="line-clamp-1 text-sm font-semibold hover:text-whatsapp">
-                {advertisement.title}
-              </h3>
-            </Link>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {advertisement.category}
-            </p>
+          </div>
+
+          <div className="flex min-h-[18px] flex-wrap gap-1">
+            {advertisement.subscriptionActive && (
+              <Badge
+                variant="outline"
+                className="gap-0.5 border-emerald-300 bg-emerald-50 px-1.5 py-0 text-[9px] leading-4 text-emerald-800"
+              >
+                <CheckCircle2 className="h-2.5 w-2.5" />
+                Verificado
+              </Badge>
+            )}
+            {open === true && (
+              <Badge
+                variant="outline"
+                className="border-emerald-300 bg-emerald-50 px-1.5 py-0 text-[9px] leading-4 text-emerald-800"
+              >
+                Aberto
+              </Badge>
+            )}
+            {open === false && (
+              <Badge
+                variant="secondary"
+                className="px-1.5 py-0 text-[9px] leading-4"
+              >
+                Fechado
+              </Badge>
+            )}
+            {showPromotionsBadge && (
+              <Badge
+                variant="outline"
+                className="gap-0.5 border-amber-300 bg-amber-50 px-1.5 py-0 text-[9px] leading-4 text-amber-900"
+              >
+                <Tag className="h-2.5 w-2.5" />
+                Promoções
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <MapPin className="h-2.5 w-2.5 shrink-0" />
+            <span className="line-clamp-1">{locationLabel}</span>
+          </div>
+
+          {/* Reserva altura fixa para alinhar botões entre cards com/sem avaliação */}
+          <div className="flex min-h-[14px] items-center gap-1 text-[10px] text-muted-foreground">
+            {hasReviews ? (
+              <>
+                <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                <span className="font-medium text-foreground">
+                  {formatRating(advertisement.rating)}
+                </span>
+                <span>({advertisement.reviewCount})</span>
+              </>
+            ) : (
+              <span className="invisible">0.0 (0)</span>
+            )}
           </div>
         </div>
 
-        <div className="flex min-h-[18px] flex-wrap gap-1">
-          <PlanTierBadge label={advertisement.planTierLabel} />
-          {advertisement.subscriptionActive && (
-            <Badge
-              variant="outline"
-              className="gap-0.5 border-emerald-300 bg-emerald-50 px-1.5 py-0 text-[9px] leading-4 text-emerald-800"
-            >
-              <CheckCircle2 className="h-2.5 w-2.5" />
-              Verificado
-            </Badge>
-          )}
-          {open === true && (
-            <Badge
-              variant="outline"
-              className="border-emerald-300 bg-emerald-50 px-1.5 py-0 text-[9px] leading-4 text-emerald-800"
-            >
-              Aberto
-            </Badge>
-          )}
-          {open === false && (
-            <Badge
-              variant="secondary"
-              className="px-1.5 py-0 text-[9px] leading-4"
-            >
-              Fechado
-            </Badge>
-          )}
-          {advertisement.hasActivePromotions && (
-            <Badge
-              variant="outline"
-              className="gap-0.5 border-amber-300 bg-amber-50 px-1.5 py-0 text-[9px] leading-4 text-amber-900"
-            >
-              <Tag className="h-2.5 w-2.5" />
-              Promoções
-            </Badge>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          <MapPin className="h-2.5 w-2.5 shrink-0" />
-          <span className="line-clamp-1">{locationLabel}</span>
-        </div>
-
-        {/* Reserva altura fixa para alinhar botões entre cards com/sem avaliação */}
-        <div className="flex min-h-[14px] items-center gap-1 text-[10px] text-muted-foreground">
-          {hasReviews ? (
-            <>
-              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-              <span className="font-medium text-foreground">
-                {formatRating(advertisement.rating)}
-              </span>
-              <span>({advertisement.reviewCount})</span>
-            </>
-          ) : (
-            <span className="invisible">0.0 (0)</span>
-          )}
-        </div>
-
-        <div className="mt-auto flex min-w-0 items-center gap-1.5 pt-1">
+        <div className="mt-auto flex min-w-0 shrink-0 items-center gap-1.5 pt-1">
           <Button
             variant="whatsapp"
             size="sm"
