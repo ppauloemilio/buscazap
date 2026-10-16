@@ -1,0 +1,451 @@
+import {
+  buildRecurringExternalReference,
+  getMercadoPagoPlanIdForTier,
+  getRecurringAmountForTier,
+  getSubscriptionBackUrl,
+  isMercadoPagoSubscriptionsEnabled,
+  parseRecurringExternalReference,
+} from "@/config/mercadopago-subscriptions";
+import { PRICING } from "@/config/pricing";
+import {
+  ListingProfile,
+  PaymentStatus,
+  PaymentType,
+  SUBSCRIPTION_TIER_REFERENCE,
+  SubscriptionTier,
+} from "@/domain/enums";
+import {
+  cancelMercadoPagoPreapproval,
+  createMercadoPagoPreapproval,
+  fetchMercadoPagoAuthorizedPayment,
+  fetchMercadoPagoPreapproval,
+  fetchMercadoPagoSubscriptionPayment,
+  resolvePreapprovalCheckoutUrl,
+} from "@/infrastructure/mercadopago/subscriptions-client";
+import { prisma } from "@/lib/prisma";
+import { isAdminProvider } from "@/lib/provider-session";
+
+function normalizeRecurringStatus(status: string | undefined): string {
+  return (status ?? "pending").toLowerCase();
+}
+
+function isAuthorizedStatus(status: string): boolean {
+  return status === "authorized" || status === "active";
+}
+
+export function getProviderRecurringSubscription(provider: {
+  readonly mpRecurringId: string | null;
+  readonly mpRecurringStatus: string | null;
+  readonly mpRecurringTier: string | null;
+  readonly mpRecurringUpdatedAt: Date | null;
+}) {
+  if (!provider.mpRecurringId) {
+    return null;
+  }
+
+  const status = normalizeRecurringStatus(provider.mpRecurringStatus ?? undefined);
+  return {
+    id: provider.mpRecurringId,
+    status,
+    tier:
+      provider.mpRecurringTier === SubscriptionTier.PLUS
+        ? SubscriptionTier.PLUS
+        : SubscriptionTier.BASIC,
+    updatedAt: provider.mpRecurringUpdatedAt,
+    isActive: isAuthorizedStatus(status),
+    isPending: status === "pending",
+    enabled: isMercadoPagoSubscriptionsEnabled(),
+  };
+}
+
+export async function startRecurringSubscriptionCheckout(input: {
+  readonly providerId: string;
+  readonly tier: SubscriptionTier;
+}): Promise<{ readonly checkoutUrl: string }> {
+  if (!isMercadoPagoSubscriptionsEnabled()) {
+    throw new Error("Renovação automática ainda não está disponível");
+  }
+
+  const provider = await prisma.provider.findUnique({
+    where: { id: input.providerId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      subscriptionExpiresAt: true,
+      mpRecurringId: true,
+      mpRecurringStatus: true,
+    },
+  });
+
+  if (!provider || isAdminProvider(provider)) {
+    throw new Error("Conta inválida para assinatura recorrente");
+  }
+
+  if (provider.status === "BLOCKED") {
+    throw new Error("Conta bloqueada");
+  }
+
+  const email = provider.email?.trim();
+  if (!email || !email.includes("@")) {
+    throw new Error(
+      "Cadastre um e-mail em Meu perfil para ativar a renovação automática"
+    );
+  }
+
+  const currentStatus = normalizeRecurringStatus(
+    provider.mpRecurringStatus ?? undefined
+  );
+  if (
+    provider.mpRecurringId &&
+    isAuthorizedStatus(currentStatus)
+  ) {
+    throw new Error(
+      "Você já tem renovação automática ativa. Cancele antes de mudar de plano."
+    );
+  }
+
+  const planId = getMercadoPagoPlanIdForTier(input.tier);
+  if (!planId) {
+    throw new Error("Plano de assinatura não configurado");
+  }
+
+  const reason =
+    input.tier === SubscriptionTier.PLUS
+      ? "BuscaZapp Plano Pro"
+      : "BuscaZapp Plano Básico";
+
+  const preapproval = await createMercadoPagoPreapproval({
+    planId,
+    reason,
+    payerEmail: email,
+    externalReference: buildRecurringExternalReference(
+      provider.id,
+      input.tier
+    ),
+    backUrl: getSubscriptionBackUrl(),
+  });
+
+  const checkoutUrl = resolvePreapprovalCheckoutUrl(preapproval);
+  if (!checkoutUrl || !preapproval.id) {
+    throw new Error("Mercado Pago não retornou link de checkout da assinatura");
+  }
+
+  await prisma.provider.update({
+    where: { id: provider.id },
+    data: {
+      mpRecurringId: preapproval.id,
+      mpRecurringStatus: normalizeRecurringStatus(preapproval.status),
+      mpRecurringTier: input.tier,
+      mpRecurringUpdatedAt: new Date(),
+    },
+  });
+
+  return { checkoutUrl };
+}
+
+export async function cancelProviderRecurringSubscription(
+  providerId: string
+): Promise<void> {
+  const provider = await prisma.provider.findUnique({
+    where: { id: providerId },
+    select: {
+      id: true,
+      role: true,
+      subscriptionExpiresAt: true,
+      mpRecurringId: true,
+      mpRecurringStatus: true,
+    },
+  });
+
+  if (!provider || isAdminProvider(provider)) {
+    throw new Error("Conta inválida");
+  }
+
+  if (!provider.mpRecurringId) {
+    throw new Error("Nenhuma renovação automática encontrada");
+  }
+
+  const remote = await cancelMercadoPagoPreapproval(provider.mpRecurringId);
+
+  await prisma.provider.update({
+    where: { id: provider.id },
+    data: {
+      mpRecurringStatus: normalizeRecurringStatus(remote.status ?? "cancelled"),
+      mpRecurringUpdatedAt: new Date(),
+    },
+  });
+}
+
+async function syncProviderFromPreapproval(preapprovalId: string) {
+  const preapproval = await fetchMercadoPagoPreapproval(preapprovalId);
+  const parsed = parseRecurringExternalReference(preapproval.external_reference);
+
+  let provider =
+    parsed != null
+      ? await prisma.provider.findUnique({ where: { id: parsed.providerId } })
+      : null;
+
+  if (!provider) {
+    provider = await prisma.provider.findFirst({
+      where: { mpRecurringId: preapprovalId },
+    });
+  }
+
+  if (!provider) {
+    return { ignored: true as const, reason: "provider_not_found" };
+  }
+
+  const tier =
+    parsed?.tier ??
+    (provider.mpRecurringTier === SubscriptionTier.PLUS
+      ? SubscriptionTier.PLUS
+      : SubscriptionTier.BASIC);
+
+  const status = normalizeRecurringStatus(preapproval.status);
+
+  await prisma.provider.update({
+    where: { id: provider.id },
+    data: {
+      mpRecurringId: preapproval.id ?? preapprovalId,
+      mpRecurringStatus: status,
+      mpRecurringTier: tier,
+      mpRecurringUpdatedAt: new Date(),
+    },
+  });
+
+  if (isAuthorizedStatus(status)) {
+    await grantRecurringCycle({
+      providerId: provider.id,
+      tier,
+      amount:
+        preapproval.auto_recurring?.transaction_amount ??
+        getRecurringAmountForTier(tier),
+      externalKey: `mp-preapproval:${preapproval.id ?? preapprovalId}:auth`,
+      paidAt: new Date(),
+    });
+  }
+
+  return { ignored: false as const, providerId: provider.id, status };
+}
+
+async function grantRecurringCycle(input: {
+  readonly providerId: string;
+  readonly tier: SubscriptionTier;
+  readonly amount: number;
+  readonly externalKey: string;
+  readonly paidAt: Date;
+}) {
+  const existing = await prisma.payment.findUnique({
+    where: { pixTxId: input.externalKey },
+    select: { id: true, status: true },
+  });
+
+  if (existing?.status === PaymentStatus.PAID) {
+    return existing.id;
+  }
+
+  const referenceId =
+    input.tier === SubscriptionTier.PLUS
+      ? SUBSCRIPTION_TIER_REFERENCE.PLUS
+      : SUBSCRIPTION_TIER_REFERENCE.BASIC;
+
+  return prisma.$transaction(async (tx) => {
+    const payment =
+      existing != null
+        ? await tx.payment.update({
+            where: { id: existing.id },
+            data: {
+              status: PaymentStatus.PAID,
+              paidAt: input.paidAt,
+              amount: input.amount,
+              referenceId,
+            },
+          })
+        : await tx.payment.create({
+            data: {
+              providerId: input.providerId,
+              type: PaymentType.SUBSCRIPTION,
+              amount: input.amount,
+              status: PaymentStatus.PAID,
+              pixTxId: input.externalKey,
+              pixCopyPaste: `mp-recurring:${input.externalKey}`,
+              referenceId,
+              paidAt: input.paidAt,
+              expiresAt: new Date(
+                input.paidAt.getTime() + 24 * 60 * 60 * 1000
+              ),
+            },
+          });
+
+    const alreadyLinked = await tx.subscription.findUnique({
+      where: { paymentId: payment.id },
+      select: { id: true },
+    });
+    if (alreadyLinked) {
+      return payment.id;
+    }
+
+    const provider = await tx.provider.findUnique({
+      where: { id: input.providerId },
+    });
+    if (!provider) {
+      throw new Error("PROVIDER_NOT_FOUND");
+    }
+
+    const baseDate =
+      provider.subscriptionExpiresAt &&
+      provider.subscriptionExpiresAt.getTime() > input.paidAt.getTime()
+        ? provider.subscriptionExpiresAt
+        : input.paidAt;
+
+    const expiresAt = new Date(baseDate);
+    expiresAt.setDate(expiresAt.getDate() + PRICING.SUBSCRIPTION_DAYS);
+
+    await tx.subscription.create({
+      data: {
+        providerId: input.providerId,
+        paymentId: payment.id,
+        amount: input.amount,
+        startsAt: input.paidAt,
+        expiresAt,
+      },
+    });
+
+    await tx.provider.update({
+      where: { id: input.providerId },
+      data: {
+        subscriptionExpiresAt: expiresAt,
+        subscriptionTier: input.tier,
+        listingProfile: ListingProfile.FULL,
+      },
+    });
+
+    await tx.advertisement.updateMany({
+      where: {
+        providerId: input.providerId,
+        status: "INACTIVE",
+      },
+      data: { status: "APPROVED" },
+    });
+
+    return payment.id;
+  });
+}
+
+export async function handleMercadoPagoSubscriptionPreapprovalWebhook(
+  preapprovalId: string
+) {
+  return syncProviderFromPreapproval(preapprovalId);
+}
+
+export async function handleMercadoPagoSubscriptionAuthorizedPaymentWebhook(
+  authorizedPaymentId: string
+) {
+  const authorized = await fetchMercadoPagoAuthorizedPayment(authorizedPaymentId);
+  const preapprovalId = authorized.preapproval_id;
+  if (!preapprovalId) {
+    return { ignored: true as const, reason: "missing_preapproval" };
+  }
+
+  const preapproval = await fetchMercadoPagoPreapproval(preapprovalId);
+  const parsed = parseRecurringExternalReference(
+    authorized.external_reference ?? preapproval.external_reference
+  );
+
+  const provider =
+    (parsed
+      ? await prisma.provider.findUnique({ where: { id: parsed.providerId } })
+      : null) ??
+    (await prisma.provider.findFirst({
+      where: { mpRecurringId: preapprovalId },
+    }));
+
+  if (!provider) {
+    return { ignored: true as const, reason: "provider_not_found" };
+  }
+
+  const paymentStatus = (
+    authorized.payment?.status ??
+    authorized.status ??
+    ""
+  ).toLowerCase();
+
+  await prisma.provider.update({
+    where: { id: provider.id },
+    data: {
+      mpRecurringId: preapprovalId,
+      mpRecurringStatus: normalizeRecurringStatus(preapproval.status),
+      mpRecurringTier:
+        parsed?.tier ??
+        provider.mpRecurringTier ??
+        SubscriptionTier.BASIC,
+      mpRecurringUpdatedAt: new Date(),
+    },
+  });
+
+  if (paymentStatus !== "approved" && paymentStatus !== "authorized") {
+    return {
+      ignored: true as const,
+      reason: "payment_not_approved",
+      status: paymentStatus,
+    };
+  }
+
+  const tier =
+    parsed?.tier ??
+    (provider.mpRecurringTier === SubscriptionTier.PLUS
+      ? SubscriptionTier.PLUS
+      : SubscriptionTier.BASIC);
+
+  const amount =
+    authorized.payment?.transaction_amount ??
+    authorized.transaction_amount ??
+    getRecurringAmountForTier(tier);
+
+  const paymentId = await grantRecurringCycle({
+    providerId: provider.id,
+    tier,
+    amount,
+    externalKey: `mp-authorized:${authorizedPaymentId}`,
+    paidAt: new Date(),
+  });
+
+  return { ignored: false as const, providerId: provider.id, paymentId };
+}
+
+/** Pagamento avulso gerado pela assinatura (type=payment) — só se external_reference for nosso. */
+export async function handleMercadoPagoSubscriptionPaymentWebhook(
+  paymentId: string
+) {
+  const payment = await fetchMercadoPagoSubscriptionPayment(paymentId);
+  const parsed = parseRecurringExternalReference(payment.external_reference);
+
+  if (!parsed) {
+    return { ignored: true as const, reason: "not_recurring_reference" };
+  }
+
+  if ((payment.status ?? "").toLowerCase() !== "approved") {
+    return {
+      ignored: true as const,
+      reason: "payment_not_approved",
+      status: payment.status,
+    };
+  }
+
+  const localPaymentId = await grantRecurringCycle({
+    providerId: parsed.providerId,
+    tier: parsed.tier,
+    amount: payment.transaction_amount ?? getRecurringAmountForTier(parsed.tier),
+    externalKey: `mp-payment:${paymentId}`,
+    paidAt: new Date(),
+  });
+
+  return {
+    ignored: false as const,
+    providerId: parsed.providerId,
+    paymentId: localPaymentId,
+  };
+}

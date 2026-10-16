@@ -383,6 +383,59 @@ export async function createSubscriptionPaymentAction(formData?: FormData) {
   redirect(`/pagamento/${payment.id}`);
 }
 
+export async function startRecurringSubscriptionAction(formData: FormData) {
+  const provider = await requireCurrentProvider();
+
+  if (isAdminProvider(provider)) {
+    redirect("/painel/assinatura");
+  }
+
+  const tier = parseSubscriptionTierFromForm(formData.get("tier"));
+
+  try {
+    const { startRecurringSubscriptionCheckout } = await import(
+      "@/application/services/mp-recurring-subscription-service"
+    );
+    const { checkoutUrl } = await startRecurringSubscriptionCheckout({
+      providerId: provider.id,
+      tier,
+    });
+    redirect(checkoutUrl);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível iniciar a renovação automática";
+    redirect(`/painel/assinatura?error=${encodeURIComponent(message)}`);
+  }
+}
+
+export async function cancelRecurringSubscriptionAction() {
+  const provider = await requireCurrentProvider();
+
+  if (isAdminProvider(provider)) {
+    redirect("/painel/assinatura");
+  }
+
+  try {
+    const { cancelProviderRecurringSubscription } = await import(
+      "@/application/services/mp-recurring-subscription-service"
+    );
+    await cancelProviderRecurringSubscription(provider.id);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível cancelar a renovação automática";
+    redirect(`/painel/assinatura?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/painel/assinatura");
+  revalidatePath("/painel");
+  redirect("/painel/assinatura?recurringCancelled=1");
+}
+
 export async function downgradeToBasicPlanAction() {
   const provider = await requireCurrentProvider();
 

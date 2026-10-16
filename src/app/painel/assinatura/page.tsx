@@ -10,8 +10,10 @@ import {
   Tag,
 } from "lucide-react";
 import {
+  cancelRecurringSubscriptionAction,
   createSubscriptionPaymentAction,
   downgradeToBasicPlanAction,
+  startRecurringSubscriptionAction,
 } from "@/actions/provider-actions";
 import { getHomepageSettings } from "@/application/services/homepage-settings-service";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
@@ -41,6 +43,7 @@ interface SubscriptionPageProps {
   readonly searchParams: Promise<{
     readonly error?: string;
     readonly downgraded?: string;
+    readonly recurringCancelled?: string;
   }>;
 }
 
@@ -57,6 +60,23 @@ function SubscriptionPayButton({
     <form action={createSubscriptionPaymentAction}>
       <input type="hidden" name="tier" value={tier} />
       <Button type="submit" variant={variant} size="sm" className="w-full sm:w-auto">
+        {label}
+      </Button>
+    </form>
+  );
+}
+
+function RecurringSubscribeButton({
+  tier,
+  label,
+}: {
+  readonly tier: SubscriptionTier;
+  readonly label: string;
+}) {
+  return (
+    <form action={startRecurringSubscriptionAction}>
+      <input type="hidden" name="tier" value={tier} />
+      <Button type="submit" variant="outline" size="sm" className="w-full sm:w-auto">
         {label}
       </Button>
     </form>
@@ -131,6 +151,13 @@ export default async function SubscriptionPage({
             <div className="rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
               Você voltou ao Plano Básico. As promoções deixam de aparecer
               na busca até fazer upgrade novamente.
+            </div>
+          )}
+
+          {params.recurringCancelled === "1" && (
+            <div className="rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
+              Renovação automática cancelada. Sua assinatura atual continua
+              válida até a data de vencimento.
             </div>
           )}
 
@@ -209,22 +236,44 @@ export default async function SubscriptionPage({
                   <Badge variant="whatsapp">Seu plano</Badge>
                 ) : null}
                 {!status.active ? (
-                  <SubscriptionPayButton
-                    tier={SubscriptionTier.BASIC}
-                    label={freemium ? "Assinar Plano Básico" : "Fazer assinatura"}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <SubscriptionPayButton
+                      tier={SubscriptionTier.BASIC}
+                      label={
+                        freemium
+                          ? "Assinar com PIX (este mês)"
+                          : "Fazer assinatura via PIX"
+                      }
+                    />
+                    {status.recurringEnabled &&
+                    !(status.recurring?.isActive || status.recurring?.isPending) ? (
+                      <RecurringSubscribeButton
+                        tier={SubscriptionTier.BASIC}
+                        label="Renovação automática (cartão)"
+                      />
+                    ) : null}
+                  </div>
                 ) : status.canRenew && !isPlus ? (
-                  <SubscriptionPayButton
-                    tier={SubscriptionTier.BASIC}
-                    label="Renovar Plano Básico"
-                  />
+                  <div className="flex flex-col gap-2">
+                    <SubscriptionPayButton
+                      tier={SubscriptionTier.BASIC}
+                      label="Renovar via PIX"
+                    />
+                    {status.recurringEnabled &&
+                    !(status.recurring?.isActive || status.recurring?.isPending) ? (
+                      <RecurringSubscribeButton
+                        tier={SubscriptionTier.BASIC}
+                        label="Ativar renovação automática"
+                      />
+                    ) : null}
+                  </div>
                 ) : status.canRenew && isPlus ? (
                   <p className="text-xs text-muted-foreground">
                     Para renovar no Plano Básico, volte ao básico ou renove no Plano Pro.
                   </p>
                 ) : status.active && !isPlus ? (
                   <p className="text-xs text-muted-foreground">
-                    Renovação disponível nos últimos {status.renewalWindowDays}{" "}
+                    Renovação PIX disponível nos últimos {status.renewalWindowDays}{" "}
                     dias.
                   </p>
                 ) : null}
@@ -293,27 +342,45 @@ export default async function SubscriptionPage({
                     <Badge variant="whatsapp">Seu plano</Badge>
                   ) : null}
                   {!status.active ? (
-                    <SubscriptionPayButton
-                      tier={SubscriptionTier.PLUS}
-                      label="Assinar Plano Pro"
-                    />
+                    <div className="flex flex-col gap-2">
+                      <SubscriptionPayButton
+                        tier={SubscriptionTier.PLUS}
+                        label="Assinar Pro via PIX"
+                      />
+                      {status.recurringEnabled &&
+                      !(status.recurring?.isActive || status.recurring?.isPending) ? (
+                        <RecurringSubscribeButton
+                          tier={SubscriptionTier.PLUS}
+                          label="Pro com renovação automática"
+                        />
+                      ) : null}
+                    </div>
                   ) : !isPlus ? (
                     <SubscriptionPayButton
                       tier={SubscriptionTier.PLUS}
                       label={
                         proRataAmount != null
-                          ? `Upgrade Pro (${formatPriceBRL(proRataAmount)})`
-                          : "Upgrade para Plano Pro"
+                          ? `Upgrade Pro PIX (${formatPriceBRL(proRataAmount)})`
+                          : "Upgrade Pro via PIX"
                       }
                     />
                   ) : status.canRenew ? (
-                    <SubscriptionPayButton
-                      tier={SubscriptionTier.PLUS}
-                      label="Renovar Plano Pro"
-                    />
+                    <div className="flex flex-col gap-2">
+                      <SubscriptionPayButton
+                        tier={SubscriptionTier.PLUS}
+                        label="Renovar Pro via PIX"
+                      />
+                      {status.recurringEnabled &&
+                      !(status.recurring?.isActive || status.recurring?.isPending) ? (
+                        <RecurringSubscribeButton
+                          tier={SubscriptionTier.PLUS}
+                          label="Ativar renovação automática"
+                        />
+                      ) : null}
+                    </div>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      Renovação disponível nos últimos{" "}
+                      Renovação PIX disponível nos últimos{" "}
                       {status.renewalWindowDays} dias.
                     </p>
                   )}
@@ -328,6 +395,59 @@ export default async function SubscriptionPage({
               </Card>
             )}
           </div>
+
+          {status.recurringEnabled ? (
+            <Card>
+              <CardHeader className="p-3 pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <CreditCard className="h-4 w-4 text-whatsapp" />
+                  Renovação automática
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 p-3 pt-0 text-sm">
+                {status.recurring?.isActive ? (
+                  <>
+                    <p>
+                      Ativa no{" "}
+                      <span className="font-medium">
+                        {status.recurring.tier === SubscriptionTier.PLUS
+                          ? "Plano Pro"
+                          : "Plano Básico"}
+                      </span>
+                      . O Mercado Pago cobra no cartão todo mês.
+                    </p>
+                    <form action={cancelRecurringSubscriptionAction}>
+                      <Button type="submit" variant="outline" size="sm">
+                        Cancelar renovação automática
+                      </Button>
+                    </form>
+                  </>
+                ) : status.recurring?.isPending ? (
+                  <>
+                    <p className="text-muted-foreground">
+                      Checkout pendente no Mercado Pago. Conclua o pagamento no
+                      cartão ou cancele e tente de novo.
+                    </p>
+                    <form action={cancelRecurringSubscriptionAction}>
+                      <Button type="submit" variant="outline" size="sm">
+                        Cancelar checkout pendente
+                      </Button>
+                    </form>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Opcional: ative a renovação automática (cartão) nos botões
+                    dos planos acima. O PIX mensal continua disponível. É
+                    necessário ter e-mail em{" "}
+                    <Link href="/painel/perfil" className="text-whatsapp underline">
+                      Meu perfil
+                    </Link>
+                    .
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardContent className="space-y-2 p-3 pt-3">

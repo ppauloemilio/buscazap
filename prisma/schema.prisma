@@ -33,6 +33,13 @@ model Provider {
   subscriptionTier      String          @default("BASIC")
   /** SIMPLE = UX listagem grátis; FULL = painel completo (permanece após vencimento). */
   listingProfile        String          @default("SIMPLE")
+  /** ID da assinatura recorrente no Mercado Pago (preapproval). */
+  mpRecurringId         String?         @unique
+  /** pending | authorized | paused | cancelled */
+  mpRecurringStatus     String?
+  /** BASIC | PLUS — plano da recorrência ativa/pendente. */
+  mpRecurringTier       String?
+  mpRecurringUpdatedAt  DateTime?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
   advertisements        Advertisement[]

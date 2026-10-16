@@ -34,6 +34,13 @@ export async function getSubscriptionStatus(providerId: string) {
     !isAdminProvider(provider) &&
     canRenewSubscription(provider.subscriptionExpiresAt);
 
+  const { getProviderRecurringSubscription } = await import(
+    "@/application/services/mp-recurring-subscription-service"
+  );
+  const { isMercadoPagoSubscriptionsEnabled } = await import(
+    "@/config/mercadopago-subscriptions"
+  );
+
   return {
     active,
     canRenew,
@@ -55,6 +62,8 @@ export async function getSubscriptionStatus(providerId: string) {
     subscriptionTier: getProviderSubscriptionTier(provider),
     durationDays: PRICING.SUBSCRIPTION_DAYS,
     renewalWindowDays: PRICING.SUBSCRIPTION_RENEWAL_WINDOW_DAYS,
+    recurringEnabled: isMercadoPagoSubscriptionsEnabled(),
+    recurring: getProviderRecurringSubscription(provider),
   };
 }
 
