@@ -22,8 +22,12 @@ import {
   fetchMercadoPagoSubscriptionPayment,
   resolvePreapprovalCheckoutUrl,
 } from "@/infrastructure/mercadopago/subscriptions-client";
+import { getProviderSubscriptionTier } from "@/lib/plus-plan";
 import { prisma } from "@/lib/prisma";
-import { isAdminProvider } from "@/lib/provider-session";
+import {
+  hasActiveSubscription,
+  isAdminProvider,
+} from "@/lib/provider-session";
 
 function normalizeRecurringStatus(status: string | undefined): string {
   return (status ?? "pending").toLowerCase();
@@ -75,6 +79,7 @@ export async function startRecurringSubscriptionCheckout(input: {
       role: true,
       status: true,
       subscriptionExpiresAt: true,
+      subscriptionTier: true,
       mpRecurringId: true,
       mpRecurringStatus: true,
     },
@@ -107,6 +112,24 @@ export async function startRecurringSubscriptionCheckout(input: {
     );
   }
 
+  const hasActive = hasActiveSubscription(provider.subscriptionExpiresAt);
+  const currentTier = getProviderSubscriptionTier(provider);
+  const isCardUpgradeToPlus =
+    hasActive &&
+    currentTier === SubscriptionTier.BASIC &&
+    input.tier === SubscriptionTier.PLUS;
+
+  // Downgrade via cartão não é suportado (manter Pro até o fim ou voltar ao básico no painel).
+  if (
+    hasActive &&
+    currentTier === SubscriptionTier.PLUS &&
+    input.tier === SubscriptionTier.BASIC
+  ) {
+    throw new Error(
+      "Para renovar no Plano Básico, volte ao básico no painel ou aguarde o vencimento."
+    );
+  }
+
   const planId = getMercadoPagoPlanIdForTier(input.tier);
   if (!planId) {
     throw new Error("Plano de assinatura não configurado");
@@ -117,6 +140,13 @@ export async function startRecurringSubscriptionCheckout(input: {
       ? "BuscaZapp Plano Pro"
       : "BuscaZapp Plano Básico";
 
+  // Mesmo plano já pago: só vincula cartão e cobra na data de vencimento.
+  // Upgrade Básico → Pro no cartão: cobra o Pro agora (mensalidade cheia) e fica recorrente.
+  const startDate =
+    hasActive && !isCardUpgradeToPlus && provider.subscriptionExpiresAt
+      ? provider.subscriptionExpiresAt.toISOString()
+      : undefined;
+
   const preapproval = await createMercadoPagoPreapproval({
     planId,
     reason,
@@ -126,6 +156,7 @@ export async function startRecurringSubscriptionCheckout(input: {
       input.tier
     ),
     backUrl: getSubscriptionBackUrl(),
+    startDate,
   });
 
   const checkoutUrl = resolvePreapprovalCheckoutUrl(preapproval);
@@ -206,6 +237,8 @@ async function syncProviderFromPreapproval(preapprovalId: string) {
 
   const status = normalizeRecurringStatus(preapproval.status);
 
+  // Só sincroniza vínculo/status. Extensão de vencimento e Payment
+  // acontecem nos webhooks de cobrança (authorized_payment / payment).
   await prisma.provider.update({
     where: { id: provider.id },
     data: {
@@ -215,18 +248,6 @@ async function syncProviderFromPreapproval(preapprovalId: string) {
       mpRecurringUpdatedAt: new Date(),
     },
   });
-
-  if (isAuthorizedStatus(status)) {
-    await grantRecurringCycle({
-      providerId: provider.id,
-      tier,
-      amount:
-        preapproval.auto_recurring?.transaction_amount ??
-        getRecurringAmountForTier(tier),
-      externalKey: `mp-preapproval:${preapproval.id ?? preapprovalId}:auth`,
-      paidAt: new Date(),
-    });
-  }
 
   return { ignored: false as const, providerId: provider.id, status };
 }
@@ -295,11 +316,21 @@ async function grantRecurringCycle(input: {
       throw new Error("PROVIDER_NOT_FOUND");
     }
 
+    const previousTier = getProviderSubscriptionTier(provider);
+    const isCardUpgradeToPlus =
+      input.tier === SubscriptionTier.PLUS &&
+      previousTier === SubscriptionTier.BASIC &&
+      hasActiveSubscription(provider.subscriptionExpiresAt);
+
+    // Upgrade no cartão: novo ciclo a partir da cobrança (alinha com a recorrência do MP).
+    // Demais casos: empilha a partir do vencimento atual se ainda vigente.
     const baseDate =
-      provider.subscriptionExpiresAt &&
-      provider.subscriptionExpiresAt.getTime() > input.paidAt.getTime()
-        ? provider.subscriptionExpiresAt
-        : input.paidAt;
+      isCardUpgradeToPlus
+        ? input.paidAt
+        : provider.subscriptionExpiresAt &&
+            provider.subscriptionExpiresAt.getTime() > input.paidAt.getTime()
+          ? provider.subscriptionExpiresAt
+          : input.paidAt;
 
     const expiresAt = new Date(baseDate);
     expiresAt.setDate(expiresAt.getDate() + PRICING.SUBSCRIPTION_DAYS);

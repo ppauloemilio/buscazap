@@ -96,6 +96,9 @@ export default async function SubscriptionPage({
   const homepage = await getHomepageSettings();
   const plusOffer = homepage.plusPlanEnabled;
   const isPlus = status.subscriptionTier === SubscriptionTier.PLUS;
+  const canActivateRecurring =
+    status.recurringEnabled &&
+    !(status.recurring?.isActive || status.recurring?.isPending);
   const proRataUpgrade =
     status.active &&
     !isPlus &&
@@ -245,8 +248,7 @@ export default async function SubscriptionPage({
                           : "Fazer assinatura via PIX"
                       }
                     />
-                    {status.recurringEnabled &&
-                    !(status.recurring?.isActive || status.recurring?.isPending) ? (
+                    {canActivateRecurring ? (
                       <RecurringSubscribeButton
                         tier={SubscriptionTier.BASIC}
                         label="Renovação automática (cartão)"
@@ -259,8 +261,7 @@ export default async function SubscriptionPage({
                       tier={SubscriptionTier.BASIC}
                       label="Renovar via PIX"
                     />
-                    {status.recurringEnabled &&
-                    !(status.recurring?.isActive || status.recurring?.isPending) ? (
+                    {canActivateRecurring ? (
                       <RecurringSubscribeButton
                         tier={SubscriptionTier.BASIC}
                         label="Ativar renovação automática"
@@ -272,10 +273,18 @@ export default async function SubscriptionPage({
                     Para renovar no Plano Básico, volte ao básico ou renove no Plano Pro.
                   </p>
                 ) : status.active && !isPlus ? (
-                  <p className="text-xs text-muted-foreground">
-                    Renovação PIX disponível nos últimos {status.renewalWindowDays}{" "}
-                    dias.
-                  </p>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs text-muted-foreground">
+                      Renovação PIX disponível nos últimos{" "}
+                      {status.renewalWindowDays} dias.
+                    </p>
+                    {canActivateRecurring ? (
+                      <RecurringSubscribeButton
+                        tier={SubscriptionTier.BASIC}
+                        label="Ativar renovação automática"
+                      />
+                    ) : null}
+                  </div>
                 ) : null}
               </CardContent>
             </Card>
@@ -347,8 +356,7 @@ export default async function SubscriptionPage({
                         tier={SubscriptionTier.PLUS}
                         label="Assinar Pro via PIX"
                       />
-                      {status.recurringEnabled &&
-                      !(status.recurring?.isActive || status.recurring?.isPending) ? (
+                      {canActivateRecurring ? (
                         <RecurringSubscribeButton
                           tier={SubscriptionTier.PLUS}
                           label="Pro com renovação automática"
@@ -356,22 +364,45 @@ export default async function SubscriptionPage({
                       ) : null}
                     </div>
                   ) : !isPlus ? (
-                    <SubscriptionPayButton
-                      tier={SubscriptionTier.PLUS}
-                      label={
-                        proRataAmount != null
-                          ? `Upgrade Pro PIX (${formatPriceBRL(proRataAmount)})`
-                          : "Upgrade Pro via PIX"
-                      }
-                    />
+                    <div className="flex flex-col gap-2">
+                      <SubscriptionPayButton
+                        tier={SubscriptionTier.PLUS}
+                        label={
+                          proRataAmount != null
+                            ? `Upgrade Pro PIX (${formatPriceBRL(proRataAmount)})`
+                            : "Upgrade Pro via PIX"
+                        }
+                      />
+                      {canActivateRecurring ? (
+                        <div className="space-y-2 rounded-md border border-amber-200/80 bg-amber-50/80 p-2.5 text-xs text-amber-950">
+                          <p className="font-medium">Atenção — upgrade no cartão</p>
+                          <p>
+                            Se pagar o upgrade com cartão, será cobrada a
+                            mensalidade Pro cheia (
+                            {formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}
+                            ): o Pro ativa na hora, inicia um ciclo novo e fica
+                            com renovação automática no cartão.
+                          </p>
+                          <p>
+                            Se preferir pagar só a diferença e manter a data de
+                            vencimento atual, use o upgrade via PIX acima.
+                            Depois você pode cadastrar a recorrência no cartão
+                            sem cobrança até o vencimento.
+                          </p>
+                          <RecurringSubscribeButton
+                            tier={SubscriptionTier.PLUS}
+                            label={`Upgrade Pro no cartão (${formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}/mês)`}
+                          />
+                        </div>
+                      ) : null}
+                    </div>
                   ) : status.canRenew ? (
                     <div className="flex flex-col gap-2">
                       <SubscriptionPayButton
                         tier={SubscriptionTier.PLUS}
                         label="Renovar Pro via PIX"
                       />
-                      {status.recurringEnabled &&
-                      !(status.recurring?.isActive || status.recurring?.isPending) ? (
+                      {canActivateRecurring ? (
                         <RecurringSubscribeButton
                           tier={SubscriptionTier.PLUS}
                           label="Ativar renovação automática"
@@ -379,10 +410,18 @@ export default async function SubscriptionPage({
                       ) : null}
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Renovação PIX disponível nos últimos{" "}
-                      {status.renewalWindowDays} dias.
-                    </p>
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        Renovação PIX disponível nos últimos{" "}
+                        {status.renewalWindowDays} dias.
+                      </p>
+                      {canActivateRecurring ? (
+                        <RecurringSubscribeButton
+                          tier={SubscriptionTier.PLUS}
+                          label="Ativar renovação automática"
+                        />
+                      ) : null}
+                    </div>
                   )}
                   {status.active && isPlus && (
                     <form action={downgradeToBasicPlanAction}>
@@ -435,15 +474,31 @@ export default async function SubscriptionPage({
                     </form>
                   </>
                 ) : (
-                  <p className="text-muted-foreground">
-                    Opcional: ative a renovação automática (cartão) nos botões
-                    dos planos acima. O PIX mensal continua disponível. É
-                    necessário ter e-mail em{" "}
-                    <Link href="/painel/perfil" className="text-whatsapp underline">
-                      Meu perfil
-                    </Link>
-                    .
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-muted-foreground">
+                      No plano atual: vincule o cartão sem cobrança até o
+                      vencimento. Para ir ao Pro pagando só a diferença, use o
+                      PIX no card do Plano Pro e depois ative a recorrência
+                      aqui. É necessário ter e-mail em{" "}
+                      <Link
+                        href="/painel/perfil"
+                        className="text-whatsapp underline"
+                      >
+                        Meu perfil
+                      </Link>
+                      .
+                    </p>
+                    {status.active ? (
+                      <RecurringSubscribeButton
+                        tier={
+                          isPlus
+                            ? SubscriptionTier.PLUS
+                            : SubscriptionTier.BASIC
+                        }
+                        label="Ativar renovação automática"
+                      />
+                    ) : null}
+                  </div>
                 )}
               </CardContent>
             </Card>

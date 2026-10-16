@@ -77,19 +77,27 @@ export async function createMercadoPagoPreapproval(input: {
   readonly payerEmail: string;
   readonly externalReference: string;
   readonly backUrl: string;
+  /** ISO 8601 — adia a 1ª cobrança (ex.: até o vencimento atual). */
+  readonly startDate?: string;
 }): Promise<MercadoPagoPreapproval> {
+  const body: Record<string, unknown> = {
+    preapproval_plan_id: input.planId,
+    reason: input.reason,
+    external_reference: input.externalReference,
+    payer_email: input.payerEmail,
+    back_url: input.backUrl,
+    status: "pending",
+  };
+
+  if (input.startDate) {
+    body.auto_recurring = { start_date: input.startDate };
+  }
+
   const { ok, status, data } = await mpFetch<MercadoPagoPreapproval>(
     "/preapproval",
     {
       method: "POST",
-      body: JSON.stringify({
-        preapproval_plan_id: input.planId,
-        reason: input.reason,
-        external_reference: input.externalReference,
-        payer_email: input.payerEmail,
-        back_url: input.backUrl,
-        status: "pending",
-      }),
+      body: JSON.stringify(body),
     }
   );
 
