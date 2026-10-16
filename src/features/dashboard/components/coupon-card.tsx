@@ -44,20 +44,20 @@ export function CouponCard({ coupon }: CouponCardProps) {
 
   return (
     <>
-      <article className="flex h-full flex-col rounded-xl border border-dashed border-emerald-300/80 bg-card p-3.5 shadow-sm">
-        <div className="mb-2 flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <Ticket className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-            <p className="truncate text-[11px] font-medium text-emerald-700">
-              {coupon.businessName}
-            </p>
+      <article className="flex h-full flex-col overflow-hidden rounded-xl border border-dashed border-emerald-400/70 bg-emerald-50/60">
+        <div className="flex min-h-0 flex-1 flex-col p-3.5 pb-3">
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Ticket className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+              <p className="truncate text-[11px] font-medium text-emerald-700">
+                {coupon.businessName}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-emerald-300/80 bg-emerald-100/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+              {coupon.badgeLabel}
+            </span>
           </div>
-          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
-            {coupon.badgeLabel}
-          </span>
-        </div>
 
-        <div className="flex min-h-0 flex-1 flex-col">
           <h3 className="line-clamp-2 text-sm font-bold leading-snug text-foreground">
             {coupon.title}
           </h3>
@@ -69,25 +69,27 @@ export function CouponCard({ coupon }: CouponCardProps) {
               Válido até {validUntil}
             </p>
           ) : null}
-          <p className="mt-1 text-[10px] font-medium text-emerald-700">
-            {soldOut
-              ? "Esgotado"
-              : `${remaining} ${remaining === 1 ? "restante" : "restantes"}`}
-          </p>
+          {soldOut ? (
+            <p className="mt-1 text-[10px] font-medium text-emerald-700">
+              Esgotado
+            </p>
+          ) : null}
           {error ? (
             <p className="mt-1 text-[10px] text-destructive">{error}</p>
           ) : null}
         </div>
 
-        <Button
-          type="button"
-          size="sm"
-          className="mt-3 h-8 w-full shrink-0 bg-emerald-600 text-[11px] font-semibold text-white hover:bg-emerald-700"
-          disabled={soldOut || pending}
-          onClick={handleClaim}
-        >
-          {pending ? "Gerando…" : soldOut ? "Esgotado" : "Pegar cupom"}
-        </Button>
+        <div className="border-t border-dashed border-emerald-400/70 px-3.5 py-3">
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 w-full shrink-0 bg-emerald-600 text-[11px] font-semibold text-white hover:bg-emerald-700"
+            disabled={soldOut || pending}
+            onClick={handleClaim}
+          >
+            {pending ? "Gerando…" : soldOut ? "Esgotado" : "Pegar cupom"}
+          </Button>
+        </div>
       </article>
 
       {claimed ? (
