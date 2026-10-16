@@ -14,6 +14,8 @@ import {
   Tag,
   Ticket,
   KeyRound,
+  Package,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,8 @@ const NAV_ITEMS: ReadonlyArray<{
 }> = [
   { href: "/painel", label: "Visão geral", icon: LayoutDashboard },
   { href: "/painel/perfil", label: "Meu perfil", icon: User },
+  { href: "/painel/produtos", label: "Produtos", icon: Package },
+  { href: "/painel/servicos", label: "Serviços", icon: Wrench },
   { href: "/painel/assinatura", label: "Assinatura", icon: CreditCard },
   { href: "/painel/anuncios", label: "Meus anúncios", icon: Megaphone },
   { href: "/painel/estatisticas", label: "Estatísticas", icon: BarChart3 },
@@ -81,7 +85,8 @@ export function PanelNav({
     if (showCoupons) {
       extras.push({ href: "/painel/cupons", label: "Cupons", icon: Ticket });
     }
-    items = [...NAV_ITEMS.slice(0, 3), ...extras, ...NAV_ITEMS.slice(3)];
+    // Após Assinatura (índice 4) inserir Promoções/Cupons.
+    items = [...NAV_ITEMS.slice(0, 5), ...extras, ...NAV_ITEMS.slice(5)];
   }
 
   return (

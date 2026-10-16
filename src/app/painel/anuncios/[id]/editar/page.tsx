@@ -11,7 +11,6 @@ import { formatPriceBRL, PRICING } from "@/config/pricing";
 import { DescriptionEditor } from "@/components/advertisement/description-editor";
 import { AdvertisementCategoryFields } from "@/features/panel/components/advertisement-category-fields";
 import { AdvertisementImagesEditor } from "@/features/panel/components/advertisement-images-editor";
-import { AdvertisementPaidProfileEditor } from "@/features/panel/components/advertisement-paid-profile-editor";
 import { LocationFields } from "@/features/panel/components/location-fields";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { ServiceAreaField } from "@/features/panel/components/service-area-field";
@@ -20,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdvertisementType } from "@/domain/enums";
 import { canProviderUsePaidFeatures, getCurrentProvider } from "@/lib/provider-session";
-import { getLimitsForProvider } from "@/lib/subscription-limits";
 import {
   hasFullListingProfile,
   shouldUseSimpleFreeListingUx,
@@ -43,7 +41,6 @@ export default async function EditAdvertisementPage({
 }: EditAdvertisementPageProps) {
   const provider = await getCurrentProvider();
   if (!provider) redirect("/entrar");
-  const { maxProducts, maxServices } = getLimitsForProvider(provider);
 
   const { id } = await params;
   const query = await searchParams;
@@ -260,15 +257,14 @@ export default async function EditAdvertisementPage({
           <p className="text-xs text-muted-foreground">
             {newProfile
               ? advertisement.premiumActive
-                ? `1) Capa · 2) Logo · 3) Galeria premium até ${PRICING.PREMIUM_AD_GALLERY} fotos (+ ${PRICING.PROVIDER_MAX_COMPANY_PHOTOS} da empresa em Meu perfil = ${PRICING.PREMIUM_MAX_GALLERY} na página).`
-                : `1) Capa · 2) Logo. As ${PRICING.PROVIDER_MAX_COMPANY_PHOTOS} fotos da empresa ficam em Meu perfil. Premium libera +${PRICING.PREMIUM_AD_GALLERY} neste anúncio.`
+                ? `Capa e galeria premium (até ${PRICING.PREMIUM_AD_GALLERY} fotos). Logo, fotos da empresa e perfil completo ficam em Meu perfil.`
+                : `Capa do anúncio. Logo e fotos da empresa em Meu perfil. Premium libera +${PRICING.PREMIUM_AD_GALLERY} fotos neste anúncio.`
               : `Altere a capa e a galeria premium (até ${PRICING.PREMIUM_AD_GALLERY} fotos).`}
           </p>
           <AdvertisementImagesEditor
             advertisementId={advertisement.id}
             title={advertisement.title}
             coverImage={advertisement.coverImage}
-            logoImage={advertisement.logoImage}
             galleryImages={advertisement.galleryImages}
             premiumActive={advertisement.premiumActive}
             maxGallery={
@@ -279,16 +275,29 @@ export default async function EditAdvertisementPage({
                 : undefined
             }
             forceGalleryEdit={!newProfile && advertisement.premiumActive}
-            showLogoField={newProfile}
+            showLogoField={false}
           />
+          {newProfile && fullProfile ? (
+            <p className="text-xs text-muted-foreground">
+              Logo, perfil completo,{" "}
+              <Link href="/painel/produtos" className="underline">
+                produtos
+              </Link>{" "}
+              e{" "}
+              <Link href="/painel/servicos" className="underline">
+                serviços
+              </Link>{" "}
+              ficam nos menus do painel.
+            </p>
+          ) : null}
         </div>
       ) : (
         <div className="max-w-xl rounded-lg border bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
           {newProfile ? (
             <>
               Assine por {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês para
-              capa, logo, produtos, serviços e perfil completo. Fotos da
-              empresa: Meu perfil.{" "}
+              capa, logo, produtos, serviços e perfil completo. Logo e perfil:
+              Meu perfil.{" "}
               <Link
                 href="/painel/assinatura"
                 className="font-medium text-whatsapp hover:underline"
@@ -310,20 +319,6 @@ export default async function EditAdvertisementPage({
             </>
           )}
         </div>
-      )}
-
-      {newProfile && fullProfile && (
-        <AdvertisementPaidProfileEditor
-          advertisementId={advertisement.id}
-          streetAddress={advertisement.streetAddress}
-          instagram={advertisement.instagram}
-          website={advertisement.website}
-          businessHoursJson={advertisement.businessHoursJson}
-          products={advertisement.editProducts}
-          services={advertisement.editServices}
-          maxProducts={maxProducts}
-          maxServices={maxServices}
-        />
       )}
 
       {simpleListing && (

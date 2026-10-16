@@ -78,17 +78,43 @@ import {
   validateImageFile,
 } from "@/lib/image-upload";
 
-function redirectToEditImages(
-  advertisementId: string,
+function resolvePanelReturnTo(
+  formData: FormData | null | undefined,
+  fallback: string
+): string {
+  const returnTo = formData?.get("returnTo");
+  if (
+    typeof returnTo === "string" &&
+    returnTo.startsWith("/painel/") &&
+    !returnTo.includes("//")
+  ) {
+    return returnTo.split("?")[0] ?? returnTo;
+  }
+  return fallback;
+}
+
+function redirectWithPanelQuery(
+  path: string,
   query: { error?: string; saved?: string; boosted?: string } = {}
 ): never {
   const params = new URLSearchParams();
   if (query.error) params.set("error", query.error);
   if (query.saved) params.set("saved", query.saved);
   if (query.boosted) params.set("boosted", query.boosted);
-
   const suffix = params.size > 0 ? `?${params.toString()}` : "";
-  redirect(`/painel/anuncios/${advertisementId}/editar${suffix}`);
+  redirect(`${path}${suffix}`);
+}
+
+function redirectToEditImages(
+  advertisementId: string,
+  query: { error?: string; saved?: string; boosted?: string } = {},
+  formData?: FormData
+): never {
+  const path = resolvePanelReturnTo(
+    formData,
+    `/painel/anuncios/${advertisementId}/editar`
+  );
+  redirectWithPanelQuery(path, query);
 }
 
 function parseBusinessHoursFromForm(formData: FormData): Record<string, string | null> {
@@ -775,9 +801,13 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
     const galleryFiles = parseImageFiles(formData, "galleryImages");
 
     if (galleryFiles.length > ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages) {
-      redirectToEditImages(advertisementId, {
-        error: `Envie no máximo ${ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos por vez`,
-      });
+      redirectToEditImages(
+        advertisementId,
+        {
+          error: `Envie no máximo ${ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages} fotos por vez`,
+        },
+        formData
+      );
     }
 
     for (const galleryFile of galleryFiles) {
@@ -786,7 +816,11 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
         "Foto da galeria"
       );
       if (galleryValidationError) {
-        redirectToEditImages(advertisementId, { error: galleryValidationError });
+        redirectToEditImages(
+          advertisementId,
+          { error: galleryValidationError },
+          formData
+        );
       }
     }
 
@@ -795,22 +829,32 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
     const hasGalleryFiles = galleryFiles.length > 0;
 
     if (!hasCoverFile && !hasLogoFile && !hasGalleryFiles) {
-      redirectToEditImages(advertisementId, {
-        error: "Selecione ao menos uma foto para atualizar",
-      });
+      redirectToEditImages(
+        advertisementId,
+        { error: "Selecione ao menos uma foto para atualizar" },
+        formData
+      );
     }
 
     if (hasCoverFile) {
       const coverValidationError = validateImageFile(coverFile, "Foto de capa");
       if (coverValidationError) {
-        redirectToEditImages(advertisementId, { error: coverValidationError });
+        redirectToEditImages(
+          advertisementId,
+          { error: coverValidationError },
+          formData
+        );
       }
     }
 
     if (hasLogoFile) {
       const logoValidationError = validateImageFile(logoFile, "Logo da marca");
       if (logoValidationError) {
-        redirectToEditImages(advertisementId, { error: logoValidationError });
+        redirectToEditImages(
+          advertisementId,
+          { error: logoValidationError },
+          formData
+        );
       }
     }
 
@@ -821,11 +865,15 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
     ];
     const requestBytes = requestFiles.reduce((sum, file) => sum + file.size, 0);
     if (requestBytes > ADVERTISEMENT_IMAGE_LIMITS.maxRequestBytes) {
-      redirectToEditImages(advertisementId, {
-        error:
-          `O conjunto de fotos ultrapassa ${ADVERTISEMENT_IMAGE_LIMITS.maxRequestBytes / (1024 * 1024)} MB. ` +
-          "Envie menos fotos por vez ou reduza o tamanho das imagens.",
-      });
+      redirectToEditImages(
+        advertisementId,
+        {
+          error:
+            `O conjunto de fotos ultrapassa ${ADVERTISEMENT_IMAGE_LIMITS.maxRequestBytes / (1024 * 1024)} MB. ` +
+            "Envie menos fotos por vez ou reduza o tamanho das imagens.",
+        },
+        formData
+      );
     }
 
     if (hasCoverFile) {
@@ -841,10 +889,14 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
         isNewAdProfileEnabled() &&
         !isPremiumActive(advertisement.premiumExpiresAt)
       ) {
-        redirectToEditImages(advertisementId, {
-          error:
-            "As fotos da empresa ficam em Meu perfil. A galeria do anúncio é só com destaque premium.",
-        });
+        redirectToEditImages(
+          advertisementId,
+          {
+            error:
+              "As fotos da empresa ficam em Meu perfil. A galeria do anúncio é só com destaque premium.",
+          },
+          formData
+        );
       }
       await addAdvertisementGalleryImages(advertisementId, galleryFiles);
     }
@@ -858,11 +910,12 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
         ? error.message
         : "Não foi possível atualizar as fotos do anúncio";
 
-    redirectToEditImages(advertisementId, { error: message });
+    redirectToEditImages(advertisementId, { error: message }, formData);
   }
 
   revalidateAdvertisementPaths(advertisementId);
-  redirectToEditImages(advertisementId, { saved: "1" });
+  revalidatePath("/painel/perfil");
+  redirectToEditImages(advertisementId, { saved: "1" }, formData);
 }
 
 export async function removeAdvertisementGalleryImageAction(formData: FormData) {
@@ -913,11 +966,12 @@ export async function removeAdvertisementLogoAction(formData: FormData) {
       error instanceof Error
         ? error.message
         : "Não foi possível remover o logo";
-    redirectToEditImages(advertisementId, { error: message });
+    redirectToEditImages(advertisementId, { error: message }, formData);
   }
 
   revalidateAdvertisementPaths(advertisementId);
-  redirectToEditImages(advertisementId, { saved: "1" });
+  revalidatePath("/painel/perfil");
+  redirectToEditImages(advertisementId, { saved: "1" }, formData);
 }
 
 export async function deleteAdvertisementAction(formData: FormData) {
@@ -1165,13 +1219,14 @@ export async function updateProviderPasswordAction(formData: FormData) {
 
 function redirectToAdEdit(
   advertisementId: string,
-  params?: { error?: string; saved?: string }
+  params?: { error?: string; saved?: string },
+  formData?: FormData
 ): never {
-  const search = new URLSearchParams();
-  if (params?.error) search.set("error", params.error);
-  if (params?.saved) search.set("saved", params.saved);
-  const suffix = search.size > 0 ? `?${search.toString()}` : "";
-  redirect(`/painel/anuncios/${advertisementId}/editar${suffix}`);
+  const path = resolvePanelReturnTo(
+    formData,
+    `/painel/anuncios/${advertisementId}/editar`
+  );
+  redirectWithPanelQuery(path, params);
 }
 
 export async function updateAdvertisementProfileExtrasAction(
@@ -1196,11 +1251,12 @@ export async function updateAdvertisementProfileExtrasAction(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Não foi possível salvar o perfil";
-    redirectToAdEdit(advertisementId, { error: message });
+    redirectToAdEdit(advertisementId, { error: message }, formData);
   }
 
   revalidateAdvertisementPaths(advertisementId);
-  redirectToAdEdit(advertisementId, { saved: "1" });
+  revalidatePath("/painel/perfil");
+  redirectToAdEdit(advertisementId, { saved: "1" }, formData);
 }
 
 export async function saveAdvertisementProductAction(formData: FormData) {
@@ -1213,7 +1269,7 @@ export async function saveAdvertisementProductAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const price = Number(formData.get("price"));
   if (!title || Number.isNaN(price) || price < 0) {
-    redirectToAdEdit(advertisementId, { error: "Produto inválido" });
+    redirectToAdEdit(advertisementId, { error: "Produto inválido" }, formData);
   }
 
   const imageFile = formData.get("image");
@@ -1223,7 +1279,7 @@ export async function saveAdvertisementProductAction(formData: FormData) {
     if (imageFile instanceof File && imageFile.size > 0) {
       const validationError = validateImageFile(imageFile, "Imagem do produto");
       if (validationError) {
-        redirectToAdEdit(advertisementId, { error: validationError });
+        redirectToAdEdit(advertisementId, { error: validationError }, formData);
       }
       const { uploadAdvertisementImage } = await import("@/lib/image-upload");
       imageUrl = await uploadAdvertisementImage(
@@ -1247,11 +1303,12 @@ export async function saveAdvertisementProductAction(formData: FormData) {
     if (isRedirectError(error)) throw error;
     const message =
       error instanceof Error ? error.message : "Não foi possível salvar o produto";
-    redirectToAdEdit(advertisementId, { error: message });
+    redirectToAdEdit(advertisementId, { error: message }, formData);
   }
 
   revalidateAdvertisementPaths(advertisementId);
-  redirectToAdEdit(advertisementId, { saved: "1" });
+  revalidatePath("/painel/produtos");
+  redirectToAdEdit(advertisementId, { saved: "1" }, formData);
 }
 
 export async function deleteAdvertisementProductAction(formData: FormData) {
@@ -1279,11 +1336,12 @@ export async function deleteAdvertisementProductAction(formData: FormData) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Não foi possível remover o produto";
-    redirectToAdEdit(advertisementId, { error: message });
+    redirectToAdEdit(advertisementId, { error: message }, formData);
   }
 
   revalidateAdvertisementPaths(advertisementId);
-  redirectToAdEdit(advertisementId, { saved: "1" });
+  revalidatePath("/painel/produtos");
+  redirectToAdEdit(advertisementId, { saved: "1" }, formData);
 }
 
 export async function saveAdvertisementServiceAction(formData: FormData) {
@@ -1298,7 +1356,7 @@ export async function saveAdvertisementServiceAction(formData: FormData) {
   const priceRaw = String(formData.get("priceFrom") ?? "").trim();
   const priceFrom = priceRaw ? Number(priceRaw) : null;
   if (!title || !description) {
-    redirectToAdEdit(advertisementId, { error: "Serviço inválido" });
+    redirectToAdEdit(advertisementId, { error: "Serviço inválido" }, formData);
   }
 
   const imageFile = formData.get("image");
@@ -1308,7 +1366,7 @@ export async function saveAdvertisementServiceAction(formData: FormData) {
     if (imageFile instanceof File && imageFile.size > 0) {
       const validationError = validateImageFile(imageFile, "Imagem do serviço");
       if (validationError) {
-        redirectToAdEdit(advertisementId, { error: validationError });
+        redirectToAdEdit(advertisementId, { error: validationError }, formData);
       }
       const { uploadAdvertisementImage } = await import("@/lib/image-upload");
       imageUrl = await uploadAdvertisementImage(
@@ -1334,11 +1392,12 @@ export async function saveAdvertisementServiceAction(formData: FormData) {
     if (isRedirectError(error)) throw error;
     const message =
       error instanceof Error ? error.message : "Não foi possível salvar o serviço";
-    redirectToAdEdit(advertisementId, { error: message });
+    redirectToAdEdit(advertisementId, { error: message }, formData);
   }
 
   revalidateAdvertisementPaths(advertisementId);
-  redirectToAdEdit(advertisementId, { saved: "1" });
+  revalidatePath("/painel/servicos");
+  redirectToAdEdit(advertisementId, { saved: "1" }, formData);
 }
 
 export async function deleteAdvertisementServiceAction(formData: FormData) {
@@ -1366,11 +1425,12 @@ export async function deleteAdvertisementServiceAction(formData: FormData) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Não foi possível remover o serviço";
-    redirectToAdEdit(advertisementId, { error: message });
+    redirectToAdEdit(advertisementId, { error: message }, formData);
   }
 
   revalidateAdvertisementPaths(advertisementId);
-  redirectToAdEdit(advertisementId, { saved: "1" });
+  revalidatePath("/painel/servicos");
+  redirectToAdEdit(advertisementId, { saved: "1" }, formData);
 }
 
 function redirectToPromotions(query?: { error?: string; saved?: string }): never {

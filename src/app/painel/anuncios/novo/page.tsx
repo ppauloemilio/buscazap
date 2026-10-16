@@ -15,9 +15,7 @@ import {
   canPurchasePremiumBoost,
   isAdminProvider,
 } from "@/lib/provider-session";
-import { hasFullListingProfile, shouldUseSimpleFreeListingUx } from "@/lib/free-listing";
-import { isNewAdProfileEnabled } from "@/config/feature-flags";
-import { AdvertisementProfileExtrasFields } from "@/features/panel/components/advertisement-profile-extras-fields";
+import { shouldUseSimpleFreeListingUx } from "@/lib/free-listing";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { getCategoriesWithCounts } from "@/application/services/catalog-service";
 import { listActiveCatalogLocationOptions } from "@/application/services/catalog-location";
@@ -54,8 +52,6 @@ export default async function NewAdvertisementPage({
 
   const params = await searchParams;
   const simpleListing = shouldUseSimpleFreeListingUx(provider);
-  const newProfile = isNewAdProfileEnabled();
-  const fullProfile = hasFullListingProfile(provider);
   const canBuyPremium = canPurchasePremiumBoost(provider);
   const [categories, locationOptions] = await Promise.all([
     getCategoriesWithCounts(),
@@ -152,14 +148,12 @@ export default async function NewAdvertisementPage({
             />
           </div>
 
-          <AdvertisementImageFields
-            showLogo={newProfile && fullProfile}
-            showPremiumOption={canBuyPremium}
-          />
+          <AdvertisementImageFields showPremiumOption={canBuyPremium} />
 
-          {newProfile && fullProfile ? (
-            <AdvertisementProfileExtrasFields />
-          ) : null}
+          <p className="text-xs text-muted-foreground">
+            Após publicar, complete logo, perfil, produtos e serviços nos menus
+            Meu perfil, Produtos e Serviços.
+          </p>
 
           <div className="flex gap-2">
             <Button type="submit" variant="whatsapp" size="sm">

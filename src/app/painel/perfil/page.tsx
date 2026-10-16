@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Images, KeyRound, User } from "lucide-react";
+import { BadgeCheck, Images, KeyRound, User } from "lucide-react";
 import {
   updateProviderPasswordAction,
   updateProviderProfileAction,
 } from "@/actions/provider-actions";
+import { findPrimaryProviderAdvertisementForPanel } from "@/application/services/advertisement-service";
 import { listProviderCompanyImages } from "@/application/services/provider-image-service";
 import { listActiveCities, listActiveStates } from "@/application/services/catalog-service";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import { AdvertisementLogoEditor } from "@/features/panel/components/advertisement-logo-editor";
+import { AdvertisementProfileExtrasEditor } from "@/features/panel/components/advertisement-profile-extras-editor";
 import { ProviderCompanyImagesEditor } from "@/features/panel/components/provider-company-images-editor";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { getCurrentProvider } from "@/lib/provider-session";
@@ -45,10 +48,13 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const simpleListing = shouldUseSimpleFreeListingUx(provider);
   const canManageCompanyPhotos = hasFullListingProfile(provider);
   const { maxCompanyPhotos } = getLimitsForProvider(provider);
-  const [states, cities, companyImages] = await Promise.all([
+  const [states, cities, companyImages, primaryAd] = await Promise.all([
     listActiveStates(),
     listActiveCities(),
     newProfile ? listProviderCompanyImages(provider.id) : Promise.resolve([]),
+    newProfile && canManageCompanyPhotos
+      ? findPrimaryProviderAdvertisementForPanel(provider.id)
+      : Promise.resolve(null),
   ]);
 
   return (
@@ -236,6 +242,65 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                 paidActive={canManageCompanyPhotos}
                 maxPhotos={maxCompanyPhotos}
               />
+            </CardContent>
+          </Card>
+        )}
+
+        {newProfile && canManageCompanyPhotos && (
+          <Card>
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Images className="h-4 w-4 text-whatsapp" />
+                Logo da marca
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              {!primaryAd ? (
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>Publique um anúncio para adicionar a logo da marca.</p>
+                  <Button variant="whatsapp" size="sm" asChild>
+                    <Link href="/painel/anuncios/novo">Novo anúncio</Link>
+                  </Button>
+                </div>
+              ) : (
+                <AdvertisementLogoEditor
+                  advertisementId={primaryAd.id}
+                  title={primaryAd.title}
+                  logoImage={primaryAd.logoImage}
+                />
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {newProfile && canManageCompanyPhotos && (
+          <Card>
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <BadgeCheck className="h-4 w-4 text-whatsapp" />
+                Perfil completo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              {!primaryAd ? (
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>
+                    Publique um anúncio para preencher endereço, horários e
+                    redes.
+                  </p>
+                  <Button variant="whatsapp" size="sm" asChild>
+                    <Link href="/painel/anuncios/novo">Novo anúncio</Link>
+                  </Button>
+                </div>
+              ) : (
+                <AdvertisementProfileExtrasEditor
+                  advertisementId={primaryAd.id}
+                  streetAddress={primaryAd.streetAddress}
+                  instagram={primaryAd.instagram}
+                  website={primaryAd.website}
+                  businessHoursJson={primaryAd.businessHoursJson}
+                />
+              )}
             </CardContent>
           </Card>
         )}

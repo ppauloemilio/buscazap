@@ -652,6 +652,23 @@ export async function findProviderAdvertisements(providerId: string) {
   });
 }
 
+/** Anúncio principal do painel (mais recente) para logo, perfil, produtos e serviços. */
+export async function findPrimaryProviderAdvertisementForPanel(
+  providerId: string
+) {
+  const latest = await prisma.advertisement.findFirst({
+    where: { providerId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+
+  if (!latest) {
+    return null;
+  }
+
+  return findProviderAdvertisementForEdit(providerId, latest.id);
+}
+
 export async function findProviderAdvertisementForEdit(
   providerId: string,
   advertisementId: string
