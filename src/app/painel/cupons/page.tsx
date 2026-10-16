@@ -27,7 +27,23 @@ export default async function CouponsPage({ searchParams }: CouponsPageProps) {
   const params = await searchParams;
   const settings = await getHomepageSettings();
   const plusAllowed = settings.plusPlanEnabled;
+  const sectionEnabled = settings.showCoupons;
   const canManage = await canUsePlusFeatures(provider);
+
+  if (!sectionEnabled) {
+    return (
+      <PanelLayout>
+        <Card>
+          <CardHeader className="p-3 pb-2">
+            <CardTitle className="text-base">Cupons</CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 text-sm text-muted-foreground">
+            Os cupons ainda não foram liberados na plataforma.
+          </CardContent>
+        </Card>
+      </PanelLayout>
+    );
+  }
 
   if (!plusAllowed) {
     return (

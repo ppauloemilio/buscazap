@@ -320,8 +320,10 @@ export async function updateHomepageSettingsAction(formData: FormData) {
   revalidatePath("/cupons");
   revalidatePath("/admin/home");
   revalidatePath("/anunciar");
+  revalidatePath("/painel");
   revalidatePath("/painel/assinatura");
   revalidatePath("/painel/promocoes");
+  revalidatePath("/painel/cupons");
   redirect("/admin/home?saved=1");
 }
 

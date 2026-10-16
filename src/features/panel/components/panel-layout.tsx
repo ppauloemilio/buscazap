@@ -5,6 +5,7 @@ import {
   isAdminProvider,
   isProviderBlocked,
 } from "@/lib/provider-session";
+import { getHomepageSettings } from "@/application/services/homepage-settings-service";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { PanelNav } from "@/features/panel/components/panel-nav";
 import { canUsePlusFeatures } from "@/lib/plus-plan";
@@ -30,11 +31,15 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
 
   const subscriptionActive = canProviderUsePaidFeatures(provider);
   const isAdmin = isAdminProvider(provider);
-  const subscription = await getSubscriptionStatus(provider.id);
+  const [subscription, homepage] = await Promise.all([
+    getSubscriptionStatus(provider.id),
+    getHomepageSettings(),
+  ]);
   const simpleListing = shouldUseSimpleFreeListingUx(provider);
   const fullProfile = hasFullListingProfile(provider);
-  const showPromotions =
-    !simpleListing && (await canUsePlusFeatures(provider));
+  const plusFeatures = !simpleListing && (await canUsePlusFeatures(provider));
+  const showPromotions = plusFeatures && homepage.showPromotions;
+  const showCoupons = plusFeatures && homepage.showCoupons;
   const freemium = isNewAdProfileEnabled();
 
   return (
@@ -62,7 +67,11 @@ export async function PanelLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[180px_1fr]">
-        <PanelNav showPromotions={showPromotions} freeListing={simpleListing} />
+        <PanelNav
+          showPromotions={showPromotions}
+          showCoupons={showCoupons}
+          freeListing={simpleListing}
+        />
         <div>
           <SubscriptionReminderBanner
             active={subscription.active}

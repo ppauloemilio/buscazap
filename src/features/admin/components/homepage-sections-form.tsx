@@ -51,8 +51,10 @@ const TOGGLEABLE: ReadonlySet<HomepageSectionId> = new Set([
 const DESCRIPTIONS: Record<HomepageSectionId, string> = {
   popularCategories: "Grade de categorias na página inicial.",
   urgentSearches: "Atalhos rápidos de Gás, Água, Delivery e outros.",
-  promotions: "Cards de ofertas ativas de anunciantes Plano Pro.",
-  coupons: "Cupons resgatáveis com estoque e código único.",
+  promotions:
+    "Seção na home e menu Promoções no painel (Plano Pro).",
+  coupons:
+    "Seção na home e menu Cupons no painel (Plano Pro).",
   premiumAds: "Anúncios com destaque premium ativo.",
   paidAds: "Anúncios de assinantes (Plano Básico ou Pro).",
   freeAds: "Listagens do Plano Grátis.",
@@ -240,8 +242,8 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
                 Plano Pro (promoções)
               </span>
               <span className="mt-0.5 block text-xs text-muted-foreground">
-                Permite upgrade para Plano Pro e menu Promoções no painel do
-                anunciante.
+                Permite upgrade para Plano Pro. Os menus Promoções e Cupons no
+                painel seguem as seções liberadas acima.
               </span>
             </span>
           </label>

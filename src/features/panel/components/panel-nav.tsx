@@ -50,11 +50,13 @@ const FREE_NAV_ITEMS: ReadonlyArray<{
 
 interface PanelNavProps {
   readonly showPromotions?: boolean;
+  readonly showCoupons?: boolean;
   readonly freeListing?: boolean;
 }
 
 export function PanelNav({
   showPromotions = false,
+  showCoupons = false,
   freeListing = false,
 }: PanelNavProps) {
   const pathname = usePathname();
@@ -67,13 +69,19 @@ export function PanelNav({
 
   if (freeListing) {
     items = FREE_NAV_ITEMS;
-  } else if (showPromotions) {
-    items = [
-      ...NAV_ITEMS.slice(0, 3),
-      { href: "/painel/promocoes", label: "Promoções", icon: Tag },
-      { href: "/painel/cupons", label: "Cupons", icon: Ticket },
-      ...NAV_ITEMS.slice(3),
-    ];
+  } else if (showPromotions || showCoupons) {
+    const extras: Array<{
+      readonly href: string;
+      readonly label: string;
+      readonly icon: LucideIcon;
+    }> = [];
+    if (showPromotions) {
+      extras.push({ href: "/painel/promocoes", label: "Promoções", icon: Tag });
+    }
+    if (showCoupons) {
+      extras.push({ href: "/painel/cupons", label: "Cupons", icon: Ticket });
+    }
+    items = [...NAV_ITEMS.slice(0, 3), ...extras, ...NAV_ITEMS.slice(3)];
   }
 
   return (

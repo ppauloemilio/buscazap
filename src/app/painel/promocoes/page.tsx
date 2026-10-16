@@ -24,7 +24,23 @@ export default async function PromotionsPage({ searchParams }: PromotionsPagePro
   const params = await searchParams;
   const settings = await getHomepageSettings();
   const plusAllowed = settings.plusPlanEnabled;
+  const sectionEnabled = settings.showPromotions;
   const canManage = await canUsePlusFeatures(provider);
+
+  if (!sectionEnabled) {
+    return (
+      <PanelLayout>
+        <Card>
+          <CardHeader className="p-3 pb-2">
+            <CardTitle className="text-base">Promoções</CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 text-sm text-muted-foreground">
+            As promoções ainda não foram liberadas na plataforma.
+          </CardContent>
+        </Card>
+      </PanelLayout>
+    );
+  }
 
   if (!plusAllowed) {
     return (
