@@ -5,14 +5,11 @@ import {
   getCategoriesWithCounts,
   listActiveCities,
 } from "@/application/services/catalog-service";
-import {
-  buildCategoryCitySeoPath,
-  cityNameToSlug,
-} from "@/application/services/city-seo-service";
 import { CategoryIcon } from "@/components/category/category-icon";
 import { PageHeader } from "@/components/layout/page-header";
 import { formatNumber } from "@/shared/utils/format";
 import { getDefaultCatalogLocation } from "@/shared/utils/catalog-location";
+import { buildSearchHref } from "@/shared/utils/search-preferences";
 
 export const metadata: Metadata = {
   title: "Categorias — empresas e serviços com WhatsApp",
@@ -30,9 +27,6 @@ export default async function CategoriesPage() {
     cities.map((city) => ({ name: city.name, state: city.state.uf })),
     cities.map((city) => ({ uf: city.state.uf }))
   );
-  const defaultCitySlug = defaultLocation.city
-    ? cityNameToSlug(defaultLocation.city)
-    : null;
 
   return (
     <>
@@ -46,11 +40,10 @@ export default async function CategoriesPage() {
           {categories.map((category) => (
             <Link
               key={category.id}
-              href={
-                defaultCitySlug
-                  ? buildCategoryCitySeoPath(defaultCitySlug, category.slug)
-                  : `/buscar?category=${encodeURIComponent(category.slug)}`
-              }
+              href={buildSearchHref({
+                category: category.slug,
+                city: defaultLocation.city || undefined,
+              })}
               className="group flex items-center gap-2 rounded-lg border bg-card px-2 py-2 transition-all hover:border-whatsapp/50 hover:shadow-md"
             >
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-whatsapp/10 group-hover:bg-whatsapp/20">

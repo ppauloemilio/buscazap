@@ -3,7 +3,6 @@ import Link from "next/link";
 import { MapPin, Search, Megaphone } from "lucide-react";
 import type { SeoCity } from "@/application/services/city-seo-service";
 import {
-  buildCategoryCitySeoPath,
   buildCitySeoPath,
   listActiveSeoCities,
 } from "@/application/services/city-seo-service";
@@ -119,7 +118,10 @@ export async function CityLandingPage({ city }: { readonly city: SeoCity }) {
               {topCategories.map((category) => (
                 <Link
                   key={category.slug}
-                  href={buildCategoryCitySeoPath(city.slug, category.slug)}
+                  href={buildSearchHref({
+                    city: city.name,
+                    category: category.slug,
+                  })}
                   className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium hover:border-whatsapp hover:text-whatsapp"
                 >
                   <CategoryIcon icon={category.icon} size="sm" />

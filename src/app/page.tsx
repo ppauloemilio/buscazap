@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { getDashboardData } from "@/application/services/dashboard-service";
 import type { HomepageSectionId } from "@/application/services/homepage-settings-service";
-import { cityNameToSlug } from "@/application/services/city-seo-service";
 import { listHomePromotionCards } from "@/application/services/public-promotions-service";
 import { listHomeCouponCards } from "@/application/services/public-coupons-service";
 import { HeroSearch } from "@/features/dashboard/components/hero-search";
@@ -19,13 +18,13 @@ import {
   splitAdvertisementsByPremium,
 } from "@/shared/utils/advertisement-listings";
 
-function resolveDefaultCitySlug(cityNames: readonly string[]): string | undefined {
-  const preferred =
+function resolveDefaultCityName(cityNames: readonly string[]): string | undefined {
+  return (
     cityNames.find(
       (name) =>
         name.localeCompare("Belém", "pt-BR", { sensitivity: "base" }) === 0
-    ) ?? cityNames[0];
-  return preferred ? cityNameToSlug(preferred) : undefined;
+    ) ?? cityNames[0]
+  );
 }
 
 export default async function HomePage() {
@@ -39,7 +38,7 @@ export default async function HomePage() {
   const homeCoupons = homepageSettings.showCoupons
     ? await listHomeCouponCards()
     : { items: [], total: 0 };
-  const defaultCitySlug = resolveDefaultCitySlug(data.cityNames);
+  const defaultCityName = resolveDefaultCityName(data.cityNames);
 
   const allHomeAds = [
     ...data.homePremiumAdvertisements,
@@ -56,7 +55,7 @@ export default async function HomePage() {
       homepageSettings.showPopularCategories ? (
         <CategoryGrid
           categories={data.popularCategories}
-          defaultCitySlug={defaultCitySlug}
+          defaultCityName={defaultCityName}
         />
       ) : null,
     urgentSearches: () =>
