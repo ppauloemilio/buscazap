@@ -246,6 +246,54 @@ async function syncProviderFromPreapproval(preapprovalId: string) {
   return { ignored: false as const, providerId: provider.id, status };
 }
 
+/**
+ * Atualiza o status local consultando o MP (não depende só do webhook).
+ * Útil ao abrir /painel/assinatura após o checkout.
+ */
+export async function refreshProviderRecurringFromMercadoPago(
+  providerId: string
+): Promise<{
+  readonly mpRecurringId: string | null;
+  readonly mpRecurringStatus: string | null;
+  readonly mpRecurringTier: string | null;
+  readonly mpRecurringUpdatedAt: Date | null;
+} | null> {
+  if (!isMercadoPagoSubscriptionsEnabled()) {
+    return null;
+  }
+
+  const provider = await prisma.provider.findUnique({
+    where: { id: providerId },
+    select: {
+      mpRecurringId: true,
+      mpRecurringStatus: true,
+      mpRecurringTier: true,
+      mpRecurringUpdatedAt: true,
+    },
+  });
+
+  if (!provider?.mpRecurringId) {
+    return provider;
+  }
+
+  try {
+    await syncProviderFromPreapproval(provider.mpRecurringId);
+  } catch {
+    // Mantém o status local se a API do MP falhar.
+    return provider;
+  }
+
+  return prisma.provider.findUnique({
+    where: { id: providerId },
+    select: {
+      mpRecurringId: true,
+      mpRecurringStatus: true,
+      mpRecurringTier: true,
+      mpRecurringUpdatedAt: true,
+    },
+  });
+}
+
 async function grantRecurringCycle(input: {
   readonly providerId: string;
   readonly tier: SubscriptionTier;

@@ -15,7 +15,7 @@ import {
 } from "@/lib/provider-session";
 
 export async function getSubscriptionStatus(providerId: string) {
-  const provider = await prisma.provider.findUnique({
+  let provider = await prisma.provider.findUnique({
     where: { id: providerId },
     include: {
       subscriptions: {
@@ -29,17 +29,30 @@ export async function getSubscriptionStatus(providerId: string) {
     throw new Error("PROVIDER_NOT_FOUND");
   }
 
+  const { getProviderRecurringSubscription, refreshProviderRecurringFromMercadoPago } =
+    await import("@/application/services/mp-recurring-subscription-service");
+  const { isMercadoPagoSubscriptionsEnabled } = await import(
+    "@/config/mercadopago-subscriptions"
+  );
+
+  // Sincroniza status da recorrência com o MP (webhook às vezes não chega).
+  if (isMercadoPagoSubscriptionsEnabled() && provider.mpRecurringId) {
+    const synced = await refreshProviderRecurringFromMercadoPago(providerId);
+    if (synced) {
+      provider = {
+        ...provider,
+        mpRecurringId: synced.mpRecurringId,
+        mpRecurringStatus: synced.mpRecurringStatus,
+        mpRecurringTier: synced.mpRecurringTier,
+        mpRecurringUpdatedAt: synced.mpRecurringUpdatedAt,
+      };
+    }
+  }
+
   const active = isAdminProvider(provider) || hasActiveSubscription(provider.subscriptionExpiresAt);
   const canRenew =
     !isAdminProvider(provider) &&
     canRenewSubscription(provider.subscriptionExpiresAt);
-
-  const { getProviderRecurringSubscription } = await import(
-    "@/application/services/mp-recurring-subscription-service"
-  );
-  const { isMercadoPagoSubscriptionsEnabled } = await import(
-    "@/config/mercadopago-subscriptions"
-  );
 
   return {
     active,
