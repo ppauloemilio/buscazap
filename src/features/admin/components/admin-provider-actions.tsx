@@ -3,10 +3,12 @@
 import {
   adminCreateSubscriptionPixWhatsAppAction,
   adminDeleteProviderAction,
+  adminMigrateProviderPlanAction,
   adminRegisterSubscriptionAction,
   adminResetProviderPasswordAction,
   moderateProviderAction,
 } from "@/actions/admin-actions";
+import type { AdminProviderPlanFilter } from "@/application/services/admin-service";
 import { AdminPixWhatsAppButton } from "@/features/admin/components/admin-pix-whatsapp-button";
 import { MANUAL_PAYMENT_METHODS } from "@/config/manual-payment";
 import { ADMIN_PROVIDER_STATUS_OPTIONS } from "@/config/admin";
@@ -20,7 +22,17 @@ interface AdminProviderActionsProps {
   readonly name: string;
   readonly advertisementsCount: number;
   readonly subscriptionActive: boolean;
+  readonly currentPlan: AdminProviderPlanFilter;
 }
+
+const PLAN_OPTIONS: ReadonlyArray<{
+  readonly value: AdminProviderPlanFilter;
+  readonly label: string;
+}> = [
+  { value: "free", label: "Plano Grátis" },
+  { value: "basic", label: "Plano Básico" },
+  { value: "pro", label: "Plano Pro" },
+];
 
 export function AdminProviderActions({
   providerId,
@@ -28,6 +40,7 @@ export function AdminProviderActions({
   name,
   advertisementsCount,
   subscriptionActive,
+  currentPlan,
 }: AdminProviderActionsProps) {
   function handleDelete(event: React.FormEvent<HTMLFormElement>) {
     const details: string[] = [];
@@ -76,8 +89,60 @@ export function AdminProviderActions({
     }
   }
 
+  function handleMigratePlan(event: React.FormEvent<HTMLFormElement>) {
+    const form = event.currentTarget;
+    const targetPlan = new FormData(form).get("targetPlan");
+    const targetLabel =
+      PLAN_OPTIONS.find((item) => item.value === targetPlan)?.label ??
+      "outro plano";
+    const currentLabel =
+      PLAN_OPTIONS.find((item) => item.value === currentPlan)?.label ??
+      "plano atual";
+
+    let extra = "";
+    if (targetPlan === "free") {
+      extra = " A assinatura ativa será removida (anúncios continuam no Grátis).";
+    } else if (currentPlan === "free") {
+      extra = ` Serão concedidos ${PRICING.SUBSCRIPTION_DAYS} dias de assinatura.`;
+    } else {
+      extra = " A data de vencimento atual será mantida.";
+    }
+
+    if (
+      !window.confirm(
+        `Migrar "${name}" de ${currentLabel} para ${targetLabel}?${extra}`
+      )
+    ) {
+      event.preventDefault();
+    }
+  }
+
   return (
     <div className="space-y-2">
+      <form
+        action={adminMigrateProviderPlanAction}
+        onSubmit={handleMigratePlan}
+        className="flex flex-col gap-1.5 rounded-lg border border-dashed p-2 sm:flex-row sm:items-center"
+      >
+        <input type="hidden" name="providerId" value={providerId} />
+        <input type="hidden" name="returnTo" value="/admin/usuarios" />
+        <select
+          name="targetPlan"
+          defaultValue={currentPlan}
+          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          aria-label="Migrar para plano"
+        >
+          {PLAN_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <Button type="submit" size="sm" variant="whatsapp">
+          Migrar plano
+        </Button>
+      </form>
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <form action={moderateProviderAction} className="flex items-center gap-2">
           <input type="hidden" name="providerId" value={providerId} />

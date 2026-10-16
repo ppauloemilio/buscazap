@@ -11,6 +11,7 @@ import {
   deleteAdvertisementAsAdmin,
   deleteProviderAsAdmin,
   logAdminAction,
+  migrateProviderPlanAsAdmin,
   resetProviderPasswordAsAdmin,
   updateAdvertisementAsAdmin,
   updateAdvertisementStatusAsAdmin,
@@ -18,6 +19,7 @@ import {
   updateProviderStatusAsAdmin,
   updateReportStatusAsAdmin,
 } from "@/application/services/admin-service";
+import type { AdminProviderPlanFilter } from "@/application/services/admin-service";
 import { resetAdvertisementProviderPasswordForNotify } from "@/application/services/advertisement-notify-service";
 import {
   DEFAULT_SECTION_ORDER,
@@ -345,6 +347,64 @@ function appendAdminQueryParams(
   }
 
   return `${url.pathname}${url.search}`;
+}
+
+function parseAdminProviderPlan(
+  value: FormDataEntryValue | null
+): AdminProviderPlanFilter | null {
+  if (value === "free" || value === "basic" || value === "pro") {
+    return value;
+  }
+  return null;
+}
+
+export async function adminMigrateProviderPlanAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const providerId = formData.get("providerId");
+  const targetPlan = parseAdminProviderPlan(formData.get("targetPlan"));
+  const returnPath = resolveAdminSubscriptionReturnPath(formData.get("returnTo"));
+
+  if (typeof providerId !== "string" || !providerId || !targetPlan) {
+    redirect(
+      appendAdminQueryParams(returnPath, {
+        error: "Informe o anunciante e o plano de destino",
+      })
+    );
+  }
+
+  try {
+    await migrateProviderPlanAsAdmin({
+      adminId: admin.id,
+      providerId,
+      targetPlan,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível migrar o plano";
+    redirect(
+      appendAdminQueryParams(returnPath, {
+        error: message,
+      })
+    );
+  }
+
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin/anuncios");
+  revalidatePath("/admin");
+  revalidatePath("/painel");
+  revalidatePath("/painel/assinatura");
+  revalidatePath("/");
+
+  redirect(
+    appendAdminQueryParams(returnPath, {
+      saved: "1",
+      manual: "plan",
+    })
+  );
 }
 
 export async function adminRegisterSubscriptionAction(formData: FormData) {

@@ -1,10 +1,12 @@
 import {
   AdvertisementStatus,
   AdvertisementType,
+  ListingProfile,
   PaymentStatus,
   ProviderLeadStatus,
   ProviderStatus,
   ServiceArea,
+  SubscriptionTier,
   UserRole,
 } from "@/domain/enums";
 import { PRICING } from "@/config/pricing";
@@ -16,6 +18,7 @@ import {
 } from "@/application/services/category-matching-service";
 import { generateUniqueReferralCode } from "@/application/services/referral-service";
 import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
+import { getProviderSubscriptionTier } from "@/lib/plus-plan";
 import { prisma } from "@/lib/prisma";
 import {
   canProviderPublish,
@@ -196,11 +199,39 @@ export async function getAdminDashboardStats() {
   };
 }
 
+export type AdminProviderPlanFilter = "free" | "basic" | "pro";
+
+export function resolveAdminProviderPlan(provider: {
+  readonly role?: string;
+  readonly subscriptionExpiresAt: Date | null;
+  readonly subscriptionTier?: string | null;
+}): AdminProviderPlanFilter {
+  if (!hasActiveSubscription(provider.subscriptionExpiresAt)) {
+    return "free";
+  }
+
+  return getProviderSubscriptionTier({
+    role: provider.role ?? UserRole.PROVIDER,
+    subscriptionExpiresAt: provider.subscriptionExpiresAt,
+    subscriptionTier: provider.subscriptionTier,
+  }) === SubscriptionTier.PLUS
+    ? "pro"
+    : "basic";
+}
+
+export function getAdminProviderPlanLabel(plan: AdminProviderPlanFilter): string {
+  if (plan === "pro") return "Plano Pro";
+  if (plan === "basic") return "Plano Básico";
+  return "Plano Grátis";
+}
+
 export async function listAdminProviders(filters?: {
   readonly status?: string;
   readonly subscription?: string;
   readonly ads?: string;
   readonly createdDays?: number;
+  readonly category?: string;
+  readonly plan?: string;
 }) {
   const now = new Date();
   const createdSince =
@@ -211,6 +242,15 @@ export async function listAdminProviders(filters?: {
           return date;
         })()
       : null;
+
+  const planFilter =
+    filters?.plan === "free" ||
+    filters?.plan === "basic" ||
+    filters?.plan === "pro"
+      ? filters.plan
+      : undefined;
+
+  const categoryFilter = filters?.category?.trim() || undefined;
 
   const providers = await prisma.provider.findMany({
     where: {
@@ -245,13 +285,46 @@ export async function listAdminProviders(filters?: {
             subscriptions: { some: {} },
           }
         : {}),
-      ...(filters?.ads === "none" ? { advertisements: { none: {} } } : {}),
+      ...(planFilter === "free"
+        ? {
+            OR: [
+              { subscriptionExpiresAt: { equals: null } },
+              { subscriptionExpiresAt: { lte: now } },
+            ],
+          }
+        : {}),
+      ...(planFilter === "basic"
+        ? {
+            subscriptionExpiresAt: { gt: now },
+            subscriptionTier: { not: SubscriptionTier.PLUS },
+          }
+        : {}),
+      ...(planFilter === "pro"
+        ? {
+            subscriptionExpiresAt: { gt: now },
+            subscriptionTier: SubscriptionTier.PLUS,
+          }
+        : {}),
+      ...(filters?.ads === "none" && !categoryFilter
+        ? { advertisements: { none: {} } }
+        : {}),
+      ...(categoryFilter
+        ? {
+            advertisements: {
+              some: { category: categoryFilter },
+            },
+          }
+        : {}),
       ...(createdSince ? { createdAt: { gte: createdSince } } : {}),
     },
     orderBy: { createdAt: "desc" },
     include: {
       payments: {
         select: { status: true },
+      },
+      advertisements: {
+        select: { category: true },
+        take: 20,
       },
       _count: {
         select: { advertisements: true },
@@ -274,6 +347,14 @@ export async function listAdminProviders(filters?: {
 
     const subscriptionActive = hasActiveSubscription(provider.subscriptionExpiresAt);
     const hadSubscription = provider.subscriptionExpiresAt !== null;
+    const plan = resolveAdminProviderPlan(provider);
+    const categories = [
+      ...new Set(
+        provider.advertisements
+          .map((ad) => ad.category.trim())
+          .filter(Boolean)
+      ),
+    ].sort((a, b) => a.localeCompare(b, "pt-BR"));
 
     return {
       id: provider.id,
@@ -283,10 +364,14 @@ export async function listAdminProviders(filters?: {
       status: provider.status,
       city: provider.city,
       state: provider.state,
+      plan,
+      planLabel: getAdminProviderPlanLabel(plan),
+      subscriptionTier: provider.subscriptionTier,
       subscriptionActive,
       subscriptionExpired: hadSubscription && !subscriptionActive,
       hadSubscription,
       subscriptionExpiresAt: provider.subscriptionExpiresAt,
+      categories,
       advertisementsCount: provider._count.advertisements,
       paymentsCount: provider.payments.length,
       paymentsPaid,
@@ -295,6 +380,116 @@ export async function listAdminProviders(filters?: {
       createdAt: provider.createdAt,
     };
   });
+}
+
+export async function migrateProviderPlanAsAdmin(input: {
+  readonly adminId: string;
+  readonly providerId: string;
+  readonly targetPlan: AdminProviderPlanFilter;
+}) {
+  const provider = await prisma.provider.findUnique({
+    where: { id: input.providerId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      subscriptionExpiresAt: true,
+      subscriptionTier: true,
+    },
+  });
+
+  if (!provider || provider.role !== UserRole.PROVIDER) {
+    throw new Error("Anunciante não encontrado");
+  }
+
+  if (provider.status === ProviderStatus.BLOCKED) {
+    throw new Error("Não é possível migrar plano de conta bloqueada");
+  }
+
+  const currentPlan = resolveAdminProviderPlan(provider);
+  if (currentPlan === input.targetPlan) {
+    throw new Error(
+      `O anunciante já está no ${getAdminProviderPlanLabel(input.targetPlan)}`
+    );
+  }
+
+  const now = new Date();
+
+  const updated = await prisma.$transaction(async (tx) => {
+    if (input.targetPlan === "free") {
+      return tx.provider.update({
+        where: { id: provider.id },
+        data: {
+          subscriptionExpiresAt: null,
+          subscriptionTier: SubscriptionTier.BASIC,
+        },
+        select: {
+          subscriptionExpiresAt: true,
+          subscriptionTier: true,
+        },
+      });
+    }
+
+    const tier =
+      input.targetPlan === "pro"
+        ? SubscriptionTier.PLUS
+        : SubscriptionTier.BASIC;
+
+    const hasActive = hasActiveSubscription(provider.subscriptionExpiresAt);
+    let expiresAt = provider.subscriptionExpiresAt;
+
+    if (!hasActive || !expiresAt) {
+      expiresAt = new Date(now);
+      expiresAt.setDate(expiresAt.getDate() + PRICING.SUBSCRIPTION_DAYS);
+    }
+
+    const result = await tx.provider.update({
+      where: { id: provider.id },
+      data: {
+        subscriptionExpiresAt: expiresAt,
+        subscriptionTier: tier,
+        listingProfile: ListingProfile.FULL,
+      },
+      select: {
+        subscriptionExpiresAt: true,
+        subscriptionTier: true,
+      },
+    });
+
+    await tx.advertisement.updateMany({
+      where: {
+        providerId: provider.id,
+        status: AdvertisementStatus.INACTIVE,
+      },
+      data: { status: AdvertisementStatus.APPROVED },
+    });
+
+    return result;
+  });
+
+  await logAdminAction({
+    adminId: input.adminId,
+    action: "MIGRATE_PROVIDER_PLAN",
+    entityType: "Provider",
+    entityId: provider.id,
+    metadata: {
+      fromPlan: currentPlan,
+      toPlan: input.targetPlan,
+      providerName: provider.name,
+      providerEmail: provider.email,
+      subscriptionExpiresAt:
+        updated.subscriptionExpiresAt?.toISOString() ?? null,
+      subscriptionTier: updated.subscriptionTier,
+    },
+  });
+
+  return {
+    fromPlan: currentPlan,
+    toPlan: input.targetPlan,
+    expiresAt: updated.subscriptionExpiresAt,
+  };
 }
 
 export async function updateProviderStatusAsAdmin(input: {

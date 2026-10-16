@@ -7,6 +7,7 @@ import { listActiveCatalogLocationOptions } from "@/application/services/catalog
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminCreateAdvertisementForm } from "@/features/admin/components/admin-create-advertisement-form";
 import { AdminProviderActions } from "@/features/admin/components/admin-provider-actions";
+import { AdminProviderFilters } from "@/features/admin/components/admin-provider-filters";
 import {
   formatAdminPaymentBreakdown,
   getAdminProviderStatusLabel,
@@ -28,6 +29,8 @@ interface AdminUsersPageProps {
     readonly subscription?: string;
     readonly ads?: string;
     readonly created?: string;
+    readonly category?: string;
+    readonly plan?: string;
     readonly manual?: string;
     readonly adId?: string;
   }>;
@@ -39,12 +42,19 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
 
   const params = await searchParams;
   const createdDays = params.created === "7" ? 7 : undefined;
+  const planFilter =
+    params.plan === "free" || params.plan === "basic" || params.plan === "pro"
+      ? params.plan
+      : undefined;
+  const categoryFilter = params.category?.trim() || undefined;
   const [providers, categories, locationOptions] = await Promise.all([
     listAdminProviders({
       status: params.status,
       subscription: params.subscription,
       ads: params.ads,
       createdDays,
+      category: categoryFilter,
+      plan: planFilter,
     }),
     getCategoriesWithCounts(),
     listActiveCatalogLocationOptions(),
@@ -55,6 +65,8 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
     readonly subscription?: string;
     readonly ads?: string;
     readonly created?: string;
+    readonly category?: string;
+    readonly plan?: string;
   }) {
     const query = new URLSearchParams();
     const merged = {
@@ -62,6 +74,8 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
       subscription: params.subscription,
       ads: params.ads,
       created: params.created,
+      category: categoryFilter,
+      plan: planFilter,
       ...overrides,
     };
 
@@ -69,6 +83,8 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
     if (merged.subscription) query.set("subscription", merged.subscription);
     if (merged.ads) query.set("ads", merged.ads);
     if (merged.created) query.set("created", merged.created);
+    if (merged.category) query.set("category", merged.category);
+    if (merged.plan) query.set("plan", merged.plan);
 
     const qs = query.toString();
     return qs ? `/admin/usuarios?${qs}` : "/admin/usuarios";
@@ -87,10 +103,28 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
               ? "Exibindo assinantes pagos."
               : params.subscription === "active"
                 ? "Exibindo usuários com assinatura ativa."
-                : null;
+                : categoryFilter || planFilter
+                  ? `Filtrado por ${[
+                      categoryFilter ? `categoria "${categoryFilter}"` : null,
+                      planFilter === "free"
+                        ? "Plano Grátis"
+                        : planFilter === "basic"
+                          ? "Plano Básico"
+                          : planFilter === "pro"
+                            ? "Plano Pro"
+                            : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}`
+                  : null;
 
   const hasListFilter = Boolean(
-    params.status || params.subscription || params.ads || params.created
+    params.status ||
+      params.subscription ||
+      params.ads ||
+      params.created ||
+      categoryFilter ||
+      planFilter
   );
 
   return (
@@ -114,6 +148,8 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                 subscription: undefined,
                 ads: undefined,
                 created: undefined,
+                category: undefined,
+                plan: undefined,
               })}
             >
               Todos
@@ -211,13 +247,15 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
           {params.manual === "subscription"
             ? "Assinatura registrada com sucesso (dinheiro/permuta)."
-            : params.manual === "created"
-              ? "Anunciante cadastrado com sucesso. Agora você pode criar o primeiro anúncio abaixo."
-              : params.manual === "password"
-                ? "Senha redefinida. Informe o anunciante pelo WhatsApp."
-                : params.manual === "ad"
-                  ? "Anúncio publicado com sucesso."
-                  : "Status do usuário atualizado."}
+            : params.manual === "plan"
+              ? "Plano do anunciante migrado com sucesso."
+              : params.manual === "created"
+                ? "Anunciante cadastrado com sucesso. Agora você pode criar o primeiro anúncio abaixo."
+                : params.manual === "password"
+                  ? "Senha redefinida. Informe o anunciante pelo WhatsApp."
+                  : params.manual === "ad"
+                    ? "Anúncio publicado com sucesso."
+                    : "Status do usuário atualizado."}
           {params.manual === "ad" && params.adId ? (
             <>
               {" "}
@@ -237,6 +275,19 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
           Usuário excluído.
         </p>
       )}
+
+      <AdminProviderFilters
+        filters={{
+          status: params.status,
+          subscription: params.subscription,
+          ads: params.ads,
+          created: params.created,
+          category: categoryFilter,
+          plan: planFilter,
+        }}
+        categories={categories}
+        resultCount={providers.length}
+      />
 
       <Card className="mb-6">
         <CardHeader className="pb-2">
@@ -330,6 +381,17 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                       <Badge variant="outline">
                         {getAdminProviderStatusLabel(provider.status)}
                       </Badge>
+                      <Badge
+                        variant={
+                          provider.plan === "pro"
+                            ? "whatsapp"
+                            : provider.plan === "basic"
+                              ? "default"
+                              : "secondary"
+                        }
+                      >
+                        {provider.planLabel}
+                      </Badge>
                       {provider.subscriptionActive ? (
                         <Badge variant="whatsapp">Assinatura ativa</Badge>
                       ) : provider.subscriptionExpired ? (
@@ -344,6 +406,11 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                     <p className="text-sm text-muted-foreground">
                       {provider.email ?? "Sem e-mail"}
                     </p>
+                    {provider.categories.length > 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Categorias: {provider.categories.join(", ")}
+                      </p>
+                    ) : null}
                     <p className="text-sm text-muted-foreground">
                       {provider.advertisementsCount} anúncio(s) ·{" "}
                       {formatAdminPaymentBreakdown({
@@ -392,6 +459,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                   name={provider.name}
                   advertisementsCount={provider.advertisementsCount}
                   subscriptionActive={provider.subscriptionActive}
+                  currentPlan={provider.plan}
                 />
 
                 <AdminCreateAdvertisementForm
