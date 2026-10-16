@@ -20,6 +20,7 @@ import {
   fetchMercadoPagoPreapproval,
   fetchMercadoPagoSubscriptionPayment,
   resolvePreapprovalCheckoutUrl,
+  searchMercadoPagoAuthorizedPayments,
 } from "@/infrastructure/mercadopago/subscriptions-client";
 import { getProviderSubscriptionTier } from "@/lib/plus-plan";
 import { prisma } from "@/lib/prisma";
@@ -292,6 +293,104 @@ export async function refreshProviderRecurringFromMercadoPago(
       mpRecurringUpdatedAt: true,
     },
   });
+}
+
+/**
+ * Sincroniza status + aplica cobranças aprovadas no MP que ainda não geraram ciclo local.
+ * Usado pelo admin quando o webhook não entregou.
+ */
+export async function syncProviderRecurringCharges(providerId: string): Promise<{
+  readonly status: string | null;
+  readonly appliedCharges: number;
+}> {
+  if (!isMercadoPagoSubscriptionsEnabled()) {
+    throw new Error("Assinaturas Mercado Pago não configuradas");
+  }
+
+  const provider = await prisma.provider.findUnique({
+    where: { id: providerId },
+    select: {
+      id: true,
+      mpRecurringId: true,
+      mpRecurringTier: true,
+    },
+  });
+
+  if (!provider?.mpRecurringId) {
+    throw new Error("Provedor sem renovação automática vinculada");
+  }
+
+  await syncProviderFromPreapproval(provider.mpRecurringId);
+
+  const refreshed = await prisma.provider.findUnique({
+    where: { id: providerId },
+    select: {
+      mpRecurringId: true,
+      mpRecurringStatus: true,
+      mpRecurringTier: true,
+    },
+  });
+
+  const preapprovalId = refreshed?.mpRecurringId ?? provider.mpRecurringId;
+  const invoices = await searchMercadoPagoAuthorizedPayments(preapprovalId);
+  let appliedCharges = 0;
+
+  const tier =
+    refreshed?.mpRecurringTier === SubscriptionTier.PLUS
+      ? SubscriptionTier.PLUS
+      : SubscriptionTier.BASIC;
+
+  for (const invoice of invoices) {
+    const paymentStatus = (invoice.payment?.status ?? "").toLowerCase();
+    const invoiceStatus = (invoice.status ?? "").toLowerCase();
+    const approved =
+      paymentStatus === "approved" ||
+      paymentStatus === "authorized" ||
+      invoiceStatus === "processed" ||
+      invoiceStatus === "approved";
+
+    if (!approved || invoice.id == null) {
+      continue;
+    }
+
+    const amountRaw = invoice.transaction_amount;
+    const amount =
+      typeof amountRaw === "number"
+        ? amountRaw
+        : typeof amountRaw === "string"
+          ? Number(amountRaw)
+          : getRecurringAmountForTier(tier);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      continue;
+    }
+
+    const paidAt = invoice.debit_date
+      ? new Date(invoice.debit_date)
+      : new Date();
+
+    const before = await prisma.payment.findUnique({
+      where: { pixTxId: `mp-authorized:${invoice.id}` },
+      select: { status: true },
+    });
+
+    await grantRecurringCycle({
+      providerId,
+      tier,
+      amount,
+      externalKey: `mp-authorized:${invoice.id}`,
+      paidAt: Number.isNaN(paidAt.getTime()) ? new Date() : paidAt,
+    });
+
+    if (before?.status !== PaymentStatus.PAID) {
+      appliedCharges += 1;
+    }
+  }
+
+  return {
+    status: refreshed?.mpRecurringStatus ?? null,
+    appliedCharges,
+  };
 }
 
 async function grantRecurringCycle(input: {

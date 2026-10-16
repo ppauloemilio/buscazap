@@ -181,6 +181,45 @@ export async function fetchMercadoPagoAuthorizedPayment(
   return data;
 }
 
+export type MercadoPagoAuthorizedPaymentSearchItem = {
+  readonly id?: number | string;
+  readonly preapproval_id?: string;
+  readonly status?: string;
+  readonly transaction_amount?: number | string;
+  readonly debit_date?: string;
+  readonly payment?: {
+    readonly id?: number | string;
+    readonly status?: string;
+  };
+};
+
+/** Lista cobranças (faturas) de uma assinatura — útil quando o webhook falhou. */
+export async function searchMercadoPagoAuthorizedPayments(
+  preapprovalId: string,
+  limit = 20
+): Promise<readonly MercadoPagoAuthorizedPaymentSearchItem[]> {
+  const params = new URLSearchParams({
+    preapproval_id: preapprovalId,
+    offset: "0",
+    limit: String(limit),
+  });
+  const { ok, status, data } = await mpFetch<{
+    readonly results?: MercadoPagoAuthorizedPaymentSearchItem[];
+    readonly message?: string;
+    readonly error?: string;
+  }>(`/authorized_payments/search?${params.toString()}`);
+
+  if (!ok) {
+    throw new Error(
+      data.message ??
+        data.error ??
+        `Falha ao listar cobranças da assinatura (HTTP ${status})`
+    );
+  }
+
+  return data.results ?? [];
+}
+
 export async function fetchMercadoPagoSubscriptionPayment(
   paymentId: string
 ): Promise<{

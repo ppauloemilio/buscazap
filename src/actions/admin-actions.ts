@@ -1157,3 +1157,92 @@ export async function adminCreatePremiumPixWhatsAppAction(
   }
 }
 
+export async function syncAdminRecurringProviderAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const providerId = String(formData.get("providerId") ?? "").trim();
+  if (!providerId) {
+    redirect("/admin/recorrencias?error=Provedor+inválido");
+  }
+
+  try {
+    const { syncProviderRecurringCharges } = await import(
+      "@/application/services/mp-recurring-subscription-service"
+    );
+    const result = await syncProviderRecurringCharges(providerId);
+    await logAdminAction({
+      adminId: admin.id,
+      action: "SYNC_RECURRING_SUBSCRIPTION",
+      entityType: "Provider",
+      entityId: providerId,
+      metadata: {
+        status: result.status,
+        appliedCharges: result.appliedCharges,
+      },
+    });
+    revalidatePath("/admin/recorrencias");
+    revalidatePath("/admin");
+    revalidatePath("/painel/assinatura");
+    redirect(
+      `/admin/recorrencias?synced=1&charges=${result.appliedCharges}&filter=problems`
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Falha ao sincronizar com o Mercado Pago";
+    redirect(`/admin/recorrencias?error=${encodeURIComponent(message)}`);
+  }
+}
+
+export async function syncAdminRecurringProblemsAction() {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const { listAdminRecurringSubscriptions } = await import(
+    "@/application/services/admin-recurring-service"
+  );
+  const { syncProviderRecurringCharges } = await import(
+    "@/application/services/mp-recurring-subscription-service"
+  );
+
+  const { rows } = await listAdminRecurringSubscriptions({ problemsOnly: true });
+  let synced = 0;
+  let charges = 0;
+  const errors: string[] = [];
+
+  for (const row of rows) {
+    try {
+      const result = await syncProviderRecurringCharges(row.providerId);
+      synced += 1;
+      charges += result.appliedCharges;
+    } catch (error) {
+      errors.push(
+        `${row.name}: ${error instanceof Error ? error.message : "erro"}`
+      );
+    }
+  }
+
+  await logAdminAction({
+    adminId: admin.id,
+    action: "SYNC_RECURRING_PROBLEMS",
+    entityType: "Provider",
+    entityId: admin.id,
+    metadata: { synced, charges, errors: errors.slice(0, 10) },
+  });
+
+  revalidatePath("/admin/recorrencias");
+  revalidatePath("/admin");
+
+  if (errors.length > 0) {
+    redirect(
+      `/admin/recorrencias?filter=problems&syncedBatch=1&charges=${charges}&partialError=${encodeURIComponent(errors[0])}`
+    );
+  }
+
+  redirect(
+    `/admin/recorrencias?filter=problems&syncedBatch=1&charges=${charges}`
+  );
+}
+

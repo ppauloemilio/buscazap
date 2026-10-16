@@ -46,9 +46,13 @@ export default async function AdminDashboardPage() {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/entrar");
 
-  const [stats, newLeadsCount] = await Promise.all([
+  const { countAdminRecurringProblems } = await import(
+    "@/application/services/admin-recurring-service"
+  );
+  const [stats, newLeadsCount, recurringProblems] = await Promise.all([
     getAdminDashboardStats(),
     countNewProviderLeads(),
+    countAdminRecurringProblems(),
   ]);
 
   return (
@@ -93,6 +97,12 @@ export default async function AdminDashboardPage() {
           value={stats.expiredAdsCount}
           href="/admin/anuncios?subscription=expired"
           hint="Anúncios com assinatura vencida"
+        />
+        <StatCard
+          title="Recorrências com problema"
+          value={recurringProblems}
+          href="/admin/recorrencias?filter=problems"
+          hint="Cartão / webhook / vencimento"
         />
       </div>
 
@@ -167,6 +177,9 @@ export default async function AdminDashboardPage() {
         </Button>
         <Button size="sm" variant="outline" asChild>
           <Link href="/admin/usuarios?subscription=expired">Assinaturas vencidas</Link>
+        </Button>
+        <Button size="sm" variant="outline" asChild>
+          <Link href="/admin/recorrencias?filter=problems">Recorrências</Link>
         </Button>
         <Button size="sm" variant="outline" asChild>
           <Link href="/admin/relatorios">Relatórios</Link>
