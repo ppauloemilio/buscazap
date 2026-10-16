@@ -11,7 +11,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "mp:create-subscription-plans": "node scripts/create-mp-subscription-plans.mjs",
+    "mp:list-subscription-plans": "node scripts/create-mp-subscription-plans.mjs --list"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",
