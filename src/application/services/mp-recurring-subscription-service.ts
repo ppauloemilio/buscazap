@@ -1,6 +1,5 @@
 import {
   buildRecurringExternalReference,
-  getMercadoPagoPlanIdForTier,
   getRecurringAmountForTier,
   getSubscriptionBackUrl,
   isMercadoPagoSubscriptionsEnabled,
@@ -130,11 +129,6 @@ export async function startRecurringSubscriptionCheckout(input: {
     );
   }
 
-  const planId = getMercadoPagoPlanIdForTier(input.tier);
-  if (!planId) {
-    throw new Error("Plano de assinatura não configurado");
-  }
-
   const reason =
     input.tier === SubscriptionTier.PLUS
       ? "BuscaZapp Plano Pro"
@@ -148,7 +142,6 @@ export async function startRecurringSubscriptionCheckout(input: {
       : undefined;
 
   const preapproval = await createMercadoPagoPreapproval({
-    planId,
     reason,
     payerEmail: email,
     externalReference: buildRecurringExternalReference(
@@ -156,6 +149,7 @@ export async function startRecurringSubscriptionCheckout(input: {
       input.tier
     ),
     backUrl: getSubscriptionBackUrl(),
+    amount: getRecurringAmountForTier(input.tier),
     startDate,
   });
 

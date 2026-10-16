@@ -46,7 +46,7 @@ export type MercadoPagoAuthorizedPayment = {
 function requireSubscriptionsToken(): string {
   if (!isMercadoPagoSubscriptionsEnabled()) {
     throw new Error(
-      "Assinaturas Mercado Pago não configuradas (token/planos ausentes)"
+      "Assinaturas Mercado Pago não configuradas (MERCADOPAGO_SUBSCRIPTIONS_ACCESS_TOKEN)"
     );
   }
   return getMercadoPagoSubscriptionsAccessToken();
@@ -71,27 +71,38 @@ async function mpFetch<T>(
   return { ok: response.ok, status: response.status, data };
 }
 
+/**
+ * Assinatura SEM plano associado + status pending.
+ * O anunciante escolhe o cartão no init_point do MP (sem card_token_id no server).
+ */
 export async function createMercadoPagoPreapproval(input: {
-  readonly planId: string;
   readonly reason: string;
   readonly payerEmail: string;
   readonly externalReference: string;
   readonly backUrl: string;
+  readonly amount: number;
   /** ISO 8601 — adia a 1ª cobrança (ex.: até o vencimento atual). */
   readonly startDate?: string;
 }): Promise<MercadoPagoPreapproval> {
-  const body: Record<string, unknown> = {
-    preapproval_plan_id: input.planId,
+  const autoRecurring: Record<string, unknown> = {
+    frequency: 1,
+    frequency_type: "months",
+    transaction_amount: input.amount,
+    currency_id: "BRL",
+  };
+
+  if (input.startDate) {
+    autoRecurring.start_date = input.startDate;
+  }
+
+  const body = {
     reason: input.reason,
     external_reference: input.externalReference,
     payer_email: input.payerEmail,
     back_url: input.backUrl,
     status: "pending",
+    auto_recurring: autoRecurring,
   };
-
-  if (input.startDate) {
-    body.auto_recurring = { start_date: input.startDate };
-  }
 
   const { ok, status, data } = await mpFetch<MercadoPagoPreapproval>(
     "/preapproval",
@@ -211,10 +222,6 @@ export async function fetchMercadoPagoSubscriptionPayment(
 export function resolvePreapprovalCheckoutUrl(
   preapproval: MercadoPagoPreapproval
 ): string | null {
-  const token = getMercadoPagoSubscriptionsAccessToken();
-  const isTest = token.startsWith("TEST-");
-  if (isTest && preapproval.sandbox_init_point) {
-    return preapproval.sandbox_init_point;
-  }
+  // Preferir init_point (sandbox_init_point está deprecado no MP).
   return preapproval.init_point ?? preapproval.sandbox_init_point ?? null;
 }

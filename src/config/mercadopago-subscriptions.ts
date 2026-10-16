@@ -16,27 +16,19 @@ export function getMercadoPagoSubscriptionsWebhookSecret(): string {
   return normalizeEnv(process.env.MERCADOPAGO_SUBSCRIPTIONS_WEBHOOK_SECRET);
 }
 
+/** Opcional — planos no MP não são usados no checkout (fluxo sem plano + init_point). */
 export function getMercadoPagoPlanBasicId(): string {
   return normalizeEnv(process.env.MERCADOPAGO_PLAN_BASIC_ID);
 }
 
+/** Opcional — ver getMercadoPagoPlanBasicId. */
 export function getMercadoPagoPlanPlusId(): string {
   return normalizeEnv(process.env.MERCADOPAGO_PLAN_PLUS_ID);
 }
 
+/** Só o token da app Assinaturas; valores vêm de PRICING. */
 export function isMercadoPagoSubscriptionsEnabled(): boolean {
-  return (
-    getMercadoPagoSubscriptionsAccessToken().length > 0 &&
-    getMercadoPagoPlanBasicId().length > 0 &&
-    getMercadoPagoPlanPlusId().length > 0
-  );
-}
-
-export function getMercadoPagoPlanIdForTier(tier: SubscriptionTier): string {
-  if (tier === SubscriptionTier.PLUS) {
-    return getMercadoPagoPlanPlusId();
-  }
-  return getMercadoPagoPlanBasicId();
+  return getMercadoPagoSubscriptionsAccessToken().length > 0;
 }
 
 export function getSubscriptionBackUrl(): string {
