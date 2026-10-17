@@ -263,22 +263,15 @@ export function AdvertisementProfileView({
             )}
             </div>
           </div>
-          <div className="flex shrink-0 flex-col gap-3 sm:items-end">
-            <Button variant="whatsapp" size="lg" className="w-full sm:w-auto" asChild>
-              <TrackedWhatsAppLink
-                href={whatsappLink}
-                advertisementId={advertisement.id}
-              >
-                <MessageCircle className="h-4 w-4" />
-                Chamar no WhatsApp
-              </TrackedWhatsAppLink>
-            </Button>
-            <AdvertisementShareActions
-              variant="public"
-              title={advertisement.title}
-              shareUrl={shareUrl}
-            />
-          </div>
+          <Button variant="whatsapp" size="lg" className="shrink-0" asChild>
+            <TrackedWhatsAppLink
+              href={whatsappLink}
+              advertisementId={advertisement.id}
+            >
+              <MessageCircle className="h-4 w-4" />
+              Chamar no WhatsApp
+            </TrackedWhatsAppLink>
+          </Button>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -520,6 +513,13 @@ export function AdvertisementProfileView({
           </div>
 
           <aside className="space-y-4">
+            <AdvertisementShareActions
+              className="rounded-xl border bg-card p-4"
+              variant="public"
+              title={advertisement.title}
+              shareUrl={shareUrl}
+            />
+
             <div className="rounded-xl border bg-card p-4">
               <div className="mb-2 flex items-center gap-2 font-semibold">
                 <MapPin className="h-4 w-4 text-sky-600" />
