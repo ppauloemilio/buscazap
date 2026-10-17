@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin, ArrowRight } from "lucide-react";
 import { listActiveCities } from "@/application/services/catalog-service";
-import { cityNameToSlug, buildCitySeoPath } from "@/application/services/city-seo-service";
 import { PageHeader } from "@/components/layout/page-header";
+import { buildSearchHref } from "@/shared/utils/search-preferences";
 
 export const metadata: Metadata = {
   title: "Cidades — guia de contatos WhatsApp",
@@ -25,7 +25,7 @@ export default async function CitiesPage() {
           {cities.map((city) => (
             <Link
               key={city.id}
-              href={buildCitySeoPath(cityNameToSlug(city.name))}
+              href={buildSearchHref({ city: city.name })}
               className="group flex items-center justify-between rounded-xl border bg-card px-5 py-4 transition-all hover:border-whatsapp/50 hover:shadow-md"
             >
               <div className="flex items-center gap-3">
