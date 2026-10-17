@@ -22,11 +22,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FavoriteButton } from "@/features/favorites/favorite-button";
 import { AdvertisementBackLink } from "@/features/dashboard/components/advertisement-back-link";
+import { AdvertisementShareActions } from "@/features/dashboard/components/advertisement-share-actions";
 import { ReviewForm } from "@/features/dashboard/components/review-form";
 import { StickyWhatsAppCta } from "@/features/dashboard/components/sticky-whatsapp-cta";
 import { formatAdvertisementLocation } from "@/config/service-area";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
 import type { Advertisement } from "@/domain/entities";
+import { buildAbsoluteUrl } from "@/lib/site-url";
 import {
   buildWhatsAppLink,
   formatRating,
@@ -126,6 +128,9 @@ export function AdvertisementProfileView({
 
   const message = `Olá! Vi seu anúncio "${advertisement.title}" no BuscaZapp e gostaria de mais informações.`;
   const whatsappLink = buildWhatsAppLink(advertisement.whatsappNumber, message);
+  const sharePath =
+    advertisement.publicHref?.trim() || `/anuncio/${advertisement.id}`;
+  const shareUrl = buildAbsoluteUrl(sharePath);
   const locationLabel = formatAdvertisementLocation({
     city: advertisement.location.city,
     state: advertisement.location.state,
@@ -176,6 +181,12 @@ export function AdvertisementProfileView({
               Chamar no WhatsApp
             </TrackedWhatsAppLink>
           </Button>
+          <AdvertisementShareActions
+            className="mt-4"
+            variant="public"
+            title={advertisement.title}
+            shareUrl={shareUrl}
+          />
         </div>
         <StickyWhatsAppCta
           advertisementId={advertisement.id}
@@ -252,15 +263,22 @@ export function AdvertisementProfileView({
             )}
             </div>
           </div>
-          <Button variant="whatsapp" size="lg" className="shrink-0" asChild>
-            <TrackedWhatsAppLink
-              href={whatsappLink}
-              advertisementId={advertisement.id}
-            >
-              <MessageCircle className="h-4 w-4" />
-              Chamar no WhatsApp
-            </TrackedWhatsAppLink>
-          </Button>
+          <div className="flex shrink-0 flex-col gap-3 sm:items-end">
+            <Button variant="whatsapp" size="lg" className="w-full sm:w-auto" asChild>
+              <TrackedWhatsAppLink
+                href={whatsappLink}
+                advertisementId={advertisement.id}
+              >
+                <MessageCircle className="h-4 w-4" />
+                Chamar no WhatsApp
+              </TrackedWhatsAppLink>
+            </Button>
+            <AdvertisementShareActions
+              variant="public"
+              title={advertisement.title}
+              shareUrl={shareUrl}
+            />
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
