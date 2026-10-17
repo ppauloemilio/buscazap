@@ -42,6 +42,45 @@ export function buildAdvertisementNotifyWhatsAppHref(
   );
 }
 
+/** Mensagem do cadastro rápido (Plano Grátis) no admin. */
+export function buildQuickFreeListingWelcomeWhatsAppMessage(input: {
+  readonly providerName: string;
+  readonly adTitle: string;
+  readonly adUrl: string;
+  readonly whatsapp: string;
+  readonly temporaryPassword: string;
+}): string {
+  const loginDigits = toLocalWhatsAppDigits(input.whatsapp);
+  const planosUrl = buildAbsoluteUrl("/anunciar");
+  const entrarUrl = buildAbsoluteUrl("/entrar");
+
+  return (
+    `Olá! Aqui é o BuscaZapp 👋\n\n` +
+    `Somos um guia de contatos WhatsApp da sua cidade: pessoas encontram empresas e serviços e chamam direto no Zap.\n\n` +
+    `Cadastramos seu anúncio "${input.adTitle}" no Plano Grátis:\n` +
+    `${input.adUrl}\n\n` +
+    `Acesse o painel: ${entrarUrl}\n` +
+    `Login (WhatsApp): ${loginDigits}\n` +
+    `Senha temporária: ${input.temporaryPassword}\n\n` +
+    `Quer aparecer melhor nas buscas, com fotos, produtos e mais recursos? Conheça o Plano Básico e o Plano Pro:\n` +
+    `${planosUrl}\n\n` +
+    `Qualquer dúvida, responda esta mensagem.`
+  );
+}
+
+export function buildQuickFreeListingWelcomeWhatsAppHref(input: {
+  readonly providerName: string;
+  readonly adTitle: string;
+  readonly adUrl: string;
+  readonly whatsapp: string;
+  readonly temporaryPassword: string;
+}): string {
+  return buildWhatsAppLink(
+    input.whatsapp,
+    buildQuickFreeListingWelcomeWhatsAppMessage(input)
+  );
+}
+
 export interface AdvertisementRenewalMessageInput {
   readonly providerName: string;
   readonly adTitle: string;

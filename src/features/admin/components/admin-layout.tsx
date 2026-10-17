@@ -16,6 +16,7 @@ import {
   Handshake,
   Search,
   Gift,
+  Zap,
 } from "lucide-react";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { href: "/admin/busca", label: "Busca", icon: Search },
   { href: "/admin/home", label: "Home", icon: Home },
   { href: "/admin/leads", label: "Leads", icon: Handshake },
+  { href: "/admin/cadastro-rapido", label: "Cadastro rápido", icon: Zap },
   { href: "/admin/usuarios", label: "Usuários", icon: Users },
   { href: "/admin/anuncios", label: "Anúncios", icon: Megaphone },
   { href: "/admin/indicacoes", label: "Indicações", icon: Gift },

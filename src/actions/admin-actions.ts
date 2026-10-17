@@ -1196,6 +1196,70 @@ export async function syncAdminRecurringProviderAction(formData: FormData) {
   }
 }
 
+export async function adminCreateQuickFreeListingAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const title = String(formData.get("title") ?? "").trim();
+  const category = String(formData.get("category") ?? "").trim();
+  const customCategory = String(formData.get("customCategory") ?? "").trim();
+  const neighborhood = String(formData.get("neighborhood") ?? "").trim();
+  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+
+  if (!title || !category || !neighborhood || !whatsapp) {
+    redirect(
+      `/admin/cadastro-rapido?error=${encodeURIComponent("Preencha título, categoria, bairro e WhatsApp")}`
+    );
+  }
+
+  let result;
+  let notifyHref: string;
+  try {
+    const { createQuickFreeListingAsAdmin } = await import(
+      "@/application/services/admin-quick-free-listing-service"
+    );
+    const { buildQuickFreeListingWelcomeWhatsAppHref } = await import(
+      "@/lib/advertisement-notify-message"
+    );
+    const { buildAbsoluteUrl } = await import("@/lib/site-url");
+
+    result = await createQuickFreeListingAsAdmin({
+      adminId: admin.id,
+      title,
+      category,
+      customCategory: customCategory || undefined,
+      neighborhood,
+      whatsapp,
+    });
+
+    notifyHref = buildQuickFreeListingWelcomeWhatsAppHref({
+      providerName: result.providerName,
+      adTitle: result.adTitle,
+      adUrl: buildAbsoluteUrl(result.publicHref),
+      whatsapp: result.whatsapp,
+      temporaryPassword: result.temporaryPassword,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível criar o cadastro rápido";
+    redirect(`/admin/cadastro-rapido?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/admin/cadastro-rapido");
+  revalidatePath("/admin/anuncios");
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin");
+  revalidatePath("/buscar");
+  revalidatePath("/");
+  revalidatePath(`/anuncio/${result.advertisementId}`);
+
+  redirect(
+    `/admin/cadastro-rapido?created=1&adId=${encodeURIComponent(result.advertisementId)}&notify=${encodeURIComponent(notifyHref)}`
+  );
+}
+
 export async function syncAdminRecurringProblemsAction() {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/entrar");

@@ -179,6 +179,9 @@ export default async function AdminDashboardPage() {
           <Link href="/admin/usuarios?subscription=expired">Assinaturas vencidas</Link>
         </Button>
         <Button size="sm" variant="outline" asChild>
+          <Link href="/admin/cadastro-rapido">Cadastro rápido</Link>
+        </Button>
+        <Button size="sm" variant="outline" asChild>
           <Link href="/admin/recorrencias?filter=problems">Recorrências</Link>
         </Button>
         <Button size="sm" variant="outline" asChild>
