@@ -55,25 +55,31 @@ model Provider {
   subscriptions         Subscription[]
   auditLogs             AuditLog[]
   passwordResetTokens   PasswordResetToken[]
-  claimChallenges       ProviderClaimChallenge[]
+  claimRequests         ProviderClaimRequest[]
   referralsMade         Referral[]      @relation("ReferralsMade")
   referralReceived      Referral?       @relation("ReferralReceived")
 }
 
-/** Desafio OTP para reivindicar anúncio criado pelo admin. */
-model ProviderClaimChallenge {
-  id         String    @id @default(cuid())
-  providerId String
-  provider   Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  whatsapp   String
-  codeHash   String
-  attempts   Int       @default(0)
-  expiresAt  DateTime
-  usedAt     DateTime?
-  createdAt  DateTime  @default(now())
+/**
+ * Pedido de reivindicação: dono envia código ao WhatsApp do BuscaZapp;
+ * admin confere e aprova enviando usuário + senha temporária.
+ */
+model ProviderClaimRequest {
+  id           String    @id @default(cuid())
+  providerId   String
+  provider     Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  whatsapp     String
+  /** Código de referência (ex.: 482913) — aparece como BZ-482913 na mensagem. */
+  code         String
+  /** PENDING | APPROVED | REJECTED */
+  status       String    @default("PENDING")
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  @@index([providerId, createdAt])
-  @@index([whatsapp, createdAt])
+  @@index([status, createdAt])
+  @@index([providerId, status])
 }
 
 model ProviderImage {

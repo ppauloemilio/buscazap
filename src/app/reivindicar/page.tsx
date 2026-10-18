@@ -1,23 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShieldCheck, MessageCircle, KeyRound } from "lucide-react";
+import { ShieldCheck, MessageCircle, Send, Clock } from "lucide-react";
 import {
-  completeClaimPasswordAction,
-  getClaimSessionProviderId,
-  requestClaimOtpAction,
+  confirmClaimSentAction,
+  requestClaimAction,
   startClaimWithTokenAction,
-  verifyClaimOtpAction,
 } from "@/actions/claim-actions";
 import { getProviderByClaimToken } from "@/application/services/provider-claim-service";
+import {
+  buildClaimInboundWhatsAppHref,
+  formatBuscazappClaimWhatsAppDisplay,
+} from "@/config/claim-whatsapp";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Reivindicar anúncio",
   description:
-    "Confirme que você é o dono do anúncio criado no BuscaZapp e assuma a administração do perfil.",
+    "Confirme que você é o dono do anúncio criado no BuscaZapp e receba acesso ao painel.",
 };
 
 interface PageProps {
@@ -26,8 +27,8 @@ interface PageProps {
     readonly step?: string;
     readonly error?: string;
     readonly whatsapp?: string;
-    readonly masked?: string;
-    readonly delivery?: string;
+    readonly code?: string;
+    readonly name?: string;
   }>;
 }
 
@@ -35,34 +36,23 @@ export default async function ClaimAdvertisementPage({ searchParams }: PageProps
   const params = await searchParams;
   const token = params.token?.trim();
   const step = params.step ?? (token ? "token" : "whatsapp");
-  const claimSessionId = await getClaimSessionProviderId();
 
   const tokenProvider = token ? await getProviderByClaimToken(token) : null;
 
-  let passwordProviderName: string | null = null;
-  let passwordAds: { title: string; city: string | null }[] = [];
-  if (step === "password" && claimSessionId) {
-    const provider = await prisma.provider.findUnique({
-      where: { id: claimSessionId },
-      select: {
-        name: true,
-        advertisements: {
-          where: { status: { not: "INACTIVE" } },
-          select: { title: true, city: true },
-          take: 5,
-          orderBy: { createdAt: "desc" },
-        },
-      },
-    });
-    passwordProviderName = provider?.name ?? null;
-    passwordAds = provider?.advertisements ?? [];
-  }
+  const codeMessage = params.code?.trim() ?? "";
+  const codeDigits = codeMessage.replace(/^BZ-/i, "").replace(/\D/g, "");
+  const supportDisplay = formatBuscazappClaimWhatsAppDisplay();
+  const waHref =
+    codeDigits.length === 6
+      ? buildClaimInboundWhatsAppHref(codeDigits)
+      : null;
+  const providerName = params.name?.trim() ?? "";
 
   return (
     <>
       <PageHeader
         title="Reivindicar anúncio"
-        description="Confirme a posse do perfil e defina sua senha para administrar o anúncio"
+        description="Confirme a posse do perfil enviando uma mensagem ao BuscaZapp"
       />
       <section className="container mx-auto max-w-lg px-4 py-8">
         <div className="rounded-xl border bg-card p-6 shadow-sm">
@@ -84,8 +74,7 @@ export default async function ClaimAdvertisementPage({ searchParams }: PageProps
                   <span className="font-medium text-foreground">
                     {tokenProvider.name}
                   </span>{" "}
-                  com {tokenProvider.advertisements.length} anúncio(s). Confirme
-                  para definir sua senha e entrar no painel.
+                  com {tokenProvider.advertisements.length} anúncio(s).
                 </p>
                 <ul className="space-y-1 text-sm text-muted-foreground">
                   {tokenProvider.advertisements.map((ad) => (
@@ -96,26 +85,32 @@ export default async function ClaimAdvertisementPage({ searchParams }: PageProps
                     </li>
                   ))}
                 </ul>
+                <p className="text-sm text-muted-foreground">
+                  Para confirmar que você é o dono, vamos gerar um código curto
+                  para você enviar ao WhatsApp do BuscaZapp. Depois liberamos
+                  usuário e senha no seu WhatsApp.
+                </p>
                 <form action={startClaimWithTokenAction}>
                   <input type="hidden" name="token" value={token} />
                   <Button type="submit" variant="whatsapp" className="w-full">
-                    Continuar e definir senha
+                    Continuar
                   </Button>
                 </form>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
                 Este link é inválido ou expirou. Informe o WhatsApp do anúncio
-                abaixo para receber um código.
+                abaixo.
               </p>
             )
           ) : null}
 
           {(step === "whatsapp" || (step === "token" && !tokenProvider)) && (
-            <form action={requestClaimOtpAction} className="space-y-4">
+            <form action={requestClaimAction} className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Digite o WhatsApp usado no anúncio. Enviaremos um código de
-                verificação para confirmar que você é o dono.
+                Digite o WhatsApp do anúncio. Você envia um código curto para o
+                BuscaZapp; nossa equipe confere e te manda login e senha
+                temporária no WhatsApp.
               </p>
               <div>
                 <label htmlFor="whatsapp" className="mb-1.5 block text-sm font-medium">
@@ -132,124 +127,100 @@ export default async function ClaimAdvertisementPage({ searchParams }: PageProps
               </div>
               <Button type="submit" variant="whatsapp" className="w-full">
                 <MessageCircle className="h-4 w-4" />
-                Enviar código
+                Gerar código
               </Button>
-              <p className="text-xs text-muted-foreground">
-                Se você recebeu mensagem do BuscaZapp com o botão/link{" "}
-                <strong>Reivindique o anúncio</strong>, use esse link — é mais
-                rápido.
-              </p>
             </form>
           )}
 
-          {step === "otp" && (
-            <form action={verifyClaimOtpAction} className="space-y-4">
-              {params.delivery === "whatsapp" ? (
-                <p className="rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
-                  Enviamos um código de 6 dígitos para o WhatsApp{" "}
-                  {params.masked ? params.masked : "informado"}.
+          {step === "send" && (
+            <div className="space-y-4">
+              {providerName ? (
+                <p className="text-sm font-medium text-foreground">
+                  Perfil: {providerName}
                 </p>
-              ) : (
-                <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-                  Não foi possível enviar o código automaticamente por WhatsApp.
-                  Use o link <strong>Reivindique o anúncio</strong> da mensagem
-                  que o BuscaZapp enviou, ou peça ao suporte para reenviar.
+              ) : null}
+              <p className="text-sm text-muted-foreground">
+                Pelo <strong>mesmo WhatsApp do anúncio</strong>, envie a mensagem
+                abaixo para o número do BuscaZapp
+                {supportDisplay ? (
+                  <>
+                    {" "}
+                    (
+                    <span className="font-medium text-foreground">
+                      {supportDisplay}
+                    </span>
+                    )
+                  </>
+                ) : null}
+                .
+              </p>
+
+              <div className="rounded-lg border border-whatsapp/30 bg-whatsapp/10 p-4 text-center">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Mensagem a enviar
                 </p>
-              )}
-              <input type="hidden" name="whatsapp" value={params.whatsapp ?? ""} />
-              <div>
-                <label htmlFor="code" className="mb-1.5 block text-sm font-medium">
-                  Código OTP
-                </label>
-                <Input
-                  id="code"
-                  name="code"
-                  placeholder="000000"
-                  required
-                  inputMode="numeric"
-                  maxLength={6}
-                  autoComplete="one-time-code"
-                />
+                <p className="mt-1 font-mono text-2xl font-semibold tracking-widest text-foreground">
+                  {codeMessage || "—"}
+                </p>
               </div>
-              <Button
-                type="submit"
-                variant="whatsapp"
-                className="w-full"
-                disabled={params.delivery !== "whatsapp"}
-              >
-                Validar código
-              </Button>
+
+              {waHref ? (
+                <Button variant="whatsapp" className="w-full" asChild>
+                  <a href={waHref} target="_blank" rel="noopener noreferrer">
+                    <Send className="h-4 w-4" />
+                    Abrir WhatsApp e enviar
+                  </a>
+                </Button>
+              ) : null}
+
+              <form action={confirmClaimSentAction} className="space-y-3">
+                <input type="hidden" name="code" value={codeMessage} />
+                <input type="hidden" name="name" value={providerName} />
+                <Button type="submit" variant="default" className="w-full">
+                  Já enviei — aguardar liberação
+                </Button>
+              </form>
+
               <Button type="button" variant="outline" className="w-full" asChild>
                 <Link href="/reivindicar">Voltar</Link>
               </Button>
-            </form>
+            </div>
           )}
 
-          {step === "password" && (
-            claimSessionId && passwordProviderName ? (
-              <form action={completeClaimPasswordAction} className="space-y-4">
-                <div className="rounded-lg bg-whatsapp/10 p-3 text-sm">
-                  <p className="font-medium text-foreground">
-                    Conta confirmada: {passwordProviderName}
-                  </p>
-                  {passwordAds.length > 0 ? (
-                    <ul className="mt-2 space-y-0.5 text-muted-foreground">
-                      {passwordAds.map((ad) => (
-                        <li key={ad.title}>
-                          · {ad.title}
-                          {ad.city ? ` — ${ad.city}` : ""}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Defina uma senha para entrar no painel quando quiser. Você
-                  poderá alterá-la depois em Meu perfil.
-                </p>
-                <div>
-                  <label htmlFor="password" className="mb-1.5 block text-sm font-medium">
-                    Nova senha
-                  </label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    minLength={6}
-                    required
-                    autoComplete="new-password"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="passwordConfirm"
-                    className="mb-1.5 block text-sm font-medium"
-                  >
-                    Confirmar senha
-                  </label>
-                  <Input
-                    id="passwordConfirm"
-                    name="passwordConfirm"
-                    type="password"
-                    minLength={6}
-                    required
-                    autoComplete="new-password"
-                  />
-                </div>
-                <Button type="submit" variant="whatsapp" className="w-full">
-                  <KeyRound className="h-4 w-4" />
-                  Salvar senha e entrar no painel
-                </Button>
-              </form>
-            ) : (
+          {step === "done" && (
+            <div className="space-y-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-whatsapp/10">
+                <Clock className="h-6 w-6 text-whatsapp" />
+              </div>
               <p className="text-sm text-muted-foreground">
-                Sessão expirada.{" "}
-                <Link href="/reivindicar" className="text-whatsapp underline">
-                  Recomece a reivindicação
+                Recebemos seu pedido
+                {providerName ? (
+                  <>
+                    {" "}
+                    para <strong>{providerName}</strong>
+                  </>
+                ) : null}
+                {codeMessage ? (
+                  <>
+                    {" "}
+                    (código <strong className="font-mono">{codeMessage}</strong>)
+                  </>
+                ) : null}
+                .
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Nossa equipe confere a mensagem no WhatsApp do BuscaZapp e, se
+                estiver tudo certo, envia <strong>usuário e senha temporária</strong>{" "}
+                para o WhatsApp do anúncio. Depois é só entrar em{" "}
+                <Link href="/entrar" className="text-whatsapp underline">
+                  /entrar
                 </Link>
                 .
               </p>
-            )
+              <Button variant="whatsapp" className="w-full" asChild>
+                <Link href="/entrar">Ir para o login</Link>
+              </Button>
+            </div>
           )}
         </div>
       </section>

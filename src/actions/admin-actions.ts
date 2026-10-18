@@ -22,6 +22,10 @@ import {
 import type { AdminProviderPlanFilter } from "@/application/services/admin-service";
 import { resetAdvertisementProviderPasswordForNotify } from "@/application/services/advertisement-notify-service";
 import {
+  approveClaimRequestAndNotify,
+  rejectClaimRequest,
+} from "@/application/services/provider-claim-service";
+import {
   DEFAULT_SECTION_ORDER,
   parseSectionOrder,
   updateHomepageSettings,
@@ -1306,5 +1310,59 @@ export async function syncAdminRecurringProblemsAction() {
   redirect(
     `/admin/recorrencias?filter=problems&syncedBatch=1&charges=${charges}`
   );
+}
+
+export async function adminApproveClaimRequestAction(
+  formData: FormData
+): Promise<{ ok: true; notifyHref: string } | { ok: false; error: string }> {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const requestId = formData.get("requestId");
+  if (typeof requestId !== "string" || !requestId.trim()) {
+    return { ok: false, error: "Pedido inválido" };
+  }
+
+  try {
+    const result = await approveClaimRequestAndNotify({
+      adminId: admin.id,
+      requestId: requestId.trim(),
+    });
+
+    revalidatePath("/admin/reivindicacoes");
+    revalidatePath("/admin/usuarios");
+    revalidatePath("/admin/anuncios");
+
+    return { ok: true, notifyHref: result.notifyHref };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível aprovar";
+    return { ok: false, error: message };
+  }
+}
+
+export async function adminRejectClaimRequestAction(
+  formData: FormData
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const requestId = formData.get("requestId");
+  if (typeof requestId !== "string" || !requestId.trim()) {
+    return { ok: false, error: "Pedido inválido" };
+  }
+
+  try {
+    await rejectClaimRequest({
+      adminId: admin.id,
+      requestId: requestId.trim(),
+    });
+    revalidatePath("/admin/reivindicacoes");
+    return { ok: true };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível recusar";
+    return { ok: false, error: message };
+  }
 }
 

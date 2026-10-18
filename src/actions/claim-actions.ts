@@ -1,37 +1,10 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import {
-  completeProviderClaim,
-  getProviderByClaimToken,
-  requestClaimOtp,
-  verifyClaimOtp,
+  createClaimRequest,
+  createClaimRequestFromToken,
 } from "@/application/services/provider-claim-service";
-import { PROVIDER_SESSION_COOKIE } from "@/config/pricing";
-
-export const CLAIM_SESSION_COOKIE = "buscazapp_claim_provider_id";
-
-async function setClaimSession(providerId: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(CLAIM_SESSION_COOKIE, providerId, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 15 * 60,
-  });
-}
-
-async function clearClaimSession() {
-  const cookieStore = await cookies();
-  cookieStore.delete(CLAIM_SESSION_COOKIE);
-}
-
-export async function getClaimSessionProviderId(): Promise<string | null> {
-  const cookieStore = await cookies();
-  return cookieStore.get(CLAIM_SESSION_COOKIE)?.value ?? null;
-}
 
 export async function startClaimWithTokenAction(formData: FormData) {
   const token = String(formData.get("token") ?? "").trim();
@@ -39,96 +12,54 @@ export async function startClaimWithTokenAction(formData: FormData) {
     redirect("/reivindicar?error=Link+inválido");
   }
 
-  const provider = await getProviderByClaimToken(token);
-  if (!provider) {
-    redirect(
-      `/reivindicar?error=${encodeURIComponent("Link inválido ou expirado. Solicite um novo pelo WhatsApp do anúncio.")}`
-    );
+  let result;
+  try {
+    result = await createClaimRequestFromToken(token);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível iniciar";
+    redirect(`/reivindicar?error=${encodeURIComponent(message)}`);
   }
 
-  await setClaimSession(provider.id);
-  redirect("/reivindicar?step=password");
+  const q = new URLSearchParams({
+    step: "send",
+    code: result.codeMessage,
+    name: result.providerName,
+  });
+  redirect(`/reivindicar?${q.toString()}`);
 }
 
-export async function requestClaimOtpAction(formData: FormData) {
+export async function requestClaimAction(formData: FormData) {
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
 
   let result;
   try {
-    result = await requestClaimOtp(whatsapp);
+    result = await createClaimRequest(whatsapp);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Não foi possível enviar o código";
+      error instanceof Error
+        ? error.message
+        : "Não foi possível iniciar a reivindicação";
     redirect(
       `/reivindicar?error=${encodeURIComponent(message)}&whatsapp=${encodeURIComponent(whatsapp)}`
     );
   }
 
   const q = new URLSearchParams({
-    step: "otp",
+    step: "send",
     whatsapp,
-    masked: result.maskedWhatsapp,
-    delivery: result.delivery,
+    code: result.codeMessage,
+    name: result.providerName,
   });
   redirect(`/reivindicar?${q.toString()}`);
 }
 
-export async function verifyClaimOtpAction(formData: FormData) {
-  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+/** Usuário confirma que já enviou a mensagem — só mostra tela de espera. */
+export async function confirmClaimSentAction(formData: FormData) {
   const code = String(formData.get("code") ?? "").trim();
-
-  let providerId: string;
-  try {
-    ({ providerId } = await verifyClaimOtp({ whatsappRaw: whatsapp, code }));
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Código inválido";
-    const q = new URLSearchParams({
-      step: "otp",
-      whatsapp,
-      error: message,
-    });
-    redirect(`/reivindicar?${q.toString()}`);
-  }
-
-  await setClaimSession(providerId);
-  redirect("/reivindicar?step=password");
-}
-
-export async function completeClaimPasswordAction(formData: FormData) {
-  const providerId = await getClaimSessionProviderId();
-  if (!providerId) {
-    redirect(
-      `/reivindicar?error=${encodeURIComponent("Sessão expirada. Recomece a reivindicação.")}`
-    );
-  }
-
-  const password = String(formData.get("password") ?? "");
-  const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
-
-  if (password !== passwordConfirm) {
-    redirect(
-      `/reivindicar?step=password&error=${encodeURIComponent("As senhas não coincidem")}`
-    );
-  }
-
-  try {
-    await completeProviderClaim({ providerId, newPassword: password });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Não foi possível definir a senha";
-    redirect(`/reivindicar?step=password&error=${encodeURIComponent(message)}`);
-  }
-
-  await clearClaimSession();
-
-  const cookieStore = await cookies();
-  cookieStore.set(PROVIDER_SESSION_COOKIE, providerId, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-  });
-
-  revalidatePath("/painel");
-  redirect("/painel?claimed=1");
+  const name = String(formData.get("name") ?? "").trim();
+  const q = new URLSearchParams({ step: "done" });
+  if (code) q.set("code", code);
+  if (name) q.set("name", name);
+  redirect(`/reivindicar?${q.toString()}`);
 }
