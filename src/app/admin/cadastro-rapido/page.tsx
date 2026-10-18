@@ -58,12 +58,17 @@ export default async function AdminQuickFreeListingPage({
 
   return (
     <AdminLayout>
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold">Cadastro rápido — Plano Grátis</h2>
-        <p className="text-sm text-muted-foreground">
-          Cria usuário + anúncio simples (título, categoria, bairro e WhatsApp) e
-          gera mensagem para avisar o anunciante no Zap.
-        </p>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Cadastro rápido — Plano Grátis</h2>
+          <p className="text-sm text-muted-foreground">
+            Cria usuário + anúncio simples (título, categoria, bairro e WhatsApp) e
+            gera mensagem para avisar o anunciante no Zap.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin/cadastro-rapido/lote">Importar CSV em lote</Link>
+        </Button>
       </div>
 
       {!freemium ? (

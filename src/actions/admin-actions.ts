@@ -1200,6 +1200,113 @@ export async function syncAdminRecurringProviderAction(formData: FormData) {
   }
 }
 
+export async function adminPreviewBulkFreeListingsAction(
+  formData: FormData
+): Promise<
+  | {
+      ok: true;
+      rows: Awaited<
+        ReturnType<
+          typeof import("@/application/services/admin-bulk-free-listing-service").previewBulkFreeListingsFromCsv
+        >
+      >["rows"];
+      okCount: number;
+      errorCount: number;
+    }
+  | { ok: false; error: string }
+> {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Selecione um arquivo CSV" };
+  }
+  if (file.size > 512_000) {
+    return { ok: false, error: "Arquivo muito grande (máx. 500 KB)" };
+  }
+
+  try {
+    const text = await file.text();
+    const { previewBulkFreeListingsFromCsv } = await import(
+      "@/application/services/admin-bulk-free-listing-service"
+    );
+    const preview = await previewBulkFreeListingsFromCsv(text);
+    if (preview.parseError) {
+      return { ok: false, error: preview.parseError };
+    }
+    return {
+      ok: true,
+      rows: preview.rows,
+      okCount: preview.okCount,
+      errorCount: preview.errorCount,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível ler o CSV";
+    return { ok: false, error: message };
+  }
+}
+
+export async function adminConfirmBulkFreeListingsAction(input: {
+  readonly rows: readonly {
+    readonly line: number;
+    readonly nome: string;
+    readonly categoria: string;
+    readonly bairro: string;
+    readonly whatsapp: string;
+  }[];
+}): Promise<
+  | {
+      ok: true;
+      created: Awaited<
+        ReturnType<
+          typeof import("@/application/services/admin-bulk-free-listing-service").createBulkFreeListingsAsAdmin
+        >
+      >["created"];
+      failed: Awaited<
+        ReturnType<
+          typeof import("@/application/services/admin-bulk-free-listing-service").createBulkFreeListingsAsAdmin
+        >
+      >["failed"];
+    }
+  | { ok: false; error: string }
+> {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  if (!Array.isArray(input.rows) || input.rows.length === 0) {
+    return { ok: false, error: "Nenhuma linha válida para importar" };
+  }
+  if (input.rows.length > 100) {
+    return { ok: false, error: "Limite de 100 anúncios por importação" };
+  }
+
+  try {
+    const { createBulkFreeListingsAsAdmin } = await import(
+      "@/application/services/admin-bulk-free-listing-service"
+    );
+    const result = await createBulkFreeListingsAsAdmin({
+      adminId: admin.id,
+      rows: input.rows,
+    });
+
+    revalidatePath("/admin/cadastro-rapido");
+    revalidatePath("/admin/cadastro-rapido/lote");
+    revalidatePath("/admin/anuncios");
+    revalidatePath("/admin/usuarios");
+    revalidatePath("/admin");
+    revalidatePath("/buscar");
+    revalidatePath("/");
+
+    return { ok: true, created: result.created, failed: result.failed };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Falha na importação em lote";
+    return { ok: false, error: message };
+  }
+}
+
 export async function adminCreateQuickFreeListingAction(formData: FormData) {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/entrar");
