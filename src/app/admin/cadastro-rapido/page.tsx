@@ -89,8 +89,8 @@ export default async function AdminQuickFreeListingPage({
                     Cadastro criado com sucesso
                   </p>
                   <p className="text-muted-foreground">
-                    Envie a mensagem de boas-vindas com o link do anúncio e o
-                    convite aos planos pagos.
+                    Envie a mensagem com o link do anúncio e o link para o dono
+                    reivindicar o perfil.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

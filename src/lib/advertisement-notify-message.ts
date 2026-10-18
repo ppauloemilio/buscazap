@@ -44,40 +44,32 @@ export function buildAdvertisementNotifyWhatsAppHref(
 
 /** Mensagem do cadastro rápido (Plano Grátis) no admin. */
 export function buildQuickFreeListingWelcomeWhatsAppMessage(input: {
-  readonly providerName: string;
-  readonly adTitle: string;
   readonly adUrl: string;
-  readonly whatsapp: string;
-  readonly temporaryPassword: string;
+  readonly claimUrl: string;
 }): string {
-  const loginDigits = toLocalWhatsAppDigits(input.whatsapp);
-  const planosUrl = buildAbsoluteUrl("/anunciar");
-  const entrarUrl = buildAbsoluteUrl("/entrar");
-
   return (
-    `Olá! Aqui é o BuscaZapp 👋\n\n` +
-    `Somos um guia de contatos WhatsApp da sua cidade: pessoas encontram empresas e serviços e chamam direto no Zap.\n\n` +
-    `Cadastramos seu anúncio "${input.adTitle}" no Plano Grátis:\n` +
+    `Olá! Aqui é o BuscaZapp.\n\n` +
+    `Criamos gratuitamente um perfil básico para sua empresa utilizando informações públicas divulgadas para atendimento comercial.\n\n` +
+    `Seu anúncio:\n` +
     `${input.adUrl}\n\n` +
-    `Acesse o painel: ${entrarUrl}\n` +
-    `Login (WhatsApp): ${loginDigits}\n` +
-    `Senha temporária: ${input.temporaryPassword}\n\n` +
-    `Quer aparecer melhor nas buscas, com fotos, produtos e mais recursos? Conheça o Plano Básico e o Plano Pro:\n` +
-    `${planosUrl}\n\n` +
+    `O objetivo é ajudar novos clientes a encontrarem seu WhatsApp mais facilmente.\n\n` +
+    `Caso queira assumir a administração do perfil e adicionar fotos, descrição, Instagram, catálogo e outras informações, acesse:\n\n` +
+    `Reivindique o anúncio: ${input.claimUrl}\n\n` +
     `Qualquer dúvida, responda esta mensagem.`
   );
 }
 
 export function buildQuickFreeListingWelcomeWhatsAppHref(input: {
-  readonly providerName: string;
-  readonly adTitle: string;
-  readonly adUrl: string;
   readonly whatsapp: string;
-  readonly temporaryPassword: string;
+  readonly adUrl: string;
+  readonly claimUrl: string;
 }): string {
   return buildWhatsAppLink(
     input.whatsapp,
-    buildQuickFreeListingWelcomeWhatsAppMessage(input)
+    buildQuickFreeListingWelcomeWhatsAppMessage({
+      adUrl: input.adUrl,
+      claimUrl: input.claimUrl,
+    })
   );
 }
 

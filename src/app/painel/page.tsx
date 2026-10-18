@@ -29,9 +29,15 @@ import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function PanelPage() {
+interface PanelPageProps {
+  readonly searchParams: Promise<{ readonly claimed?: string }>;
+}
+
+export default async function PanelPage({ searchParams }: PanelPageProps) {
   const provider = await getCurrentProvider();
   if (!provider) redirect("/entrar");
+
+  const params = await searchParams;
 
   const [subscription, advertisements, stats, homepage] = await Promise.all([
     getSubscriptionStatus(provider.id),
@@ -57,6 +63,21 @@ export default async function PanelPage() {
 
   return (
     <PanelLayout>
+      {params.claimed === "1" ? (
+        <div className="mb-4 rounded-lg border border-whatsapp/30 bg-whatsapp/10 px-3 py-3 text-sm">
+          <p className="font-medium text-foreground">
+            Anúncio reivindicado com sucesso
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            Você já está logado. Seu login é o WhatsApp desta conta. A senha
+            que você acabou de definir pode ser alterada quando quiser em{" "}
+            <Link href="/painel/perfil" className="text-whatsapp underline">
+              Meu perfil
+            </Link>
+            .
+          </p>
+        </div>
+      ) : null}
       {freeListing ? (
         <FreePanelOverview
           advertisementCount={advertisements.length}

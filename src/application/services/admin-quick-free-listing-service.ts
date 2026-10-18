@@ -22,6 +22,7 @@ export type QuickFreeListingResult = {
   readonly advertisementId: string;
   readonly adTitle: string;
   readonly publicHref: string;
+  readonly claimUrl: string;
   readonly temporaryPassword: string;
 };
 
@@ -126,6 +127,11 @@ export async function createQuickFreeListingAsAdmin(input: {
     bypassAdSlotLimit: true,
   });
 
+  const { issueProviderClaimToken } = await import(
+    "@/application/services/provider-claim-service"
+  );
+  const { claimUrl } = await issueProviderClaimToken(provider.id);
+
   await logAdminAction({
     adminId: input.adminId,
     action: "CREATE_QUICK_FREE_LISTING",
@@ -148,6 +154,7 @@ export async function createQuickFreeListingAsAdmin(input: {
     advertisementId: advertisement.id,
     adTitle: advertisement.title,
     publicHref: advertisement.publicHref ?? `/anuncio/${advertisement.id}`,
+    claimUrl,
     temporaryPassword,
   };
 }

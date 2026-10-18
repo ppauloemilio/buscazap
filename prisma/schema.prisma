@@ -40,6 +40,11 @@ model Provider {
   /** BASIC | PLUS — plano da recorrência ativa/pendente. */
   mpRecurringTier       String?
   mpRecurringUpdatedAt  DateTime?
+  /** Token do link "Reivindique" enviado no WhatsApp (cadastro admin). */
+  claimToken            String?         @unique
+  claimTokenExpiresAt   DateTime?
+  /** Quando o dono confirmou posse do perfil. */
+  claimVerifiedAt       DateTime?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
   advertisements        Advertisement[]
@@ -50,8 +55,25 @@ model Provider {
   subscriptions         Subscription[]
   auditLogs             AuditLog[]
   passwordResetTokens   PasswordResetToken[]
+  claimChallenges       ProviderClaimChallenge[]
   referralsMade         Referral[]      @relation("ReferralsMade")
   referralReceived      Referral?       @relation("ReferralReceived")
+}
+
+/** Desafio OTP para reivindicar anúncio criado pelo admin. */
+model ProviderClaimChallenge {
+  id         String    @id @default(cuid())
+  providerId String
+  provider   Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  whatsapp   String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([providerId, createdAt])
+  @@index([whatsapp, createdAt])
 }
 
 model ProviderImage {

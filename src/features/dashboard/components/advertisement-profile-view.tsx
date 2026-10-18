@@ -612,7 +612,14 @@ export function AdvertisementProfileView({
             )}
 
             <p className="text-right text-xs text-muted-foreground">
-              Encontrou uma informação errada?{" "}
+              É o dono deste estabelecimento?{" "}
+              <Link
+                href="/reivindicar"
+                className="font-medium text-whatsapp underline hover:text-whatsapp/80"
+              >
+                Reivindique o anúncio
+              </Link>
+              . Encontrou informação errada?{" "}
               <Link href="/denunciar" className="underline hover:text-foreground">
                 Fale conosco
               </Link>

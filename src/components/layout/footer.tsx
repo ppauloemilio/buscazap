@@ -4,6 +4,7 @@ import { BrandLogo } from "@/components/layout/brand-logo";
 const SUPPORT_LINKS = [
   { label: "Quem somos", href: "/quem-somos" },
   { label: "Central de ajuda", href: "/ajuda" },
+  { label: "Reivindicar anúncio", href: "/reivindicar" },
   { label: "Denunciar anúncio", href: "/denunciar" },
   { label: "Termos de uso", href: "/termos" },
   { label: "Privacidade", href: "/privacidade" },

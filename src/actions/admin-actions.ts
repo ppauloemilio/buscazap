@@ -1233,11 +1233,9 @@ export async function adminCreateQuickFreeListingAction(formData: FormData) {
     });
 
     notifyHref = buildQuickFreeListingWelcomeWhatsAppHref({
-      providerName: result.providerName,
-      adTitle: result.adTitle,
-      adUrl: buildAbsoluteUrl(result.publicHref),
       whatsapp: result.whatsapp,
-      temporaryPassword: result.temporaryPassword,
+      adUrl: buildAbsoluteUrl(result.publicHref),
+      claimUrl: result.claimUrl,
     });
   } catch (error) {
     const message =
