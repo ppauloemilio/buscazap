@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Download, MessageCircle, Upload } from "lucide-react";
 import {
   adminConfirmBulkFreeListingsAction,
@@ -45,10 +45,28 @@ export function AdminBulkFreeListingImport() {
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
   const [okCount, setOkCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
+  const [selectedLines, setSelectedLines] = useState<Set<number>>(new Set());
   const [created, setCreated] = useState<CreatedRow[] | null>(null);
   const [failed, setFailed] = useState<
     readonly { readonly line: number; readonly error: string }[] | null
   >(null);
+
+  const selectableLines = useMemo(
+    () =>
+      (preview ?? [])
+        .filter((row) => row.ok && row.whatsappNormalized)
+        .map((row) => row.line),
+    [preview]
+  );
+
+  const selectedCount = useMemo(
+    () => selectableLines.filter((line) => selectedLines.has(line)).length,
+    [selectableLines, selectedLines]
+  );
+
+  const allSelectableChecked =
+    selectableLines.length > 0 &&
+    selectableLines.every((line) => selectedLines.has(line));
 
   function downloadTemplate() {
     const blob = new Blob([BULK_FREE_LISTING_CSV_TEMPLATE], {
@@ -68,6 +86,7 @@ export function AdminBulkFreeListingImport() {
     setError(null);
     setCreated(null);
     setFailed(null);
+    setSelectedLines(new Set());
 
     startTransition(async () => {
       const result = await adminPreviewBulkFreeListingsAction(formData);
@@ -79,13 +98,38 @@ export function AdminBulkFreeListingImport() {
       setPreview(result.rows);
       setOkCount(result.okCount);
       setErrorCount(result.errorCount);
+      setSelectedLines(
+        new Set(
+          result.rows
+            .filter((row) => row.ok && row.whatsappNormalized)
+            .map((row) => row.line)
+        )
+      );
     });
+  }
+
+  function toggleLine(line: number, checked: boolean) {
+    setSelectedLines((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(line);
+      else next.delete(line);
+      return next;
+    });
+  }
+
+  function toggleAllSelectable(checked: boolean) {
+    setSelectedLines(checked ? new Set(selectableLines) : new Set());
   }
 
   function handleConfirm() {
     if (!preview) return;
     const rows = preview
-      .filter((row) => row.ok && row.whatsappNormalized)
+      .filter(
+        (row) =>
+          row.ok &&
+          row.whatsappNormalized &&
+          selectedLines.has(row.line)
+      )
       .map((row) => ({
         line: row.line,
         nome: row.nome,
@@ -95,13 +139,13 @@ export function AdminBulkFreeListingImport() {
       }));
 
     if (rows.length === 0) {
-      setError("Nenhuma linha válida para importar");
+      setError("Selecione ao menos uma linha válida para importar");
       return;
     }
 
     if (
       !window.confirm(
-        `Criar ${rows.length} anúncio(s) Plano Grátis?\nLinhas com erro serão ignoradas.`
+        `Criar ${rows.length} anúncio(s) Plano Grátis selecionado(s)?`
       )
     ) {
       return;
@@ -117,6 +161,7 @@ export function AdminBulkFreeListingImport() {
       setCreated(result.created);
       setFailed(result.failed);
       setPreview(null);
+      setSelectedLines(new Set());
     });
   }
 
@@ -130,8 +175,8 @@ export function AdminBulkFreeListingImport() {
           <p className="text-xs text-muted-foreground">
             Colunas: <code>nome,categoria,bairro,whatsapp</code>. Aceita também
             separador <code>;</code>. Máximo {BULK_FREE_LISTING_MAX_ROWS} linhas.
-            Use &quot;Testar WhatsApp&quot; na prévia para conferir se a conversa
-            abre.
+            Marque só os que deseja criar e use &quot;Testar&quot; para
+            conferir o WhatsApp.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" onClick={downloadTemplate}>
@@ -173,25 +218,35 @@ export function AdminBulkFreeListingImport() {
             <div>
               <CardTitle className="text-base">Pré-visualização</CardTitle>
               <p className="text-xs text-muted-foreground">
-                {okCount} ok · {errorCount} com erro
+                {okCount} ok · {errorCount} com erro · {selectedCount}{" "}
+                selecionado(s)
               </p>
             </div>
             <Button
               type="button"
               variant="whatsapp"
               size="sm"
-              disabled={isPending || okCount === 0}
+              disabled={isPending || selectedCount === 0}
               onClick={handleConfirm}
             >
-              {isPending
-                ? "Importando..."
-                : `Importar ${okCount} válido(s)`}
+              {isPending ? "Importando..." : "Importar Selecionados"}
             </Button>
           </CardHeader>
           <CardContent className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
                 <tr className="border-b text-xs text-muted-foreground">
+                  <th className="py-2 pr-2">
+                    <input
+                      type="checkbox"
+                      aria-label="Selecionar todos os válidos"
+                      checked={allSelectableChecked}
+                      disabled={selectableLines.length === 0}
+                      onChange={(event) =>
+                        toggleAllSelectable(event.target.checked)
+                      }
+                    />
+                  </th>
                   <th className="py-2 pr-2">Linha</th>
                   <th className="py-2 pr-2">Status</th>
                   <th className="py-2 pr-2">Nome</th>
@@ -202,54 +257,71 @@ export function AdminBulkFreeListingImport() {
                 </tr>
               </thead>
               <tbody>
-                {preview.map((row) => (
-                  <tr key={row.line} className="border-b align-top last:border-0">
-                    <td className="py-2 pr-2 font-mono text-xs">{row.line}</td>
-                    <td className="py-2 pr-2">
-                      <Badge variant={row.ok ? "secondary" : "destructive"}>
-                        {row.ok ? "Ok" : "Erro"}
-                      </Badge>
-                      {row.errors.length > 0 ? (
-                        <ul className="mt-1 max-w-[180px] space-y-0.5 text-xs text-destructive">
-                          {row.errors.map((item) => (
-                            <li key={item}>· {item}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      {row.warnings.length > 0 ? (
-                        <ul className="mt-1 max-w-[180px] space-y-0.5 text-xs text-amber-700">
-                          {row.warnings.map((item) => (
-                            <li key={item}>· {item}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </td>
-                    <td className="py-2 pr-2">{row.nome || "—"}</td>
-                    <td className="py-2 pr-2">
-                      {row.categoriaResolvida || row.categoria || "—"}
-                    </td>
-                    <td className="py-2 pr-2">{row.bairro || "—"}</td>
-                    <td className="py-2 pr-2 font-mono text-xs">
-                      {row.whatsappDisplay || "—"}
-                    </td>
-                    <td className="py-2">
-                      {row.waMeHref ? (
-                        <Button size="sm" variant="outline" asChild>
-                          <a
-                            href={row.waMeHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <MessageCircle className="h-3.5 w-3.5" />
-                            Testar
-                          </a>
-                        </Button>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {preview.map((row) => {
+                  const canSelect = row.ok && Boolean(row.whatsappNormalized);
+                  return (
+                    <tr
+                      key={row.line}
+                      className="border-b align-top last:border-0"
+                    >
+                      <td className="py-2 pr-2">
+                        <input
+                          type="checkbox"
+                          aria-label={`Selecionar linha ${row.line}`}
+                          disabled={!canSelect}
+                          checked={canSelect && selectedLines.has(row.line)}
+                          onChange={(event) =>
+                            toggleLine(row.line, event.target.checked)
+                          }
+                        />
+                      </td>
+                      <td className="py-2 pr-2 font-mono text-xs">{row.line}</td>
+                      <td className="py-2 pr-2">
+                        <Badge variant={row.ok ? "secondary" : "destructive"}>
+                          {row.ok ? "Ok" : "Erro"}
+                        </Badge>
+                        {row.errors.length > 0 ? (
+                          <ul className="mt-1 max-w-[180px] space-y-0.5 text-xs text-destructive">
+                            {row.errors.map((item) => (
+                              <li key={item}>· {item}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+                        {row.warnings.length > 0 ? (
+                          <ul className="mt-1 max-w-[180px] space-y-0.5 text-xs text-amber-700">
+                            {row.warnings.map((item) => (
+                              <li key={item}>· {item}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </td>
+                      <td className="py-2 pr-2">{row.nome || "—"}</td>
+                      <td className="py-2 pr-2">
+                        {row.categoriaResolvida || row.categoria || "—"}
+                      </td>
+                      <td className="py-2 pr-2">{row.bairro || "—"}</td>
+                      <td className="py-2 pr-2 font-mono text-xs">
+                        {row.whatsappDisplay || "—"}
+                      </td>
+                      <td className="py-2">
+                        {row.waMeHref ? (
+                          <Button size="sm" variant="outline" asChild>
+                            <a
+                              href={row.waMeHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                              Testar
+                            </a>
+                          </Button>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </CardContent>
