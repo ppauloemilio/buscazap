@@ -84,6 +84,7 @@ export async function getAdminDashboardStats() {
     expiredAdsCount,
     adsByCity,
     pendingCategorySuggestions,
+    quickFreeListingsLast7Days,
   ] = await Promise.all([
     prisma.provider.count({ where: { role: UserRole.PROVIDER } }),
     prisma.advertisement.count(),
@@ -155,6 +156,9 @@ export async function getAdminDashboardStats() {
       _count: { _all: true },
     }),
     prisma.categorySuggestion.count({ where: { status: "PENDING" } }),
+    import("@/application/services/admin-quick-free-listings-notify-service").then(
+      ({ countAdminQuickFreeListings }) => countAdminQuickFreeListings(7)
+    ),
   ]);
 
   const activeSubscriptions = await prisma.provider.count({
@@ -189,6 +193,7 @@ export async function getAdminDashboardStats() {
     expiredAdsCount,
     signupsLast30Days,
     pendingCategorySuggestions,
+    quickFreeListingsLast7Days,
     adsByCity: adsByCity
       .map((row) => ({
         city: row.city,

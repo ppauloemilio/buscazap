@@ -23,9 +23,14 @@ export default async function AdminBulkFreeListingPage() {
             teste os números no wa.me e confirme a criação em lote.
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/admin/cadastro-rapido">Cadastro unitário</Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/cadastro-rapido">Cadastro unitário</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/cadastro-rapido/avisos">Avisar importados</Link>
+          </Button>
+        </div>
       </div>
 
       {!freemium ? (

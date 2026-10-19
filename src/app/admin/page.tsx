@@ -71,6 +71,12 @@ export default async function AdminDashboardPage() {
           href="/admin/usuarios?created=7"
         />
         <StatCard
+          title="Import / cadastro rápido (7 dias)"
+          value={stats.quickFreeListingsLast7Days}
+          href="/admin/cadastro-rapido/avisos?days=7"
+          hint="Listar e avisar no WhatsApp"
+        />
+        <StatCard
           title="Indicações (7 dias)"
           value={stats.referralsLast7Days}
           href="/admin/indicacoes?days=7"

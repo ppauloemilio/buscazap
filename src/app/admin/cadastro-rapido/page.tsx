@@ -66,9 +66,14 @@ export default async function AdminQuickFreeListingPage({
             gera mensagem para avisar o anunciante no Zap.
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/admin/cadastro-rapido/lote">Importar CSV em lote</Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/cadastro-rapido/lote">Importar CSV em lote</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/cadastro-rapido/avisos">Avisar importados</Link>
+          </Button>
+        </div>
       </div>
 
       {!freemium ? (

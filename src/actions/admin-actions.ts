@@ -1200,6 +1200,37 @@ export async function syncAdminRecurringProviderAction(formData: FormData) {
   }
 }
 
+export async function adminOpenQuickFreeWelcomeNotifyAction(
+  formData: FormData
+): Promise<{ ok: true; notifyHref: string } | { ok: false; error: string }> {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const advertisementId = formData.get("advertisementId");
+  if (typeof advertisementId !== "string" || !advertisementId.trim()) {
+    return { ok: false, error: "Anúncio inválido" };
+  }
+
+  try {
+    const { markQuickFreeListingWelcomeNotified } = await import(
+      "@/application/services/admin-quick-free-listings-notify-service"
+    );
+    const result = await markQuickFreeListingWelcomeNotified({
+      adminId: admin.id,
+      advertisementId: advertisementId.trim(),
+    });
+
+    revalidatePath("/admin/cadastro-rapido/avisos");
+    revalidatePath("/admin");
+
+    return { ok: true, notifyHref: result.notifyHref };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Não foi possível abrir o aviso";
+    return { ok: false, error: message };
+  }
+}
+
 export async function adminPreviewBulkFreeListingsAction(
   formData: FormData
 ): Promise<
