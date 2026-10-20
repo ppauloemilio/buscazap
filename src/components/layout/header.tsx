@@ -39,6 +39,18 @@ export async function Header() {
             Categorias
           </Link>
           <Link
+            href="/promocoes"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Promoções
+          </Link>
+          <Link
+            href="/cupons"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Cupons
+          </Link>
+          <Link
             href={plansHref}
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >

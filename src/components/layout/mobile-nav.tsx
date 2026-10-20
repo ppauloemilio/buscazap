@@ -96,6 +96,20 @@ export function MobileNav({
                   Categorias
                 </Link>
                 <Link
+                  href="/promocoes"
+                  onClick={close}
+                  className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
+                >
+                  Promoções
+                </Link>
+                <Link
+                  href="/cupons"
+                  onClick={close}
+                  className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
+                >
+                  Cupons
+                </Link>
+                <Link
                   href={plansHref}
                   onClick={close}
                   className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"

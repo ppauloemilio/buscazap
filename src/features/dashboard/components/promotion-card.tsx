@@ -20,7 +20,7 @@ export function PromotionCard({ promotion }: PromotionCardProps) {
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
-      <div className="relative aspect-[16/10] shrink-0 overflow-hidden bg-muted">
+      <div className="relative aspect-[16/9] shrink-0 overflow-hidden bg-muted">
         <AdvertisementCover
           title={promotion.title}
           category={promotion.businessName}
@@ -36,30 +36,27 @@ export function PromotionCard({ promotion }: PromotionCardProps) {
         )}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-2.5">
+      <div className="flex min-h-0 flex-1 flex-col px-2.5 pb-2.5 pt-2">
         <div className="flex min-h-0 flex-1 flex-col">
-          <p className="truncate text-[11px] font-medium text-whatsapp">
+          <p className="truncate text-[10px] font-medium text-whatsapp">
             {promotion.businessName}
           </p>
-          <h3 className="mt-0.5 line-clamp-2 text-sm font-bold leading-snug text-foreground">
+          <h3 className="mt-0.5 line-clamp-2 text-xs font-bold leading-snug text-foreground sm:text-sm">
             {promotion.title}
           </h3>
-          <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
-            {promotion.description}
-          </p>
 
-          <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-            <span className="text-[11px] text-muted-foreground line-through">
+          <div className="mt-1.5 flex flex-wrap items-baseline gap-1">
+            <span className="text-[10px] text-muted-foreground line-through">
               {formatPriceBRL(promotion.priceOriginal)}
             </span>
-            <span className="text-base font-bold text-whatsapp">
+            <span className="text-sm font-bold text-whatsapp">
               {formatPriceBRL(promotion.pricePromo)}
             </span>
           </div>
 
           {validUntil ? (
             <p className="mt-1 text-[10px] text-muted-foreground">
-              Válido até {validUntil}
+              Até {validUntil}
             </p>
           ) : null}
         </div>
@@ -67,7 +64,7 @@ export function PromotionCard({ promotion }: PromotionCardProps) {
         <Button
           variant="outline"
           size="sm"
-          className="mt-3 h-8 w-full shrink-0 text-[11px] font-semibold uppercase tracking-wide"
+          className="mt-2 h-7 w-full shrink-0 text-[10px] font-semibold uppercase tracking-wide"
           asChild
         >
           <Link href={promotion.href}>Ver oferta</Link>

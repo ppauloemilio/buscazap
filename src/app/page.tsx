@@ -72,6 +72,7 @@ export default async function HomePage() {
         <CouponsSection
           coupons={homeCoupons.items}
           total={homeCoupons.total}
+          showWhenEmpty
         />
       ) : null,
     premiumAds: () =>

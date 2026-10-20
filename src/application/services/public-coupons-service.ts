@@ -36,15 +36,16 @@ export async function listPublicCouponCards(options?: {
       provider: {
         status: ProviderStatus.ACTIVE,
         OR: [
+          // Conta admin (demo / operação) — não exige anúncio aprovado
           { role: UserRole.ADMIN },
           {
             subscriptionExpiresAt: { gt: now },
             subscriptionTier: SubscriptionTier.PLUS,
+            advertisements: {
+              some: { status: AdvertisementStatus.APPROVED },
+            },
           },
         ],
-        advertisements: {
-          some: { status: AdvertisementStatus.APPROVED },
-        },
       },
     },
     include: {

@@ -58,13 +58,13 @@ export async function listPublicPromotionCards(options?: {
             {
               subscriptionExpiresAt: { gt: now },
               subscriptionTier: SubscriptionTier.PLUS,
+              advertisements: {
+                some: {
+                  status: AdvertisementStatus.APPROVED,
+                },
+              },
             },
           ],
-          advertisements: {
-            some: {
-              status: AdvertisementStatus.APPROVED,
-            },
-          },
         },
       },
       include: {

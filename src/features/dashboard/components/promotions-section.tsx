@@ -53,7 +53,7 @@ export function PromotionsSection({
           </div>
         )}
 
-        <div className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {promotions.map((promotion) => (
             <PromotionCard key={promotion.id} promotion={promotion} />
           ))}
