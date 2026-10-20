@@ -36,7 +36,7 @@ export function CouponsSection({
             <div>
               <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
                 <Ticket className="h-5 w-5 shrink-0 text-emerald-600" />
-                Cupons de desconto
+                Cupons Ativos
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Resgate cupons e economize nas suas empresas favoritas.

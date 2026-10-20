@@ -42,13 +42,13 @@ export async function Header() {
             href="/promocoes"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Promoções
+            Promoções Ativas
           </Link>
           <Link
             href="/cupons"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Cupons
+            Cupons Ativos
           </Link>
           <Link
             href={plansHref}

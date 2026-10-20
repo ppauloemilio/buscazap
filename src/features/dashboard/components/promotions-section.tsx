@@ -35,7 +35,7 @@ export function PromotionsSection({
             <div>
               <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
                 <Tag className="h-5 w-5 shrink-0 text-rose-500" />
-                Promoções
+                Promoções Ativas
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Ofertas ativas de anunciantes Plano Pro

@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { PromotionsSection } from "@/features/dashboard/components/promotions-section";
 
 export const metadata: Metadata = {
-  title: "Promoções — ofertas WhatsApp",
+  title: "Promoções Ativas — ofertas WhatsApp",
   description:
     "Ofertas e promoções ativas de empresas e prestadores no BuscaZapp. Veja preços e fale no WhatsApp.",
 };
@@ -15,7 +15,7 @@ export default async function PromocoesPage() {
   return (
     <>
       <PageHeader
-        title="Promoções"
+        title="Promoções Ativas"
         description="Ofertas ativas de anunciantes Plano Pro"
       />
       {promotions.length === 0 ? (

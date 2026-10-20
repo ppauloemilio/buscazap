@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { CouponsSection } from "@/features/dashboard/components/coupons-section";
 
 export const metadata: Metadata = {
-  title: "Cupons de desconto",
+  title: "Cupons Ativos",
   description:
     "Resgate cupons e economize nas suas empresas favoritas no BuscaZapp.",
 };
@@ -15,7 +15,7 @@ export default async function CuponsPage() {
   return (
     <>
       <PageHeader
-        title="Cupons de desconto"
+        title="Cupons Ativos"
         description="Resgate cupons e economize nas suas empresas favoritas."
       />
       {coupons.length === 0 ? (

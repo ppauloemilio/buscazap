@@ -57,8 +57,8 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
 export const HOMEPAGE_SECTION_LABELS: Record<HomepageSectionId, string> = {
   popularCategories: "Categorias populares",
   urgentSearches: "Precisa agora?",
-  promotions: "Promoções",
-  coupons: "Cupons de desconto",
+  promotions: "Promoções Ativas",
+  coupons: "Cupons Ativos",
   premiumAds: "Destaques Premium",
   paidAds: "Anúncios pagos",
   freeAds: "Plano Grátis",
