@@ -15,6 +15,7 @@ export type PublicCouponCard = {
   readonly title: string;
   readonly description: string;
   readonly badgeLabel: string;
+  readonly quantityTotal: number;
   readonly quantityRemaining: number;
   readonly endsAt: string;
   readonly businessName: string;
@@ -70,6 +71,7 @@ export async function listPublicCouponCards(options?: {
     title: row.title,
     description: row.description,
     badgeLabel: row.badgeLabel,
+    quantityTotal: row.quantityTotal,
     quantityRemaining: row.quantityRemaining,
     endsAt: row.endsAt.toISOString(),
     businessName: row.provider.advertisements[0]?.title ?? row.provider.name,

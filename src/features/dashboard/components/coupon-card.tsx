@@ -64,14 +64,14 @@ export function CouponCard({ coupon }: CouponCardProps) {
           <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
             {coupon.description}
           </p>
+          <p className="mt-2 text-[10px] font-medium text-emerald-800">
+            {soldOut
+              ? `Esgotado · Total ${coupon.quantityTotal}`
+              : `Total ${coupon.quantityTotal} · Restam ${remaining}`}
+          </p>
           {validUntil ? (
-            <p className="mt-2 text-[10px] text-muted-foreground">
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
               Válido até {validUntil}
-            </p>
-          ) : null}
-          {soldOut ? (
-            <p className="mt-1 text-[10px] font-medium text-emerald-700">
-              Esgotado
             </p>
           ) : null}
           {error ? (
