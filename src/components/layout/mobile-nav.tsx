@@ -100,14 +100,14 @@ export function MobileNav({
                   onClick={close}
                   className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
                 >
-                  Promoções Ativas
+                  Promoções
                 </Link>
                 <Link
                   href="/cupons"
                   onClick={close}
                   className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
                 >
-                  Cupons Ativos
+                  Cupons
                 </Link>
                 <Link
                   href={plansHref}
