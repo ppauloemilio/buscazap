@@ -32,6 +32,9 @@ export async function createQuickFreeListingAsAdmin(input: {
   readonly category: string;
   readonly customCategory?: string;
   readonly neighborhood: string;
+  /** Quando informado, usa esta cidade em vez do default do catálogo. */
+  readonly city?: string;
+  readonly state?: string;
   readonly whatsapp: string;
 }): Promise<QuickFreeListingResult> {
   if (!isNewAdProfileEnabled()) {
@@ -42,11 +45,13 @@ export async function createQuickFreeListingAsAdmin(input: {
 
   const title = input.title.trim();
   const neighborhood = input.neighborhood.trim();
+  const cityOverride = input.city?.trim() ?? "";
+  const stateOverride = input.state?.trim().toUpperCase() ?? "";
   if (!title) {
     throw new Error("Informe o título do anúncio");
   }
-  if (!neighborhood) {
-    throw new Error("Informe o bairro");
+  if (!neighborhood && !cityOverride) {
+    throw new Error("Informe o bairro ou a cidade");
   }
 
   const whatsapp =
@@ -76,10 +81,30 @@ export async function createQuickFreeListingAsAdmin(input: {
     listActiveCities(),
     listActiveStates(),
   ]);
-  const location = getDefaultCatalogLocation(
-    cities.map((c) => ({ name: c.name, state: c.state.uf })),
+  const catalogCities = cities.map((c) => ({
+    name: c.name,
+    state: c.state.uf,
+  }));
+  const defaultLocation = getDefaultCatalogLocation(
+    catalogCities,
     states.map((s) => ({ uf: s.uf }))
   );
+
+  let location = defaultLocation;
+  if (cityOverride) {
+    const matched = catalogCities.find(
+      (city) =>
+        city.name.localeCompare(cityOverride, "pt-BR", {
+          sensitivity: "base",
+        }) === 0 &&
+        (!stateOverride || city.state === stateOverride)
+    );
+    if (!matched) {
+      throw new Error("Cidade não encontrada no catálogo");
+    }
+    location = { city: matched.name, state: matched.state };
+  }
+
   if (!location.city || !location.state) {
     throw new Error("Catálogo de cidades não configurado");
   }
@@ -106,7 +131,7 @@ export async function createQuickFreeListingAsAdmin(input: {
       status: ProviderStatus.ACTIVE,
       city: location.city,
       state: location.state,
-      neighborhood,
+      neighborhood: neighborhood || null,
       referralCode,
       listingProfile: "SIMPLE",
     },
@@ -121,7 +146,7 @@ export async function createQuickFreeListingAsAdmin(input: {
     isCustomCategory: categoryResolution.isCustomCategory,
     city: location.city,
     state: location.state,
-    neighborhood,
+    neighborhood: neighborhood || undefined,
     serviceArea: FREE_LISTING_DEFAULTS.serviceArea,
     whatsappNumber: whatsapp,
     bypassAdSlotLimit: true,
@@ -141,7 +166,7 @@ export async function createQuickFreeListingAsAdmin(input: {
       providerId: provider.id,
       title,
       category: categoryResolution.categoryName,
-      neighborhood,
+      neighborhood: neighborhood || null,
       city: location.city,
       whatsapp,
     },

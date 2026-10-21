@@ -10,9 +10,13 @@ import {
   BULK_FREE_LISTING_CSV_TEMPLATE,
   BULK_FREE_LISTING_MAX_ROWS,
 } from "@/lib/bulk-free-listing-csv";
+import type { CatalogLocationOption } from "@/shared/utils/catalog-location";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+const EMPTY_BAIRRO_ERROR = "Bairro vazio — selecione a cidade";
+const EMPTY_BAIRRO_ERROR_LEGACY = "Bairro vazio";
 
 type PreviewRow = {
   readonly line: number;
@@ -39,25 +43,86 @@ type CreatedRow = {
   readonly notifyHref: string;
 };
 
-export function AdminBulkFreeListingImport() {
+type CityChoice = {
+  readonly city: string;
+  readonly state: string;
+};
+
+function cityKey(city: CatalogLocationOption): string {
+  return `${city.name}||${city.state}`;
+}
+
+function parseCityKey(value: string): CityChoice | null {
+  const [city, state] = value.split("||");
+  if (!city?.trim() || !state?.trim()) return null;
+  return { city: city.trim(), state: state.trim().toUpperCase() };
+}
+
+function isEmptyBairroError(message: string): boolean {
+  return (
+    message === EMPTY_BAIRRO_ERROR || message === EMPTY_BAIRRO_ERROR_LEGACY
+  );
+}
+
+function needsCityChoice(row: PreviewRow): boolean {
+  return !row.bairro.trim();
+}
+
+function rowBlockingErrors(row: PreviewRow): readonly string[] {
+  // Cidade na UI resolve o erro de bairro vazio (não duplicar no status).
+  return row.errors.filter((error) => !isEmptyBairroError(error));
+}
+
+function isRowImportable(
+  row: PreviewRow,
+  cityByLine: ReadonlyMap<number, CityChoice>
+): boolean {
+  if (!row.whatsappNormalized) return false;
+  if (needsCityChoice(row) && !cityByLine.get(row.line)) return false;
+  return rowBlockingErrors(row).length === 0;
+}
+
+export function AdminBulkFreeListingImport({
+  cities,
+}: {
+  readonly cities: readonly CatalogLocationOption[];
+}) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
-  const [okCount, setOkCount] = useState(0);
-  const [errorCount, setErrorCount] = useState(0);
   const [selectedLines, setSelectedLines] = useState<Set<number>>(new Set());
+  const [cityByLine, setCityByLine] = useState<Map<number, CityChoice>>(
+    () => new Map()
+  );
+  const [bulkCityKey, setBulkCityKey] = useState("");
   const [created, setCreated] = useState<CreatedRow[] | null>(null);
   const [failed, setFailed] = useState<
     readonly { readonly line: number; readonly error: string }[] | null
   >(null);
 
+  const emptyBairroLines = useMemo(
+    () => (preview ?? []).filter(needsCityChoice).map((row) => row.line),
+    [preview]
+  );
+
   const selectableLines = useMemo(
     () =>
       (preview ?? [])
-        .filter((row) => row.ok && row.whatsappNormalized)
+        .filter((row) => isRowImportable(row, cityByLine))
         .map((row) => row.line),
-    [preview]
+    [preview, cityByLine]
   );
+
+  const statusCounts = useMemo(() => {
+    const rows = preview ?? [];
+    let ok = 0;
+    let withError = 0;
+    for (const row of rows) {
+      if (isRowImportable(row, cityByLine)) ok += 1;
+      else withError += 1;
+    }
+    return { ok, withError };
+  }, [preview, cityByLine]);
 
   const selectedCount = useMemo(
     () => selectableLines.filter((line) => selectedLines.has(line)).length,
@@ -80,6 +145,44 @@ export function AdminBulkFreeListingImport() {
     URL.revokeObjectURL(url);
   }
 
+  function reconcileSelection(
+    nextCityByLine: Map<number, CityChoice>,
+    autoSelectLines: readonly number[] = []
+  ) {
+    if (!preview) return;
+    const autoSelect = new Set(autoSelectLines);
+    setSelectedLines((prev) => {
+      const next = new Set<number>();
+      for (const row of preview) {
+        if (!isRowImportable(row, nextCityByLine)) continue;
+        if (prev.has(row.line) || autoSelect.has(row.line)) {
+          next.add(row.line);
+        }
+      }
+      return next;
+    });
+  }
+
+  function setCityForLine(line: number, value: string) {
+    const parsed = parseCityKey(value);
+    const next = new Map(cityByLine);
+    if (parsed) next.set(line, parsed);
+    else next.delete(line);
+    setCityByLine(next);
+    reconcileSelection(next, parsed ? [line] : []);
+  }
+
+  function applyBulkCity() {
+    const parsed = parseCityKey(bulkCityKey);
+    if (!parsed || emptyBairroLines.length === 0) return;
+    const next = new Map(cityByLine);
+    for (const line of emptyBairroLines) {
+      next.set(line, parsed);
+    }
+    setCityByLine(next);
+    reconcileSelection(next, emptyBairroLines);
+  }
+
   function handlePreview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -87,6 +190,8 @@ export function AdminBulkFreeListingImport() {
     setCreated(null);
     setFailed(null);
     setSelectedLines(new Set());
+    setCityByLine(new Map());
+    setBulkCityKey("");
 
     startTransition(async () => {
       const result = await adminPreviewBulkFreeListingsAction(formData);
@@ -96,12 +201,10 @@ export function AdminBulkFreeListingImport() {
         return;
       }
       setPreview(result.rows);
-      setOkCount(result.okCount);
-      setErrorCount(result.errorCount);
       setSelectedLines(
         new Set(
           result.rows
-            .filter((row) => row.ok && row.whatsappNormalized)
+            .filter((row) => isRowImportable(row, new Map()))
             .map((row) => row.line)
         )
       );
@@ -126,17 +229,21 @@ export function AdminBulkFreeListingImport() {
     const rows = preview
       .filter(
         (row) =>
-          row.ok &&
-          row.whatsappNormalized &&
-          selectedLines.has(row.line)
+          isRowImportable(row, cityByLine) && selectedLines.has(row.line)
       )
-      .map((row) => ({
-        line: row.line,
-        nome: row.nome,
-        categoria: row.categoriaResolvida || row.categoria,
-        bairro: row.bairro,
-        whatsapp: row.whatsappNormalized!,
-      }));
+      .map((row) => {
+        const cityChoice = cityByLine.get(row.line);
+        return {
+          line: row.line,
+          nome: row.nome,
+          categoria: row.categoriaResolvida || row.categoria,
+          bairro: row.bairro,
+          whatsapp: row.whatsappNormalized!,
+          ...(needsCityChoice(row) && cityChoice
+            ? { cidade: cityChoice.city, uf: cityChoice.state }
+            : {}),
+        };
+      });
 
     if (rows.length === 0) {
       setError("Selecione ao menos uma linha válida para importar");
@@ -162,6 +269,8 @@ export function AdminBulkFreeListingImport() {
       setFailed(result.failed);
       setPreview(null);
       setSelectedLines(new Set());
+      setCityByLine(new Map());
+      setBulkCityKey("");
     });
   }
 
@@ -176,7 +285,7 @@ export function AdminBulkFreeListingImport() {
             Colunas: <code>nome,categoria,bairro,whatsapp</code>. Aceita também
             separador <code>;</code>. Máximo {BULK_FREE_LISTING_MAX_ROWS} linhas.
             Marque só os que deseja criar e use &quot;Testar&quot; para
-            conferir o WhatsApp.
+            conferir o WhatsApp. Sem bairro, escolha a cidade na pré-visualização.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" onClick={downloadTemplate}>
@@ -218,8 +327,8 @@ export function AdminBulkFreeListingImport() {
             <div>
               <CardTitle className="text-base">Pré-visualização</CardTitle>
               <p className="text-xs text-muted-foreground">
-                {okCount} ok · {errorCount} com erro · {selectedCount}{" "}
-                selecionado(s)
+                {statusCounts.ok} ok · {statusCounts.withError} com erro ·{" "}
+                {selectedCount} selecionado(s)
               </p>
             </div>
             <Button
@@ -232,8 +341,49 @@ export function AdminBulkFreeListingImport() {
               {isPending ? "Importando..." : "Importar Selecionados"}
             </Button>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
+          <CardContent className="space-y-3 overflow-x-auto">
+            {emptyBairroLines.length > 0 ? (
+              <div className="rounded-md border border-amber-300/60 bg-amber-50 px-3 py-3 text-sm dark:bg-amber-950/30">
+                <p className="mb-2 font-medium text-amber-950 dark:text-amber-100">
+                  {emptyBairroLines.length} linha(s) com bairro vazio — escolha
+                  a cidade para cadastrar
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                  <div className="min-w-[220px] flex-1">
+                    <label
+                      htmlFor="bulk-city-all"
+                      className="mb-1 block text-xs font-medium text-muted-foreground"
+                    >
+                      Cidade para todas as linhas sem bairro
+                    </label>
+                    <select
+                      id="bulk-city-all"
+                      value={bulkCityKey}
+                      onChange={(event) => setBulkCityKey(event.target.value)}
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="">Selecione a cidade</option>
+                      {cities.map((city) => (
+                        <option key={cityKey(city)} value={cityKey(city)}>
+                          {city.name} ({city.state})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!bulkCityKey}
+                    onClick={applyBulkCity}
+                  >
+                    Aplicar a todas sem bairro
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            <table className="w-full min-w-[860px] text-left text-sm">
               <thead>
                 <tr className="border-b text-xs text-muted-foreground">
                   <th className="py-2 pr-2">
@@ -251,14 +401,19 @@ export function AdminBulkFreeListingImport() {
                   <th className="py-2 pr-2">Status</th>
                   <th className="py-2 pr-2">Nome</th>
                   <th className="py-2 pr-2">Categoria</th>
-                  <th className="py-2 pr-2">Bairro</th>
+                  <th className="py-2 pr-2">Bairro / Cidade</th>
                   <th className="py-2 pr-2">WhatsApp</th>
                   <th className="py-2">Teste</th>
                 </tr>
               </thead>
               <tbody>
                 {preview.map((row) => {
-                  const canSelect = row.ok && Boolean(row.whatsappNormalized);
+                  const cityChoice = cityByLine.get(row.line);
+                  const canSelect = isRowImportable(row, cityByLine);
+                  const displayErrors = rowBlockingErrors(row);
+                  const rowOk = canSelect;
+                  const emptyBairro = needsCityChoice(row);
+
                   return (
                     <tr
                       key={row.line}
@@ -277,15 +432,20 @@ export function AdminBulkFreeListingImport() {
                       </td>
                       <td className="py-2 pr-2 font-mono text-xs">{row.line}</td>
                       <td className="py-2 pr-2">
-                        <Badge variant={row.ok ? "secondary" : "destructive"}>
-                          {row.ok ? "Ok" : "Erro"}
+                        <Badge variant={rowOk ? "secondary" : "destructive"}>
+                          {rowOk ? "Ok" : "Erro"}
                         </Badge>
-                        {row.errors.length > 0 ? (
-                          <ul className="mt-1 max-w-[180px] space-y-0.5 text-xs text-destructive">
-                            {row.errors.map((item) => (
+                        {displayErrors.length > 0 ? (
+                          <ul className="mt-1 max-w-[200px] space-y-0.5 text-xs text-destructive">
+                            {displayErrors.map((item) => (
                               <li key={item}>· {item}</li>
                             ))}
                           </ul>
+                        ) : null}
+                        {emptyBairro && !cityChoice ? (
+                          <p className="mt-1 max-w-[200px] text-xs text-amber-700">
+                            · Selecione a cidade ao lado
+                          </p>
                         ) : null}
                         {row.warnings.length > 0 ? (
                           <ul className="mt-1 max-w-[180px] space-y-0.5 text-xs text-amber-700">
@@ -299,7 +459,39 @@ export function AdminBulkFreeListingImport() {
                       <td className="py-2 pr-2">
                         {row.categoriaResolvida || row.categoria || "—"}
                       </td>
-                      <td className="py-2 pr-2">{row.bairro || "—"}</td>
+                      <td className="py-2 pr-2">
+                        {emptyBairro ? (
+                          <div className="min-w-[160px]">
+                            <select
+                              aria-label={`Cidade da linha ${row.line}`}
+                              value={
+                                cityChoice
+                                  ? cityKey({
+                                      name: cityChoice.city,
+                                      state: cityChoice.state,
+                                    })
+                                  : ""
+                              }
+                              onChange={(event) =>
+                                setCityForLine(row.line, event.target.value)
+                              }
+                              className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs"
+                            >
+                              <option value="">Cidade…</option>
+                              {cities.map((city) => (
+                                <option
+                                  key={cityKey(city)}
+                                  value={cityKey(city)}
+                                >
+                                  {city.name} ({city.state})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : (
+                          row.bairro
+                        )}
+                      </td>
                       <td className="py-2 pr-2 font-mono text-xs">
                         {row.whatsappDisplay || "—"}
                       </td>

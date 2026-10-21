@@ -129,7 +129,9 @@ export async function previewBulkFreeListingRows(
 
     if (!nome) errors.push("Nome/título vazio");
     if (!categoria) errors.push("Categoria vazia");
-    if (!bairro) errors.push("Bairro vazio");
+    if (!bairro) {
+      errors.push("Bairro vazio — selecione a cidade");
+    }
     if (!whatsappRaw) errors.push("WhatsApp vazio");
 
     const whatsappNormalized = whatsappRaw
@@ -210,6 +212,8 @@ export async function createBulkFreeListingsAsAdmin(input: {
     readonly nome: string;
     readonly categoria: string;
     readonly bairro: string;
+    readonly cidade?: string;
+    readonly uf?: string;
     readonly whatsapp: string;
   }[];
 }): Promise<{
@@ -227,11 +231,23 @@ export async function createBulkFreeListingsAsAdmin(input: {
 
   for (const row of input.rows) {
     try {
+      const bairro = row.bairro.trim();
+      const cidade = row.cidade?.trim() ?? "";
+      if (!bairro && !cidade) {
+        failed.push({
+          line: row.line,
+          error: "Informe o bairro ou a cidade",
+        });
+        continue;
+      }
+
       const result: QuickFreeListingResult = await createQuickFreeListingAsAdmin({
         adminId: input.adminId,
         title: row.nome,
         category: row.categoria,
-        neighborhood: row.bairro,
+        neighborhood: bairro,
+        city: cidade || undefined,
+        state: row.uf?.trim() || undefined,
         whatsapp: row.whatsapp,
       });
 

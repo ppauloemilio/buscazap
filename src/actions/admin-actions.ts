@@ -1285,6 +1285,8 @@ export async function adminConfirmBulkFreeListingsAction(input: {
     readonly nome: string;
     readonly categoria: string;
     readonly bairro: string;
+    readonly cidade?: string;
+    readonly uf?: string;
     readonly whatsapp: string;
   }[];
 }): Promise<

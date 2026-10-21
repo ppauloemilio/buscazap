@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminLayout } from "@/features/admin/components/admin-layout";
 import { AdminBulkFreeListingImport } from "@/features/admin/components/admin-bulk-free-listing-import";
+import { listActiveCatalogLocationOptions } from "@/application/services/catalog-location";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,9 @@ export default async function AdminBulkFreeListingPage() {
   if (!admin) redirect("/admin/entrar");
 
   const freemium = isNewAdProfileEnabled();
+  const { cities } = freemium
+    ? await listActiveCatalogLocationOptions()
+    : { cities: [] as const };
 
   return (
     <AdminLayout>
@@ -20,7 +24,8 @@ export default async function AdminBulkFreeListingPage() {
           <h2 className="text-xl font-semibold">Importar anúncios grátis (CSV)</h2>
           <p className="text-sm text-muted-foreground">
             Envie um CSV com nome, categoria, bairro e WhatsApp. Pré-visualize,
-            teste os números no wa.me e confirme a criação em lote.
+            teste os números no wa.me e confirme a criação em lote. Linhas sem
+            bairro pedem a cidade na pré-visualização.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -41,7 +46,7 @@ export default async function AdminBulkFreeListingPage() {
           </CardContent>
         </Card>
       ) : (
-        <AdminBulkFreeListingImport />
+        <AdminBulkFreeListingImport cities={cities} />
       )}
     </AdminLayout>
   );
