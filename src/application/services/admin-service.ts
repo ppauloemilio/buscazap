@@ -1206,6 +1206,7 @@ export async function listAdminAdvertisements(filters?: {
           email: true,
           whatsapp: true,
           subscriptionExpiresAt: true,
+          subscriptionTier: true,
         },
       },
       premiumBoosts: {
@@ -1225,6 +1226,10 @@ export async function listAdminAdvertisements(filters?: {
     const subscriptionActive = hasActiveSubscription(subscriptionExpiresAt);
     const subscriptionExpired =
       subscriptionExpiresAt !== null && !subscriptionActive;
+    const providerPlan = resolveAdminProviderPlan({
+      subscriptionExpiresAt,
+      subscriptionTier: ad.provider.subscriptionTier,
+    });
 
     return {
       id: ad.id,
@@ -1242,7 +1247,9 @@ export async function listAdminAdvertisements(filters?: {
         name: ad.provider.name,
         email: ad.provider.email,
         whatsapp: ad.provider.whatsapp,
+        subscriptionTier: ad.provider.subscriptionTier,
       },
+      providerPlan,
       subscriptionActive,
       subscriptionExpired,
       subscriptionExpiresAt,

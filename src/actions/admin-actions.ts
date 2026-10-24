@@ -32,6 +32,7 @@ import {
 } from "@/application/services/homepage-settings-service";
 import {
   parseManualPaymentMethod,
+  parseManualSubscriptionMode,
   registerManualPremiumBoostAsAdmin,
   registerManualSubscriptionAsAdmin,
 } from "@/application/services/admin-manual-billing-service";
@@ -64,7 +65,7 @@ import {
   adminUpdateProviderSchema,
   loginAdminSchema,
 } from "@/schemas/provider-schemas";
-import { UserRole } from "@/domain/enums";
+import { SubscriptionTier, UserRole } from "@/domain/enums";
 
 function redirectWithAdminError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
@@ -419,6 +420,7 @@ export async function adminRegisterSubscriptionAction(formData: FormData) {
 
   const providerId = formData.get("providerId");
   const notesRaw = formData.get("notes");
+  const mode = parseManualSubscriptionMode(formData.get("mode"));
   const returnPath = resolveAdminSubscriptionReturnPath(formData.get("returnTo"));
 
   if (typeof providerId !== "string" || !providerId) {
@@ -437,6 +439,7 @@ export async function adminRegisterSubscriptionAction(formData: FormData) {
       providerId,
       method,
       notes,
+      mode,
     });
   } catch (error) {
     const message =
@@ -457,10 +460,17 @@ export async function adminRegisterSubscriptionAction(formData: FormData) {
   revalidatePath("/painel");
   revalidatePath("/painel/assinatura");
 
+  const manualFlag =
+    mode === "plus_upgrade"
+      ? "subscription_plus_upgrade"
+      : mode === "plus"
+        ? "subscription_plus"
+        : "subscription";
+
   redirect(
     appendAdminQueryParams(returnPath, {
       saved: "1",
-      manual: "subscription",
+      manual: manualFlag,
     })
   );
 }
@@ -1046,6 +1056,8 @@ export async function adminCreateSubscriptionPixWhatsAppAction(
     return { ok: false, error: "Usuário inválido" };
   }
 
+  const mode = parseManualSubscriptionMode(formData.get("mode"));
+
   try {
     const provider = await prisma.provider.findUnique({
       where: { id: providerId.trim() },
@@ -1058,14 +1070,29 @@ export async function adminCreateSubscriptionPixWhatsAppAction(
 
     const payment = await createSubscriptionPayment(provider.id, {
       bypassRenewalWindow: true,
+      tier:
+        mode === "plus" || mode === "plus_upgrade"
+          ? SubscriptionTier.PLUS
+          : SubscriptionTier.BASIC,
+      forceFullAmount: mode === "plus",
+      requireProRataUpgrade: mode === "plus_upgrade",
     });
 
     await logAdminAction({
       adminId: admin.id,
-      action: "CREATE_SUBSCRIPTION_PIX_WHATSAPP",
+      action:
+        mode === "plus_upgrade"
+          ? "CREATE_SUBSCRIPTION_PLUS_UPGRADE_PIX_WHATSAPP"
+          : mode === "plus"
+            ? "CREATE_SUBSCRIPTION_PLUS_PIX_WHATSAPP"
+            : "CREATE_SUBSCRIPTION_PIX_WHATSAPP",
       entityType: "Payment",
       entityId: payment.id,
-      metadata: { providerId: provider.id, amount: payment.amount },
+      metadata: {
+        providerId: provider.id,
+        amount: payment.amount,
+        mode,
+      },
     });
 
     revalidatePath("/admin/usuarios");
@@ -1078,7 +1105,7 @@ export async function adminCreateSubscriptionPixWhatsAppAction(
       notifyHref: buildPixCopyPasteWhatsAppHref({
         providerName: provider.name,
         whatsapp: provider.whatsapp,
-        amountLabel: formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT),
+        amountLabel: formatPriceBRL(payment.amount),
         pixCopyPaste: payment.pixCopyPaste,
         kind: "subscription",
       }),

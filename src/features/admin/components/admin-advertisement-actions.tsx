@@ -8,10 +8,12 @@ import {
   adminRegisterSubscriptionAction,
   moderateAdvertisementAction,
 } from "@/actions/admin-actions";
+import type { AdminProviderPlanFilter } from "@/application/services/admin-service";
 import { AdminPixWhatsAppButton } from "@/features/admin/components/admin-pix-whatsapp-button";
 import { MANUAL_PAYMENT_METHODS } from "@/config/manual-payment";
 import { ADMIN_AD_STATUS_OPTIONS } from "@/config/admin";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
+import { calculateProRataUpgradeAmount } from "@/lib/subscription-proration";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -23,6 +25,8 @@ interface AdminAdvertisementActionsProps {
   readonly title: string;
   readonly premiumActive: boolean;
   readonly subscriptionActive: boolean;
+  readonly providerPlan: AdminProviderPlanFilter;
+  readonly subscriptionExpiresAt: Date | string | null;
   readonly returnTo?: string;
 }
 
@@ -34,8 +38,24 @@ export function AdminAdvertisementActions({
   title,
   premiumActive,
   subscriptionActive,
+  providerPlan,
+  subscriptionExpiresAt,
   returnTo = "/admin/anuncios",
 }: AdminAdvertisementActionsProps) {
+  const expiresAt =
+    subscriptionExpiresAt instanceof Date
+      ? subscriptionExpiresAt
+      : subscriptionExpiresAt
+        ? new Date(subscriptionExpiresAt)
+        : null;
+
+  const canMigrateToPro = subscriptionActive && providerPlan === "basic";
+  const proRataAmount =
+    canMigrateToPro && expiresAt
+      ? calculateProRataUpgradeAmount(expiresAt)
+      : null;
+  const isActivePro = subscriptionActive && providerPlan === "pro";
+
   function handleDelete(event: React.FormEvent<HTMLFormElement>) {
     const message = premiumActive
       ? `Excluir "${title}"? Este anúncio possui destaque premium pago ativo.`
@@ -48,14 +68,29 @@ export function AdminAdvertisementActions({
 
   function handleManualSubscription(event: React.FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
-    const method = new FormData(form).get("method");
+    const data = new FormData(form);
+    const method = data.get("method");
+    const mode = data.get("mode");
     const methodLabel =
       MANUAL_PAYMENT_METHODS.find((item) => item.value === method)?.label ??
       "manual";
 
-    const message = subscriptionActive
-      ? `Registrar +${PRICING.SUBSCRIPTION_DAYS} dias de assinatura para "${providerName}" (${methodLabel})? O prazo será acumulado a partir da data atual de validade.`
-      : `Registrar assinatura de ${PRICING.SUBSCRIPTION_DAYS} dias para "${providerName}" (${methodLabel})? Use para pagamento em dinheiro ou permuta.`;
+    let message: string;
+    if (mode === "plus_upgrade") {
+      const amountLabel = proRataAmount
+        ? formatPriceBRL(proRataAmount)
+        : "pro-rata";
+      const validUntil = expiresAt?.toLocaleDateString("pt-BR") ?? "a data atual";
+      message = `Migrar "${providerName}" para Plano Pro (${methodLabel}, ${amountLabel})? A validade permanece até ${validUntil} (mesmo cálculo do painel do anunciante).`;
+    } else if (mode === "plus") {
+      message = isActivePro
+        ? `Registrar +${PRICING.SUBSCRIPTION_DAYS} dias de Plano Pro para "${providerName}" (${methodLabel}, ${formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)})?`
+        : `Assinar Plano Pro de ${PRICING.SUBSCRIPTION_DAYS} dias para "${providerName}" (${methodLabel}, ${formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)})?`;
+    } else {
+      message = subscriptionActive
+        ? `Registrar +${PRICING.SUBSCRIPTION_DAYS} dias de assinatura básica para "${providerName}" (${methodLabel})? O prazo será acumulado a partir da data atual de validade.`
+        : `Registrar assinatura básica de ${PRICING.SUBSCRIPTION_DAYS} dias para "${providerName}" (${methodLabel})? Use para pagamento em dinheiro ou permuta.`;
+    }
 
     if (!window.confirm(message)) {
       event.preventDefault();
@@ -114,11 +149,12 @@ export function AdminAdvertisementActions({
       >
         <input type="hidden" name="providerId" value={providerId} />
         <input type="hidden" name="returnTo" value={returnTo} />
+        <input type="hidden" name="mode" value="basic" />
         <select
           name="method"
           defaultValue="CASH"
           className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-          aria-label="Forma de pagamento da assinatura"
+          aria-label="Forma de pagamento da assinatura básica"
         >
           {MANUAL_PAYMENT_METHODS.map((method) => (
             <option key={method.value} value={method.value}>
@@ -139,10 +175,90 @@ export function AdminAdvertisementActions({
 
       <AdminPixWhatsAppButton
         action={adminCreateSubscriptionPixWhatsAppAction}
-        hiddenFields={{ providerId }}
+        hiddenFields={{ providerId, mode: "basic" }}
         label={`Pix assinatura ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)} + WhatsApp`}
-        confirmMessage={`Gerar Pix da assinatura (${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}) para "${providerName}" e abrir o WhatsApp com o copia e cola?`}
+        confirmMessage={`Gerar Pix da assinatura básica (${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}) para "${providerName}" e abrir o WhatsApp com o copia e cola?`}
       />
+
+      <form
+        action={adminRegisterSubscriptionAction}
+        onSubmit={handleManualSubscription}
+        className="flex flex-col gap-1.5 rounded-lg border border-dashed border-whatsapp/40 p-2 sm:flex-row sm:items-center"
+      >
+        <input type="hidden" name="providerId" value={providerId} />
+        <input type="hidden" name="returnTo" value={returnTo} />
+        <input type="hidden" name="mode" value="plus" />
+        <select
+          name="method"
+          defaultValue="CASH"
+          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          aria-label="Forma de pagamento do Plano Pro"
+        >
+          {MANUAL_PAYMENT_METHODS.map((method) => (
+            <option key={method.value} value={method.value}>
+              {method.label}
+            </option>
+          ))}
+        </select>
+        <Input
+          name="notes"
+          placeholder="Obs. (opcional)"
+          className="h-9 sm:max-w-[180px]"
+          maxLength={200}
+        />
+        <Button type="submit" size="sm" variant="whatsapp">
+          {isActivePro ? "Renovar Plano Pro" : "Assinar Plano Pro"}
+        </Button>
+      </form>
+
+      <AdminPixWhatsAppButton
+        action={adminCreateSubscriptionPixWhatsAppAction}
+        hiddenFields={{ providerId, mode: "plus" }}
+        label={`Pix Pro ${formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)} + WhatsApp`}
+        confirmMessage={`Gerar Pix do Plano Pro (${formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}) para "${providerName}" e abrir o WhatsApp com o copia e cola?`}
+      />
+
+      {canMigrateToPro && proRataAmount !== null ? (
+        <>
+          <form
+            action={adminRegisterSubscriptionAction}
+            onSubmit={handleManualSubscription}
+            className="flex flex-col gap-1.5 rounded-lg border border-dashed border-amber-300/70 p-2 sm:flex-row sm:items-center"
+          >
+            <input type="hidden" name="providerId" value={providerId} />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <input type="hidden" name="mode" value="plus_upgrade" />
+            <select
+              name="method"
+              defaultValue="CASH"
+              className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+              aria-label="Forma de pagamento da migração Pro"
+            >
+              {MANUAL_PAYMENT_METHODS.map((method) => (
+                <option key={method.value} value={method.value}>
+                  {method.label}
+                </option>
+              ))}
+            </select>
+            <Input
+              name="notes"
+              placeholder="Obs. (opcional)"
+              className="h-9 sm:max-w-[180px]"
+              maxLength={200}
+            />
+            <Button type="submit" size="sm" variant="whatsapp">
+              Migrar para Pro ({formatPriceBRL(proRataAmount)})
+            </Button>
+          </form>
+
+          <AdminPixWhatsAppButton
+            action={adminCreateSubscriptionPixWhatsAppAction}
+            hiddenFields={{ providerId, mode: "plus_upgrade" }}
+            label={`Pix upgrade Pro ${formatPriceBRL(proRataAmount)} + WhatsApp`}
+            confirmMessage={`Gerar Pix do upgrade proporcional para Pro (${formatPriceBRL(proRataAmount)}) para "${providerName}" e abrir o WhatsApp? A validade atual será mantida.`}
+          />
+        </>
+      ) : null}
 
       <form
         action={adminRegisterPremiumBoostAction}

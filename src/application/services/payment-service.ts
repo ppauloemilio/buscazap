@@ -114,6 +114,13 @@ export async function createSubscriptionPayment(
   options?: {
     readonly bypassRenewalWindow?: boolean;
     readonly tier?: SubscriptionTier;
+    /**
+     * Com tier PLUS: cobra a mensalidade cheia do Pro (sem pro-rata),
+     * mesmo com Básico ainda vigente. Usado pelo admin em "Assinar Pro".
+     */
+    readonly forceFullAmount?: boolean;
+    /** Exige elegibilidade ao upgrade pro-rata Básico → Pro. */
+    readonly requireProRataUpgrade?: boolean;
   }
 ) {
   const provider = await getProviderPaymentProfile(providerId);
@@ -124,13 +131,22 @@ export async function createSubscriptionPayment(
   }
 
   const hasActive = hasActiveSubscription(provider.subscriptionExpiresAt);
-  const proRataUpgrade =
+  const eligibleProRata =
     tier === SubscriptionTier.PLUS &&
     isEligibleForProRataUpgrade({
       role: provider.role,
       subscriptionExpiresAt: provider.subscriptionExpiresAt,
       subscriptionTier: provider.subscriptionTier,
     });
+
+  if (options?.requireProRataUpgrade && !eligibleProRata) {
+    throw new Error(
+      "Migrar para Pro só vale com Plano Básico ainda vigente. Use Assinar Pro se a assinatura estiver vencida."
+    );
+  }
+
+  const proRataUpgrade =
+    eligibleProRata && !options?.forceFullAmount;
 
   const upgradingToPlusWhileActive = tier === SubscriptionTier.PLUS && hasActive;
 

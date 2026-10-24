@@ -112,9 +112,13 @@ export default async function AdminAdvertisementsPage({
         <p className="mb-4 rounded-lg bg-whatsapp/10 p-3 text-sm text-whatsapp">
           {params.manual === "premium"
             ? "Destaque premium registrado com sucesso (dinheiro/permuta)."
-            : params.manual === "subscription"
-              ? "Assinatura registrada com sucesso (dinheiro/permuta)."
-              : "Status do anúncio atualizado."}
+            : params.manual === "subscription_plus_upgrade"
+              ? "Migração para Plano Pro registrada (pro-rata, validade mantida)."
+              : params.manual === "subscription_plus"
+                ? "Plano Pro registrado com sucesso (dinheiro/permuta)."
+                : params.manual === "subscription"
+                  ? "Assinatura básica registrada com sucesso (dinheiro/permuta)."
+                  : "Status do anúncio atualizado."}
         </p>
       )}
       {params.deleted === "1" && (
@@ -260,6 +264,8 @@ export default async function AdminAdvertisementsPage({
                     title={ad.title}
                     premiumActive={ad.premiumActive}
                     subscriptionActive={ad.subscriptionActive}
+                    providerPlan={ad.providerPlan}
+                    subscriptionExpiresAt={ad.subscriptionExpiresAt}
                     returnTo={
                       isExpiredSubscriptionFilter
                         ? "/admin/anuncios?subscription=expired"
