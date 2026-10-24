@@ -13,7 +13,7 @@ import { AdminPixWhatsAppButton } from "@/features/admin/components/admin-pix-wh
 import { MANUAL_PAYMENT_METHODS } from "@/config/manual-payment";
 import { ADMIN_AD_STATUS_OPTIONS } from "@/config/admin";
 import { formatPriceBRL, PRICING } from "@/config/pricing";
-import { calculateProRataUpgradeAmount } from "@/lib/subscription-proration";
+import { calculateProRataUpgradeAmount } from "@/lib/subscription-proration-calc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
