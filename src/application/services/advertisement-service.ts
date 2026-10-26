@@ -30,6 +30,7 @@ import {
   listActivePromotionsForProvider,
 } from "@/application/services/provider-promotion-service";
 import { canUsePlusFeatures } from "@/lib/plus-plan";
+import { isNewAdProfileEnabled } from "@/config/feature-flags";
 
 const PUBLIC_SEARCH_MAX_RESULTS = 300;
 
@@ -900,7 +901,12 @@ export async function getPopularAdvertisements() {
   );
 }
 
-const HOMEPAGE_AD_LIMIT = 24;
+/** Destaques Premium na home (o restante em Ver todos). */
+export const HOME_PREMIUM_LIMIT = 8;
+/** Anúncios pagos na home (o restante em Ver todos). */
+export const HOME_PAID_LIMIT = 12;
+/** Plano Grátis na home — mantém o pool amplo anterior. */
+export const HOME_FREE_LIMIT = 24;
 
 function sortHomepageAdvertisements<
   T extends { reviewCount: number; createdAt: string },
@@ -919,35 +925,51 @@ export interface HomepageAdvertisements {
   readonly regular: readonly Advertisement[];
 }
 
-/** Home: premium ativos em seção própria; regulares até completar o limite da grade. */
+/**
+ * Home: até {@link HOME_PREMIUM_LIMIT} premium e {@link HOME_PAID_LIMIT} pagos;
+ * Plano Grátis até {@link HOME_FREE_LIMIT} (inalterado em relação ao pool anterior).
+ */
 export async function getHomepageAdvertisements(
   knownCategorySlugs?: ReadonlyMap<string, string>
 ): Promise<HomepageAdvertisements> {
   const categorySlugs =
     knownCategorySlugs ??
     categorySlugMap(await getPublicSearchCatalog());
+  const freemium = isNewAdProfileEnabled();
 
-  const [premiumAds, regularAds] = await Promise.all([
+  const [premiumAds, paidAds, freeAds] = await Promise.all([
     findPublicAdvertisements({
       query: "",
       premium: true,
       sort: "popular",
+      take: HOME_PREMIUM_LIMIT,
       knownCategorySlugs: categorySlugs,
     }),
     findPublicAdvertisements({
       query: "",
-      nonPremiumOnly: true,
+      ...(freemium ? { plan: "paid" as const } : { nonPremiumOnly: true }),
       sort: "popular",
-      take: HOMEPAGE_AD_LIMIT,
+      take: HOME_PAID_LIMIT,
       knownCategorySlugs: categorySlugs,
     }),
+    freemium
+      ? findPublicAdvertisements({
+          query: "",
+          plan: "free",
+          sort: "popular",
+          take: HOME_FREE_LIMIT,
+          knownCategorySlugs: categorySlugs,
+        })
+      : Promise.resolve([] as Advertisement[]),
   ]);
 
-  const premium = sortHomepageAdvertisements(premiumAds);
-  const regularLimit = Math.max(0, HOMEPAGE_AD_LIMIT - premium.length);
-  const regular = sortHomepageAdvertisements(regularAds).slice(0, regularLimit);
-
-  return { premium, regular };
+  return {
+    premium: sortHomepageAdvertisements(premiumAds).slice(0, HOME_PREMIUM_LIMIT),
+    regular: [
+      ...sortHomepageAdvertisements(paidAds).slice(0, HOME_PAID_LIMIT),
+      ...sortHomepageAdvertisements(freeAds).slice(0, HOME_FREE_LIMIT),
+    ],
+  };
 }
 
 export async function getCategoryNameBySlug(slug: string) {
