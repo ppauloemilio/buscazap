@@ -29,6 +29,10 @@ interface SearchResultsViewProps {
   readonly popularCategories: readonly Category[];
   readonly cities: readonly string[];
   readonly neighborhoods: readonly string[];
+  readonly neighborhoodsByCity?: ReadonlyArray<{
+    readonly city: string;
+    readonly neighborhoods: readonly string[];
+  }>;
   readonly defaultCityName?: string;
   readonly pageTitle?: string;
   readonly returnTo: string;
@@ -47,6 +51,7 @@ export function SearchResultsView({
   popularCategories,
   cities,
   neighborhoods,
+  neighborhoodsByCity = [],
   defaultCityName,
   pageTitle = "Buscar",
   returnTo,
@@ -88,6 +93,7 @@ export function SearchResultsView({
           initialSort={sort}
           cities={cities}
           neighborhoods={neighborhoods}
+          neighborhoodsByCity={neighborhoodsByCity}
         />
 
         <CategoryGrid

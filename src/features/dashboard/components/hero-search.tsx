@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CitySelect } from "@/features/search/components/city-select";
 import { NeighborhoodSelect } from "@/features/search/components/neighborhood-select";
+import { UseMyLocationButton } from "@/features/search/components/use-my-location-button";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 import { neighborhoodsForCity } from "@/shared/utils/neighborhoods";
 import {
@@ -128,6 +129,21 @@ export function HeroSearch({
               <Search className="h-3.5 w-3.5" />
               Buscar
             </Button>
+          </div>
+          <div className="mt-2 border-t border-border/60 pt-2">
+            <UseMyLocationButton
+              cities={cities}
+              neighborhoodsByCity={neighborhoodsByCity}
+              compact
+              onResolved={(place) => {
+                setCity(place.city);
+                setNeighborhood(place.neighborhood);
+                goToSearch({
+                  city: place.city,
+                  neighborhood: place.neighborhood,
+                });
+              }}
+            />
           </div>
         </form>
       </div>

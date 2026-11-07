@@ -1,9 +1,4 @@
-function normalizePlace(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "");
-}
+import { normalizePlace } from "@/shared/utils/place-match";
 
 export function neighborhoodsForCity(
   groups: ReadonlyArray<{

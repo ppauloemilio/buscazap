@@ -111,6 +111,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       popularCategories={popularCategories}
       cities={cityNames}
       neighborhoods={neighborhoods}
+      neighborhoodsByCity={catalog.neighborhoodsByCity}
       defaultCityName={defaultCityName}
       returnTo={searchReturnPath}
     />

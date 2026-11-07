@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { CitySelect } from "@/features/search/components/city-select";
 import { NeighborhoodSelect } from "@/features/search/components/neighborhood-select";
 import { PlanSelect } from "@/features/search/components/plan-select";
+import { UseMyLocationButton } from "@/features/search/components/use-my-location-button";
 import { POPULAR_CITIES } from "@/infrastructure/data/mock-dashboard";
 import {
   buildSearchHref,
@@ -26,6 +27,10 @@ interface SearchFormProps {
   readonly initialSort?: string;
   readonly cities?: readonly string[];
   readonly neighborhoods?: readonly string[];
+  readonly neighborhoodsByCity?: ReadonlyArray<{
+    readonly city: string;
+    readonly neighborhoods: readonly string[];
+  }>;
 }
 
 export function SearchForm({
@@ -38,6 +43,7 @@ export function SearchForm({
   initialSort,
   cities = POPULAR_CITIES,
   neighborhoods = [],
+  neighborhoodsByCity = [],
 }: SearchFormProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
@@ -170,6 +176,22 @@ export function SearchForm({
           <Search className="h-3.5 w-3.5" />
           Buscar
         </Button>
+      </div>
+      <div className="mt-2 border-t border-border/60 pt-2">
+        <UseMyLocationButton
+          cities={cities}
+          neighborhoods={neighborhoods}
+          neighborhoodsByCity={neighborhoodsByCity}
+          compact
+          onResolved={(place) => {
+            setCity(place.city);
+            setNeighborhood(place.neighborhood);
+            navigate({
+              city: place.city,
+              neighborhood: place.neighborhood,
+            });
+          }}
+        />
       </div>
     </form>
   );
