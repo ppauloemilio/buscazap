@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCoverImageSizeHint } from "@/config/advertisement-images";
 import { PRICING } from "@/config/pricing";
 import { ImageFileInput } from "@/components/advertisement/image-file-input";
 import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
@@ -27,7 +28,7 @@ export function AdvertisementImageFields({
             name="coverImage"
             label="Foto de capa"
             required
-            hint={`JPG, PNG ou WebP. Máximo ${formatMaxImageSizeLabel()}. Aparece na listagem e na página do anúncio.`}
+            hint={`JPG, PNG ou WebP. Máximo ${formatMaxImageSizeLabel()}. ${formatCoverImageSizeHint()} Aparece na listagem e na página do anúncio.`}
           />
         </div>
       </div>

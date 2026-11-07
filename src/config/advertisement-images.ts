@@ -17,6 +17,18 @@ export const ADVERTISEMENT_IMAGE_LIMITS = {
   allowedExtensions: [".jpg", ".jpeg", ".png", ".webp"] as const,
 } as const;
 
+/** Dimensões recomendadas da capa (proporção usada na vitrine e na página do anúncio). */
+export const COVER_IMAGE_RECOMMENDATION = {
+  aspectRatioLabel: "16:9",
+  widthPx: 1920,
+  heightPx: 1080,
+} as const;
+
+export function formatCoverImageSizeHint(): string {
+  const { aspectRatioLabel, widthPx, heightPx } = COVER_IMAGE_RECOMMENDATION;
+  return `Proporção ${aspectRatioLabel} (ideal ${widthPx}×${heightPx} px).`;
+}
+
 /** Limite de fotos GALLERY no anúncio (só premium no freemium). */
 export function getMaxAdGalleryImages(input: {
   readonly premiumActive: boolean;

@@ -3,6 +3,7 @@ import { markDataFetchDynamic } from "@/lib/db";
 
 export const HOMEPAGE_SECTION_IDS = [
   "popularCategories",
+  "sponsorBanners",
   "urgentSearches",
   "promotions",
   "coupons",
@@ -20,6 +21,7 @@ const LEGACY_ADVERTISEMENTS_SECTION = "advertisements";
 export type HomepageSettings = {
   readonly showUrgentSearches: boolean;
   readonly showPopularCategories: boolean;
+  readonly showSponsorBanners: boolean;
   readonly showCityExplorer: boolean;
   readonly showPromotions: boolean;
   readonly showCoupons: boolean;
@@ -32,6 +34,7 @@ export type HomepageSettings = {
 
 export const DEFAULT_SECTION_ORDER: readonly HomepageSectionId[] = [
   "popularCategories",
+  "sponsorBanners",
   "urgentSearches",
   "promotions",
   "coupons",
@@ -44,6 +47,7 @@ export const DEFAULT_SECTION_ORDER: readonly HomepageSectionId[] = [
 export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   showUrgentSearches: false,
   showPopularCategories: false,
+  showSponsorBanners: false,
   showCityExplorer: false,
   showPromotions: false,
   showCoupons: false,
@@ -56,6 +60,7 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
 
 export const HOMEPAGE_SECTION_LABELS: Record<HomepageSectionId, string> = {
   popularCategories: "Categorias populares",
+  sponsorBanners: "Banners patrocinados",
   urgentSearches: "Precisa agora?",
   promotions: "Promoções Ativas",
   coupons: "Cupons Ativos",
@@ -70,6 +75,27 @@ function isHomepageSectionId(value: unknown): value is HomepageSectionId {
     typeof value === "string" &&
     (HOMEPAGE_SECTION_IDS as readonly string[]).includes(value)
   );
+}
+
+/**
+ * Insere `sponsorBanners` logo após categorias quando a ordem antiga
+ * ainda não conhecia a seção (mantém “abaixo das categorias”).
+ */
+function ensureSponsorBannersPlacement(
+  order: HomepageSectionId[]
+): HomepageSectionId[] {
+  if (order.includes("sponsorBanners")) {
+    return order;
+  }
+
+  const categoriesIndex = order.indexOf("popularCategories");
+  if (categoriesIndex >= 0) {
+    const next = [...order];
+    next.splice(categoriesIndex + 1, 0, "sponsorBanners");
+    return next;
+  }
+
+  return ["sponsorBanners", ...order];
 }
 
 function expandLegacySectionIds(parsed: unknown[]): HomepageSectionId[] {
@@ -103,7 +129,7 @@ export function parseSectionOrder(raw: string | null | undefined): HomepageSecti
       return [...DEFAULT_SECTION_ORDER];
     }
 
-    const valid = expandLegacySectionIds(parsed);
+    const valid = ensureSponsorBannersPlacement(expandLegacySectionIds(parsed));
     const missing = DEFAULT_SECTION_ORDER.filter((id) => !valid.includes(id));
     return [...valid, ...missing];
   } catch {
@@ -143,6 +169,7 @@ export async function getHomepageSettings(): Promise<HomepageSettings> {
     return {
       showUrgentSearches: settings.showUrgentSearches,
       showPopularCategories: settings.showPopularCategories,
+      showSponsorBanners: settings.showSponsorBanners,
       showCityExplorer: settings.showCityExplorer,
       showPromotions: settings.showPromotions,
       showCoupons: settings.showCoupons,
@@ -166,6 +193,7 @@ export async function updateHomepageSettings(input: HomepageSettings) {
       id: "default",
       showUrgentSearches: input.showUrgentSearches,
       showPopularCategories: input.showPopularCategories,
+      showSponsorBanners: input.showSponsorBanners,
       showCityExplorer: input.showCityExplorer,
       showPromotions: input.showPromotions,
       showCoupons: input.showCoupons,
@@ -178,6 +206,7 @@ export async function updateHomepageSettings(input: HomepageSettings) {
     update: {
       showUrgentSearches: input.showUrgentSearches,
       showPopularCategories: input.showPopularCategories,
+      showSponsorBanners: input.showSponsorBanners,
       showCityExplorer: input.showCityExplorer,
       showPromotions: input.showPromotions,
       showCoupons: input.showCoupons,

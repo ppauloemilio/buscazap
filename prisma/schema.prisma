@@ -400,10 +400,25 @@ model HomepageSetting {
   showPremiumAds        Boolean  @default(true)
   showPaidAds           Boolean  @default(true)
   showFreeAds           Boolean  @default(true)
+  showSponsorBanners    Boolean  @default(false)
   /** JSON array de ids das seções da home */
-  sectionOrderJson      String   @default("[\"popularCategories\",\"urgentSearches\",\"promotions\",\"coupons\",\"premiumAds\",\"paidAds\",\"freeAds\",\"cityExplorer\"]")
+  sectionOrderJson      String   @default("[\"popularCategories\",\"sponsorBanners\",\"urgentSearches\",\"promotions\",\"coupons\",\"premiumAds\",\"paidAds\",\"freeAds\",\"cityExplorer\"]")
   plusPlanEnabled       Boolean  @default(false)
   updatedAt             DateTime @updatedAt
+}
+
+/** Banners rotativos da home (área comercial / patrocinadores). */
+model SponsorBanner {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String
+  linkUrl   String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
 }
 
 model ProviderLead {

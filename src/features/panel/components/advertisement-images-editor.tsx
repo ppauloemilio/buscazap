@@ -15,6 +15,7 @@ import {
   validateFormImageInputs,
 } from "@/components/advertisement/image-file-input";
 import { Button } from "@/components/ui/button";
+import { formatCoverImageSizeHint } from "@/config/advertisement-images";
 import { PRICING } from "@/config/pricing";
 import {
   formatMaxImageSizeLabel,
@@ -120,7 +121,8 @@ export function AdvertisementImagesEditor({
       <div className="rounded-lg border p-3">
         <p className="mb-1 text-sm font-semibold">1. Foto da capa</p>
         <p className="mb-2 text-xs text-muted-foreground">
-          Banner principal do perfil e dos cards.
+          Banner principal do perfil e dos cards.{" "}
+          {formatCoverImageSizeHint()} Mantenha o assunto no centro.
         </p>
         {coverImage && (
           <div className="relative mb-2 aspect-[16/9] max-w-md overflow-hidden rounded-lg border bg-muted">
@@ -255,7 +257,7 @@ export function AdvertisementImagesEditor({
               id="coverImage"
               name="coverImage"
               label="Foto de capa"
-              hint={`JPG, PNG ou WebP. Máx. ${formatMaxImageSizeLabel()}.`}
+              hint={`JPG, PNG ou WebP. Máx. ${formatMaxImageSizeLabel()}. ${formatCoverImageSizeHint()}`}
             />
           </div>
         </div>

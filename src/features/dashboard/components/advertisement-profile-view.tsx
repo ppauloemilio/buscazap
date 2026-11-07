@@ -200,7 +200,7 @@ export function AdvertisementProfileView({
     <section className="pb-24 md:pb-8">
       <TrackAdView advertisementId={advertisement.id} />
 
-      <div className="relative h-48 w-full bg-muted md:h-64">
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
         <AdvertisementCover
           title={advertisement.title}
           category={advertisement.category}

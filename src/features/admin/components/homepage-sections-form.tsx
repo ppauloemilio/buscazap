@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronUp,
   Crown,
+  ImageIcon,
   LayoutGrid,
   MapPin,
   Megaphone,
@@ -28,6 +29,7 @@ const SECTION_ICONS: Record<
   ComponentType<{ className?: string }>
 > = {
   popularCategories: LayoutGrid,
+  sponsorBanners: ImageIcon,
   urgentSearches: Zap,
   promotions: Tag,
   coupons: Ticket,
@@ -39,6 +41,7 @@ const SECTION_ICONS: Record<
 
 const TOGGLEABLE: ReadonlySet<HomepageSectionId> = new Set([
   "popularCategories",
+  "sponsorBanners",
   "urgentSearches",
   "promotions",
   "coupons",
@@ -50,6 +53,8 @@ const TOGGLEABLE: ReadonlySet<HomepageSectionId> = new Set([
 
 const DESCRIPTIONS: Record<HomepageSectionId, string> = {
   popularCategories: "Grade de categorias na página inicial.",
+  sponsorBanners:
+    "Carrossel de banners patrocinados (gerencie em Admin → Banners).",
   urgentSearches: "Atalhos rápidos de Gás, Água, Delivery e outros.",
   promotions:
     "Seção na home e menu Promoções no painel (Plano Pro).",
@@ -63,6 +68,7 @@ const DESCRIPTIONS: Record<HomepageSectionId, string> = {
 
 type VisibilityState = {
   popularCategories: boolean;
+  sponsorBanners: boolean;
   urgentSearches: boolean;
   promotions: boolean;
   coupons: boolean;
@@ -82,6 +88,7 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
   ]);
   const [visibility, setVisibility] = useState<VisibilityState>({
     popularCategories: settings.showPopularCategories,
+    sponsorBanners: settings.showSponsorBanners,
     urgentSearches: settings.showUrgentSearches,
     promotions: settings.showPromotions,
     coupons: settings.showCoupons,
@@ -112,6 +119,9 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
       <input type="hidden" name="sectionOrder" value={orderValue} />
       {visibility.popularCategories && (
         <input type="hidden" name="showPopularCategories" value="on" />
+      )}
+      {visibility.sponsorBanners && (
+        <input type="hidden" name="showSponsorBanners" value="on" />
       )}
       {visibility.urgentSearches && (
         <input type="hidden" name="showUrgentSearches" value="on" />
@@ -196,7 +206,7 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
                     className="mt-1 h-4 w-4 accent-[hsl(var(--whatsapp))]"
                     aria-label={`Exibir ${HOMEPAGE_SECTION_LABELS[id]}`}
                   />
-                ) : (
+                  ) : (
                   <span className="mt-1 inline-block h-4 w-4 rounded border bg-muted" />
                 )}
 
@@ -232,7 +242,7 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
               type="checkbox"
               checked={plusPlanEnabled}
               onChange={(event) => setPlusPlanEnabled(event.target.checked)}
-              className="mt-1 h-4 w-4 accent-[hsl(var(--whatsapp))]"
+              className="h-4 w-4 accent-[hsl(var(--whatsapp))]"
             />
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-whatsapp/10">
               <Sparkles className="h-4 w-4 text-whatsapp" />

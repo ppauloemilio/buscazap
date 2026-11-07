@@ -6,11 +6,13 @@ import { listHomeCouponCards } from "@/application/services/public-coupons-servi
 import { HeroSearch } from "@/features/dashboard/components/hero-search";
 import { UrgentSearches } from "@/features/dashboard/components/urgent-searches";
 import { StatsSection } from "@/features/dashboard/components/stats-section";
+import { listActiveSponsorBanners } from "@/application/services/sponsor-banner-service";
 import { CategoryGrid } from "@/features/dashboard/components/category-grid";
 import { AdvertisementSection } from "@/features/dashboard/components/advertisement-section";
 import { CityExplorer } from "@/features/dashboard/components/city-explorer";
 import { PromotionsSection } from "@/features/dashboard/components/promotions-section";
 import { CouponsSection } from "@/features/dashboard/components/coupons-section";
+import { SponsorBannersCarousel } from "@/features/dashboard/components/sponsor-banners-carousel";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
 import {
@@ -38,6 +40,9 @@ export default async function HomePage() {
   const homeCoupons = homepageSettings.showCoupons
     ? await listHomeCouponCards()
     : { items: [], total: 0 };
+  const sponsorBanners = homepageSettings.showSponsorBanners
+    ? await listActiveSponsorBanners()
+    : [];
   const defaultCityName = resolveDefaultCityName(data.cityNames);
 
   const allHomeAds = [
@@ -57,6 +62,10 @@ export default async function HomePage() {
           categories={data.popularCategories}
           defaultCityName={defaultCityName}
         />
+      ) : null,
+    sponsorBanners: () =>
+      homepageSettings.showSponsorBanners && sponsorBanners.length > 0 ? (
+        <SponsorBannersCarousel banners={sponsorBanners} />
       ) : null,
     urgentSearches: () =>
       homepageSettings.showUrgentSearches ? <UrgentSearches /> : null,

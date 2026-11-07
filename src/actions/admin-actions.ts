@@ -31,6 +31,11 @@ import {
   updateHomepageSettings,
 } from "@/application/services/homepage-settings-service";
 import {
+  createSponsorBanner,
+  deleteSponsorBanner,
+  updateSponsorBanner,
+} from "@/application/services/sponsor-banner-service";
+import {
   parseManualPaymentMethod,
   parseManualSubscriptionMode,
   registerManualPremiumBoostAsAdmin,
@@ -309,6 +314,7 @@ export async function updateHomepageSettingsAction(formData: FormData) {
   await updateHomepageSettings({
     showUrgentSearches: formData.get("showUrgentSearches") === "on",
     showPopularCategories: formData.get("showPopularCategories") === "on",
+    showSponsorBanners: formData.get("showSponsorBanners") === "on",
     showCityExplorer: formData.get("showCityExplorer") === "on",
     showPromotions: formData.get("showPromotions") === "on",
     showCoupons: formData.get("showCoupons") === "on",
@@ -324,12 +330,150 @@ export async function updateHomepageSettingsAction(formData: FormData) {
   revalidatePath("/promocoes");
   revalidatePath("/cupons");
   revalidatePath("/admin/home");
+  revalidatePath("/admin/banners");
   revalidatePath("/anunciar");
   revalidatePath("/painel");
   revalidatePath("/painel/assinatura");
   revalidatePath("/painel/promocoes");
   revalidatePath("/painel/cupons");
   redirect("/admin/home?saved=1");
+}
+
+function redirectAdminBanners(params?: {
+  readonly error?: string;
+  readonly saved?: string;
+}) {
+  const search = new URLSearchParams();
+  if (params?.error) search.set("error", params.error);
+  if (params?.saved) search.set("saved", params.saved);
+  const query = search.toString();
+  redirect(query ? `/admin/banners?${query}` : "/admin/banners");
+}
+
+export async function createSponsorBannerAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const title = String(formData.get("title") ?? "");
+  const linkUrl = String(formData.get("linkUrl") ?? "");
+  const imageEntry = formData.get("image");
+  const isActive = formData.get("isActive") === "on";
+
+  if (!(imageEntry instanceof File) || imageEntry.size === 0) {
+    redirectAdminBanners({ error: "Selecione a imagem do banner." });
+  }
+
+  const imageFile = imageEntry as File;
+  const imageError = validateImageFile(imageFile, "Banner");
+  if (imageError) {
+    redirectAdminBanners({ error: imageError });
+  }
+
+  try {
+    const { uploadSponsorBannerImage } = await import("@/lib/image-upload");
+    const imageUrl = await uploadSponsorBannerImage(imageFile);
+    await createSponsorBanner({
+      title,
+      imageUrl,
+      linkUrl,
+      isActive,
+    });
+  } catch (error) {
+    redirectAdminBanners({
+      error:
+        error instanceof Error ? error.message : "Não foi possível criar o banner.",
+    });
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/banners");
+  revalidatePath("/admin/home");
+  redirectAdminBanners({ saved: "1" });
+}
+
+export async function updateSponsorBannerAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) {
+    redirectAdminBanners({ error: "Banner inválido." });
+  }
+
+  const title = String(formData.get("title") ?? "");
+  const linkUrl = String(formData.get("linkUrl") ?? "");
+  const sortOrderRaw = Number(formData.get("sortOrder") ?? 0);
+  const sortOrder = Number.isFinite(sortOrderRaw) ? Math.trunc(sortOrderRaw) : 0;
+  const isActive = formData.get("isActive") === "on";
+  const imageFile = formData.get("image");
+
+  let imageUrl: string | undefined;
+  if (imageFile instanceof File && imageFile.size > 0) {
+    const imageError = validateImageFile(imageFile, "Banner");
+    if (imageError) {
+      redirectAdminBanners({ error: imageError });
+    }
+    try {
+      const { uploadSponsorBannerImage } = await import("@/lib/image-upload");
+      imageUrl = await uploadSponsorBannerImage(imageFile);
+    } catch (error) {
+      redirectAdminBanners({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível enviar a imagem.",
+      });
+    }
+  }
+
+  try {
+    await updateSponsorBanner({
+      id,
+      title,
+      linkUrl,
+      sortOrder,
+      isActive,
+      imageUrl,
+    });
+  } catch (error) {
+    redirectAdminBanners({
+      error:
+        error instanceof Error
+          ? error.message
+          : "Não foi possível atualizar o banner.",
+    });
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/banners");
+  revalidatePath("/admin/home");
+  redirectAdminBanners({ saved: "1" });
+}
+
+export async function deleteSponsorBannerAction(formData: FormData) {
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin/entrar");
+
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) {
+    redirectAdminBanners({ error: "Banner inválido." });
+  }
+
+  try {
+    await deleteSponsorBanner(id);
+  } catch (error) {
+    redirectAdminBanners({
+      error:
+        error instanceof Error
+          ? error.message
+          : "Não foi possível excluir o banner.",
+    });
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/banners");
+  revalidatePath("/admin/home");
+  redirectAdminBanners({ saved: "1" });
 }
 
 function resolveAdminSubscriptionReturnPath(returnTo: FormDataEntryValue | null) {

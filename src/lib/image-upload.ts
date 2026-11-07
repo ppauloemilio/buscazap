@@ -121,6 +121,16 @@ export async function uploadLeadImage(
   );
 }
 
+export async function uploadSponsorBannerImage(file: File): Promise<string> {
+  const timestamp = Date.now();
+  return storeImageFile(
+    file,
+    `sponsor-banners/banner-${timestamp}`,
+    path.join(process.cwd(), "public", "uploads", "sponsor-banners"),
+    "/uploads/sponsor-banners"
+  );
+}
+
 export function parseImageFiles(formData: FormData, fieldName: string): File[] {
   return formData
     .getAll(fieldName)
