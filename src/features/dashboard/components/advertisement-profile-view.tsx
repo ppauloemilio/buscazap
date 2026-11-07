@@ -256,15 +256,6 @@ export function AdvertisementProfileView({
                 {advertisement.category}
               </Badge>
             </div>
-            {hasReviews && (
-              <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                <span className="font-medium text-foreground">
-                  {formatRating(advertisement.rating)}
-                </span>
-                <span>({advertisement.reviewCount})</span>
-              </div>
-            )}
             </div>
           </div>
           <Button variant="whatsapp" size="lg" className="shrink-0" asChild>
@@ -523,6 +514,40 @@ export function AdvertisementProfileView({
               title={advertisement.title}
               shareUrl={shareUrl}
             />
+
+            <div className="rounded-xl border bg-card p-4">
+              <div className="mb-2 flex items-center gap-2 font-semibold">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                Avaliação
+              </div>
+              {hasReviews ? (
+                <button
+                  type="button"
+                  onClick={() => setTab("avaliacoes")}
+                  className="flex w-full items-center gap-1.5 text-left text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <span className="font-medium text-foreground">
+                    {formatRating(advertisement.rating)}
+                  </span>
+                  <span>
+                    ({advertisement.reviewCount}{" "}
+                    {advertisement.reviewCount === 1
+                      ? "avaliação"
+                      : "avaliações"}
+                    )
+                  </span>
+                  <span className="ml-auto text-xs text-whatsapp">Ver</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setTab("avaliacoes")}
+                  className="text-left text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Ainda sem avaliações. Seja o primeiro.
+                </button>
+              )}
+            </div>
 
             <div className="rounded-xl border bg-card p-4">
               <div className="mb-2 flex items-center gap-2 font-semibold">
