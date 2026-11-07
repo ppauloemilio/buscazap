@@ -114,7 +114,7 @@ export async function AdvertisementDetailView({
               title={advertisement.title}
             />
           ) : (
-            <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted sm:aspect-[4/3]">
+            <div className="relative aspect-[3/1] overflow-hidden rounded-xl border bg-muted">
               <AdvertisementCover
                 title={advertisement.title}
                 category={advertisement.category}

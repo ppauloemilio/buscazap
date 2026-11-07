@@ -44,7 +44,7 @@ export function formatCardImageSizeHint(): string {
 
 export function formatBannerImageSizeHint(): string {
   const { aspectRatioLabel, widthPx, heightPx } = BANNER_IMAGE_RECOMMENDATION;
-  return `Proporção ${aspectRatioLabel} (ideal ${widthPx}×${heightPx} px).`;
+  return `Proporção ${aspectRatioLabel} (ideal ${widthPx}×${heightPx} px) — a imagem aparece inteira, sem corte.`;
 }
 
 /** @deprecated Prefer formatCardImageSizeHint / formatBannerImageSizeHint */

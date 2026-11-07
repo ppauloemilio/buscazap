@@ -200,15 +200,19 @@ export function AdvertisementProfileView({
     <section className="pb-24 md:pb-8">
       <TrackAdView advertisementId={advertisement.id} />
 
-      <div className="relative h-48 w-full bg-muted md:h-64">
-        <AdvertisementCover
-          title={advertisement.title}
-          category={advertisement.category}
-          imageUrl={advertisement.bannerUrl ?? advertisement.imageUrl}
-          priority
-          fit="cover"
-        />
-        <div className="absolute right-3 top-3">
+      <div className="relative w-full bg-muted">
+        {/* 3:1 + contain: imagem inteira (sem corte), alinhada à dica 1200×400 do painel */}
+        <div className="relative mx-auto aspect-[3/1] w-full max-w-6xl overflow-hidden">
+          <AdvertisementCover
+            title={advertisement.title}
+            category={advertisement.category}
+            imageUrl={advertisement.bannerUrl ?? advertisement.imageUrl}
+            priority
+            fit="contain"
+            className="bg-muted"
+          />
+        </div>
+        <div className="absolute right-3 top-3 z-10">
           <FavoriteButton advertisementId={advertisement.id} size="sm" />
         </div>
       </div>
