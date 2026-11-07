@@ -82,6 +82,7 @@ export function AdvertisementProfileView({
   const hasPromotions = (advertisement.promotions?.length ?? 0) > 0;
   const isProPlan = advertisement.planTierLabel === "Pro";
   const showPromocoesTab = isProPlan || hasPromotions;
+  /** Abas visíveis no menu (Avaliações fica só no aside: Ver / Avaliar). */
   const tabs: { id: ProfileTab; label: string }[] = [
     { id: "descricao", label: "Descrição" },
     { id: "produtos", label: "Produtos" },
@@ -89,8 +90,19 @@ export function AdvertisementProfileView({
     ...(showPromocoesTab
       ? [{ id: "promocoes" as const, label: "Promoções" }]
       : []),
-    { id: "avaliacoes", label: "Avaliações" },
   ];
+
+  function openReviews(focus: "list" | "form" = "list") {
+    setTab("avaliacoes");
+    window.requestAnimationFrame(() => {
+      const targetId =
+        focus === "form" ? "review-form" : "reviews-panel";
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
   const requestedTab = searchParams.get("tab");
   const focusPromoId = searchParams.get("promo");
   const [tab, setTab] = useState<ProfileTab>(() => {
@@ -459,8 +471,11 @@ export function AdvertisementProfileView({
               )}
 
               {tab === "avaliacoes" && (
-                <div className="space-y-4">
-                  <ReviewForm advertisementId={advertisement.id} />
+                <div id="reviews-panel" className="space-y-4 scroll-mt-4">
+                  <h2 className="text-base font-semibold">Avaliações</h2>
+                  <div id="review-form" className="scroll-mt-4">
+                    <ReviewForm advertisementId={advertisement.id} />
+                  </div>
                   {reviews.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                       Ainda não há avaliações.
@@ -521,32 +536,41 @@ export function AdvertisementProfileView({
                 Avaliação
               </div>
               {hasReviews ? (
-                <button
-                  type="button"
-                  onClick={() => setTab("avaliacoes")}
-                  className="flex w-full items-center gap-1.5 text-left text-sm text-muted-foreground hover:text-foreground"
-                >
+                <p className="mb-3 text-sm text-muted-foreground">
                   <span className="font-medium text-foreground">
                     {formatRating(advertisement.rating)}
-                  </span>
-                  <span>
-                    ({advertisement.reviewCount}{" "}
-                    {advertisement.reviewCount === 1
-                      ? "avaliação"
-                      : "avaliações"}
-                    )
-                  </span>
-                  <span className="ml-auto text-xs text-whatsapp">Ver</span>
-                </button>
+                  </span>{" "}
+                  ({advertisement.reviewCount}{" "}
+                  {advertisement.reviewCount === 1
+                    ? "avaliação"
+                    : "avaliações"}
+                  )
+                </p>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setTab("avaliacoes")}
-                  className="text-left text-sm text-muted-foreground hover:text-foreground"
-                >
-                  Ainda sem avaliações. Seja o primeiro.
-                </button>
+                <p className="mb-3 text-sm text-muted-foreground">
+                  Ainda sem avaliações.
+                </p>
               )}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => openReviews("list")}
+                >
+                  Ver
+                </Button>
+                <Button
+                  type="button"
+                  variant="whatsapp"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => openReviews("form")}
+                >
+                  Avaliar
+                </Button>
+              </div>
             </div>
 
             <div className="rounded-xl border bg-card p-4">
