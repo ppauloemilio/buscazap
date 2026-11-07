@@ -11,22 +11,18 @@ import { isPremiumActive } from "@/lib/provider-session";
 export async function saveAdvertisementImages(
   advertisementId: string,
   coverFile: File,
-  galleryFiles: readonly File[]
+  galleryFiles: readonly File[],
+  cardFile?: File | null
 ): Promise<void> {
-  const coverUrl = await uploadAdvertisementImage(
-    coverFile,
-    advertisementId,
-    "cover"
-  );
+  if (cardFile && cardFile.size > 0) {
+    await replaceAdvertisementCardImage(advertisementId, cardFile);
+  }
 
-  await prisma.advertisementImage.create({
-    data: {
-      advertisementId,
-      url: coverUrl,
-      kind: ADVERTISEMENT_IMAGE_KIND.COVER,
-      sortOrder: 0,
-    },
-  });
+  if (coverFile.size > 0) {
+    await replaceAdvertisementCover(advertisementId, coverFile);
+  }
+
+  // Se só veio uma das duas, o mapper faz fallback. Nada a duplicar.
 
   await addAdvertisementGalleryImages(advertisementId, galleryFiles);
 }
@@ -62,6 +58,33 @@ export async function replaceAdvertisementCover(
       advertisementId,
       url: coverUrl,
       kind: ADVERTISEMENT_IMAGE_KIND.COVER,
+      sortOrder: 0,
+    },
+  });
+}
+
+export async function replaceAdvertisementCardImage(
+  advertisementId: string,
+  cardFile: File
+): Promise<void> {
+  const cardUrl = await uploadAdvertisementImage(
+    cardFile,
+    advertisementId,
+    "card"
+  );
+
+  await prisma.advertisementImage.deleteMany({
+    where: {
+      advertisementId,
+      kind: ADVERTISEMENT_IMAGE_KIND.CARD,
+    },
+  });
+
+  await prisma.advertisementImage.create({
+    data: {
+      advertisementId,
+      url: cardUrl,
+      kind: ADVERTISEMENT_IMAGE_KIND.CARD,
       sortOrder: 0,
     },
   });

@@ -944,6 +944,9 @@ export async function findAdvertisementForAdminEdit(advertisementId: string) {
   const cover = advertisement.images.find(
     (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.COVER
   );
+  const card = advertisement.images.find(
+    (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.CARD
+  );
   const galleryImages = advertisement.images
     .filter((image) => image.kind === ADVERTISEMENT_IMAGE_KIND.GALLERY)
     .map((image) => ({
@@ -971,6 +974,9 @@ export async function findAdvertisementForAdminEdit(advertisementId: string) {
     premiumActive: isPremiumActive(advertisement.premiumExpiresAt),
     coverImage: cover
       ? { id: cover.id, url: resolveAdvertisementImageUrl(cover.url) }
+      : null,
+    cardImage: card
+      ? { id: card.id, url: resolveAdvertisementImageUrl(card.url) }
       : null,
     coverImageUrl: cover ? resolveAdvertisementImageUrl(cover.url) : null,
     galleryImages,

@@ -34,26 +34,48 @@ type PrismaAdvertisementWithImages = PrismaAdvertisement & {
   };
 };
 
-function resolveCoverImageUrl(
-  images: readonly PrismaAdvertisementImage[] | undefined
+function resolveKindUrl(
+  images: readonly PrismaAdvertisementImage[] | undefined,
+  kind: string
 ): string | undefined {
   if (!images?.length) {
     return undefined;
   }
 
-  const cover = images.find((image) => image.kind === ADVERTISEMENT_IMAGE_KIND.COVER);
-  return cover?.url ?? images[0]?.url;
+  return images.find((image) => image.kind === kind)?.url;
+}
+
+/** URL bruta do card (listagem), com fallback para o banner. */
+function resolveCardImageUrl(
+  images: readonly PrismaAdvertisementImage[] | undefined
+): string | undefined {
+  return (
+    resolveKindUrl(images, ADVERTISEMENT_IMAGE_KIND.CARD) ??
+    resolveKindUrl(images, ADVERTISEMENT_IMAGE_KIND.COVER) ??
+    images?.find(
+      (image) =>
+        image.kind !== ADVERTISEMENT_IMAGE_KIND.LOGO &&
+        image.kind !== ADVERTISEMENT_IMAGE_KIND.GALLERY
+    )?.url ??
+    images?.[0]?.url
+  );
+}
+
+/** URL bruta do banner (topo do anúncio), com fallback para o card. */
+function resolveBannerImageUrl(
+  images: readonly PrismaAdvertisementImage[] | undefined
+): string | undefined {
+  return (
+    resolveKindUrl(images, ADVERTISEMENT_IMAGE_KIND.COVER) ??
+    resolveKindUrl(images, ADVERTISEMENT_IMAGE_KIND.CARD) ??
+    resolveCardImageUrl(images)
+  );
 }
 
 function resolveLogoImageUrl(
   images: readonly PrismaAdvertisementImage[] | undefined
 ): string | undefined {
-  if (!images?.length) {
-    return undefined;
-  }
-
-  return images.find((image) => image.kind === ADVERTISEMENT_IMAGE_KIND.LOGO)
-    ?.url;
+  return resolveKindUrl(images, ADVERTISEMENT_IMAGE_KIND.LOGO);
 }
 
 function resolveGalleryImageUrls(
@@ -88,7 +110,8 @@ export function mapAdvertisementToEntity(
   }
 ): Advertisement {
   const premiumActive = isPremiumActive(ad.premiumExpiresAt);
-  const coverImageUrl = resolveCoverImageUrl(ad.images);
+  const cardImageUrl = resolveCardImageUrl(ad.images);
+  const bannerImageUrl = resolveBannerImageUrl(ad.images);
   const logoImageUrl = resolveLogoImageUrl(ad.images);
   const plan = options?.plan;
   const showPaidExtras = plan !== "free";
@@ -155,8 +178,12 @@ export function mapAdvertisementToEntity(
     rating: ad.rating,
     reviewCount: ad.reviewCount,
     imageUrl:
-      showPaidExtras && coverImageUrl
-        ? resolveAdvertisementImageUrl(coverImageUrl)
+      showPaidExtras && cardImageUrl
+        ? resolveAdvertisementImageUrl(cardImageUrl)
+        : undefined,
+    bannerUrl:
+      showPaidExtras && bannerImageUrl
+        ? resolveAdvertisementImageUrl(bannerImageUrl)
         : undefined,
     logoUrl:
       showPaidExtras && logoImageUrl

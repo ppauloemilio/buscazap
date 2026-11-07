@@ -1,6 +1,9 @@
 import { PRICING } from "@/config/pricing";
 
 export const ADVERTISEMENT_IMAGE_KIND = {
+  /** Imagem da listagem (cards na home/busca). */
+  CARD: "CARD",
+  /** Banner do topo na página interna do anúncio. */
   COVER: "COVER",
   LOGO: "LOGO",
   GALLERY: "GALLERY",
@@ -17,16 +20,36 @@ export const ADVERTISEMENT_IMAGE_LIMITS = {
   allowedExtensions: [".jpg", ".jpeg", ".png", ".webp"] as const,
 } as const;
 
-/** Dimensões recomendadas da capa (proporção usada na vitrine e na página do anúncio). */
-export const COVER_IMAGE_RECOMMENDATION = {
+/** Dimensões da imagem do card (listagem). */
+export const CARD_IMAGE_RECOMMENDATION = {
   aspectRatioLabel: "16:9",
-  widthPx: 1920,
-  heightPx: 1080,
+  widthPx: 1200,
+  heightPx: 675,
 } as const;
 
-export function formatCoverImageSizeHint(): string {
-  const { aspectRatioLabel, widthPx, heightPx } = COVER_IMAGE_RECOMMENDATION;
+/** Dimensões do banner no topo da página do anúncio (faixa compacta). */
+export const BANNER_IMAGE_RECOMMENDATION = {
+  aspectRatioLabel: "3:1",
+  widthPx: 1200,
+  heightPx: 400,
+} as const;
+
+/** @deprecated Prefer CARD_IMAGE_RECOMMENDATION / BANNER_IMAGE_RECOMMENDATION */
+export const COVER_IMAGE_RECOMMENDATION = CARD_IMAGE_RECOMMENDATION;
+
+export function formatCardImageSizeHint(): string {
+  const { aspectRatioLabel, widthPx, heightPx } = CARD_IMAGE_RECOMMENDATION;
   return `Proporção ${aspectRatioLabel} (ideal ${widthPx}×${heightPx} px).`;
+}
+
+export function formatBannerImageSizeHint(): string {
+  const { aspectRatioLabel, widthPx, heightPx } = BANNER_IMAGE_RECOMMENDATION;
+  return `Proporção ${aspectRatioLabel} (ideal ${widthPx}×${heightPx} px).`;
+}
+
+/** @deprecated Prefer formatCardImageSizeHint / formatBannerImageSizeHint */
+export function formatCoverImageSizeHint(): string {
+  return formatCardImageSizeHint();
 }
 
 /** Limite de fotos GALLERY no anúncio (só premium no freemium). */

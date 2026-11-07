@@ -107,7 +107,9 @@ export async function AdvertisementDetailView({
           advertisement.imageUrl &&
           (advertisement.galleryImages?.length ?? 0) > 0 ? (
             <AdvertisementGallery
-              coverImageUrl={advertisement.imageUrl}
+              coverImageUrl={
+                advertisement.bannerUrl ?? advertisement.imageUrl!
+              }
               galleryImages={advertisement.galleryImages}
               title={advertisement.title}
             />
@@ -116,7 +118,7 @@ export async function AdvertisementDetailView({
               <AdvertisementCover
                 title={advertisement.title}
                 category={advertisement.category}
-                imageUrl={advertisement.imageUrl}
+                imageUrl={advertisement.bannerUrl ?? advertisement.imageUrl}
                 priority
                 fit="contain"
               />

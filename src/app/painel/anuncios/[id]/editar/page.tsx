@@ -257,14 +257,15 @@ export default async function EditAdvertisementPage({
           <p className="text-xs text-muted-foreground">
             {newProfile
               ? advertisement.premiumActive
-                ? `Capa e galeria premium (até ${PRICING.PREMIUM_AD_GALLERY} fotos). Logo, fotos da empresa e perfil completo ficam em Meu perfil.`
-                : `Capa do anúncio. Logo e fotos da empresa em Meu perfil. Premium libera +${PRICING.PREMIUM_AD_GALLERY} fotos neste anúncio.`
-              : `Altere a capa e a galeria premium (até ${PRICING.PREMIUM_AD_GALLERY} fotos).`}
+                ? `Imagem do card, banner do topo e galeria premium (até ${PRICING.PREMIUM_AD_GALLERY} fotos). Logo e fotos da empresa ficam em Meu perfil.`
+                : `Imagem do card e banner do topo. Logo e fotos da empresa em Meu perfil. Premium libera +${PRICING.PREMIUM_AD_GALLERY} fotos neste anúncio.`
+              : `Altere card, banner e a galeria premium (até ${PRICING.PREMIUM_AD_GALLERY} fotos).`}
           </p>
           <AdvertisementImagesEditor
             advertisementId={advertisement.id}
             title={advertisement.title}
             coverImage={advertisement.coverImage}
+            cardImage={advertisement.cardImage}
             galleryImages={advertisement.galleryImages}
             premiumActive={advertisement.premiumActive}
             maxGallery={

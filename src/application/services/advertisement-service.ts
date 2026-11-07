@@ -323,7 +323,11 @@ export async function findPublicAdvertisements(
       images: {
         where: {
           kind: {
-            in: [ADVERTISEMENT_IMAGE_KIND.COVER, ADVERTISEMENT_IMAGE_KIND.LOGO],
+            in: [
+              ADVERTISEMENT_IMAGE_KIND.CARD,
+              ADVERTISEMENT_IMAGE_KIND.COVER,
+              ADVERTISEMENT_IMAGE_KIND.LOGO,
+            ],
           },
         },
       },
@@ -598,7 +602,11 @@ export async function findAdvertisementsByIds(ids: readonly string[]) {
       images: {
         where: {
           kind: {
-            in: [ADVERTISEMENT_IMAGE_KIND.COVER, ADVERTISEMENT_IMAGE_KIND.LOGO],
+            in: [
+              ADVERTISEMENT_IMAGE_KIND.CARD,
+              ADVERTISEMENT_IMAGE_KIND.COVER,
+              ADVERTISEMENT_IMAGE_KIND.LOGO,
+            ],
           },
         },
       },
@@ -692,6 +700,9 @@ export async function findProviderAdvertisementForEdit(
   const cover = advertisement.images.find(
     (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.COVER
   );
+  const card = advertisement.images.find(
+    (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.CARD
+  );
   const logo = advertisement.images.find(
     (image) => image.kind === ADVERTISEMENT_IMAGE_KIND.LOGO
   );
@@ -712,6 +723,12 @@ export async function findProviderAdvertisementForEdit(
       ? {
           id: cover.id,
           url: resolveAdvertisementImageUrl(cover.url),
+        }
+      : null,
+    cardImage: card
+      ? {
+          id: card.id,
+          url: resolveAdvertisementImageUrl(card.url),
         }
       : null,
     logoImage: logo

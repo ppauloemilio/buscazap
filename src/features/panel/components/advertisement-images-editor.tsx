@@ -15,7 +15,10 @@ import {
   validateFormImageInputs,
 } from "@/components/advertisement/image-file-input";
 import { Button } from "@/components/ui/button";
-import { formatCoverImageSizeHint } from "@/config/advertisement-images";
+import {
+  formatBannerImageSizeHint,
+  formatCardImageSizeHint,
+} from "@/config/advertisement-images";
 import { PRICING } from "@/config/pricing";
 import {
   formatMaxImageSizeLabel,
@@ -33,6 +36,7 @@ interface AdvertisementImagesEditorProps {
   readonly advertisementId: string;
   readonly title: string;
   readonly coverImage: GalleryImage | null;
+  readonly cardImage?: GalleryImage | null;
   readonly logoImage?: GalleryImage | null;
   readonly galleryImages: readonly GalleryImage[];
   readonly premiumActive: boolean;
@@ -49,6 +53,7 @@ export function AdvertisementImagesEditor({
   advertisementId,
   title,
   coverImage,
+  cardImage = null,
   logoImage = null,
   galleryImages,
   premiumActive,
@@ -68,6 +73,9 @@ export function AdvertisementImagesEditor({
     maxGallery ??
     (premiumActive ? PRICING.PREMIUM_AD_GALLERY : 0);
   const remainingGallerySlots = Math.max(0, galleryLimit - galleryImages.length);
+
+  const cardPreview = cardImage ?? coverImage;
+  const bannerPreview = coverImage ?? cardImage;
 
   function handleUpdateSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,16 +127,39 @@ export function AdvertisementImagesEditor({
   return (
     <div className="space-y-4">
       <div className="rounded-lg border p-3">
-        <p className="mb-1 text-sm font-semibold">1. Foto da capa</p>
+        <p className="mb-1 text-sm font-semibold">1. Imagem do card</p>
         <p className="mb-2 text-xs text-muted-foreground">
-          Banner principal do perfil e dos cards.{" "}
-          {formatCoverImageSizeHint()} Mantenha o assunto no centro.
+          Aparece na home e na busca. {formatCardImageSizeHint()}
+          {!cardImage && coverImage
+            ? " Usando o banner como fallback até você enviar uma imagem do card."
+            : ""}
         </p>
-        {coverImage && (
+        {cardPreview && (
           <div className="relative mb-2 aspect-[16/9] max-w-md overflow-hidden rounded-lg border bg-muted">
             <AdvertisementImage
-              src={coverImage.url}
-              alt={`Capa do anúncio ${title}`}
+              src={cardPreview.url}
+              alt={`Card do anúncio ${title}`}
+              fill
+              className="object-cover"
+              sizes="384px"
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-lg border p-3">
+        <p className="mb-1 text-sm font-semibold">2. Banner do topo</p>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Faixa no topo da página do anúncio. {formatBannerImageSizeHint()}
+          {!coverImage && cardImage
+            ? " Usando a imagem do card como fallback até você enviar o banner."
+            : ""}
+        </p>
+        {bannerPreview && (
+          <div className="relative mb-2 aspect-[3/1] max-w-md overflow-hidden rounded-lg border bg-muted">
+            <AdvertisementImage
+              src={bannerPreview.url}
+              alt={`Banner do anúncio ${title}`}
               fill
               className="object-cover"
               sizes="384px"
@@ -139,7 +170,7 @@ export function AdvertisementImagesEditor({
 
       {showLogoField && (
         <div className="rounded-lg border p-3">
-          <p className="mb-1 text-sm font-semibold">2. Logo da marca</p>
+          <p className="mb-1 text-sm font-semibold">3. Logo da marca</p>
           <p className="mb-2 text-xs text-muted-foreground">
             Aparece ao lado do nome, sem cortar a capa.
           </p>
@@ -189,7 +220,7 @@ export function AdvertisementImagesEditor({
         <div className="rounded-lg border p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-sm font-semibold">
-              {showLogoField ? "3. " : "2. "}Fotos da galeria
+              {showLogoField ? "4. " : "3. "}Fotos da galeria
             </p>
             <span className="text-xs text-muted-foreground">
               {galleryImages.length}/{galleryLimit}
@@ -248,16 +279,31 @@ export function AdvertisementImagesEditor({
         <input type="hidden" name="advertisementId" value={advertisementId} />
 
         <div className="rounded-lg border border-dashed p-3">
+          <label htmlFor="cardImage" className="mb-1 block text-sm font-medium">
+            Enviar / substituir imagem do card
+          </label>
+          <div className="flex items-center gap-2">
+            <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <ImageFileInput
+              id="cardImage"
+              name="cardImage"
+              label="Imagem do card"
+              hint={`JPG, PNG ou WebP. Máx. ${formatMaxImageSizeLabel()}. ${formatCardImageSizeHint()}`}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-dashed p-3">
           <label htmlFor="coverImage" className="mb-1 block text-sm font-medium">
-            Enviar / substituir capa
+            Enviar / substituir banner do topo
           </label>
           <div className="flex items-center gap-2">
             <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
             <ImageFileInput
               id="coverImage"
               name="coverImage"
-              label="Foto de capa"
-              hint={`JPG, PNG ou WebP. Máx. ${formatMaxImageSizeLabel()}. ${formatCoverImageSizeHint()}`}
+              label="Banner do topo"
+              hint={`JPG, PNG ou WebP. Máx. ${formatMaxImageSizeLabel()}. ${formatBannerImageSizeHint()}`}
             />
           </div>
         </div>

@@ -52,6 +52,7 @@ import {
 import {
   addAdvertisementGalleryImages,
   removeAdvertisementGalleryImage,
+  replaceAdvertisementCardImage,
   replaceAdvertisementCover,
   saveAdvertisementImages,
 } from "@/application/services/advertisement-image-service";
@@ -829,11 +830,19 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
   }
 
   const coverFile = formData.get("coverImage");
-  const hasCover =
-    coverFile instanceof File && coverFile.size > 0;
+  const cardFile = formData.get("cardImage");
+  const hasCover = coverFile instanceof File && coverFile.size > 0;
+  const hasCard = cardFile instanceof File && cardFile.size > 0;
+
+  if (hasCard) {
+    const cardValidationError = validateImageFile(cardFile, "Imagem do card");
+    if (cardValidationError) {
+      redirect(`${redirectBase}?error=${encodeURIComponent(cardValidationError)}`);
+    }
+  }
 
   if (hasCover) {
-    const coverValidationError = validateImageFile(coverFile, "Foto de capa");
+    const coverValidationError = validateImageFile(coverFile, "Banner do topo");
     if (coverValidationError) {
       redirect(`${redirectBase}?error=${encodeURIComponent(coverValidationError)}`);
     }
@@ -868,9 +877,17 @@ export async function adminCreateAdvertisementAction(formData: FormData) {
     redirect(`${redirectBase}?error=${encodeURIComponent(message)}`);
   }
 
-  if (hasCover) {
+  if (hasCover || hasCard) {
     try {
-      await saveAdvertisementImages(advertisementId, coverFile, []);
+      const coverToSave = hasCover
+        ? (coverFile as File)
+        : (cardFile as File);
+      await saveAdvertisementImages(
+        advertisementId,
+        coverToSave,
+        [],
+        hasCard ? (cardFile as File) : null
+      );
     } catch (error) {
       await deleteProviderAdvertisement(providerOwnerId, advertisementId);
       const message =
@@ -1031,6 +1048,7 @@ export async function adminUpdateAdvertisementImagesAction(formData: FormData) {
   }
 
   const coverFile = formData.get("coverImage");
+  const cardFile = formData.get("cardImage");
   const galleryFiles = parseImageFiles(formData, "galleryImages");
 
   if (galleryFiles.length > ADVERTISEMENT_IMAGE_LIMITS.maxGalleryImages) {
@@ -1047,22 +1065,31 @@ export async function adminUpdateAdvertisementImagesAction(formData: FormData) {
   }
 
   const hasCoverFile = coverFile instanceof File && coverFile.size > 0;
+  const hasCardFile = cardFile instanceof File && cardFile.size > 0;
   const hasGalleryFiles = galleryFiles.length > 0;
 
-  if (!hasCoverFile && !hasGalleryFiles) {
+  if (!hasCoverFile && !hasCardFile && !hasGalleryFiles) {
     redirectToAdminEditImages(id, {
       error: "Selecione ao menos uma foto para atualizar",
     });
   }
 
+  if (hasCardFile) {
+    const cardValidationError = validateImageFile(cardFile, "Imagem do card");
+    if (cardValidationError) {
+      redirectToAdminEditImages(id, { error: cardValidationError });
+    }
+  }
+
   if (hasCoverFile) {
-    const coverValidationError = validateImageFile(coverFile, "Foto de capa");
+    const coverValidationError = validateImageFile(coverFile, "Banner do topo");
     if (coverValidationError) {
       redirectToAdminEditImages(id, { error: coverValidationError });
     }
   }
 
   const requestFiles = [
+    ...(hasCardFile ? [cardFile as File] : []),
     ...(hasCoverFile ? [coverFile as File] : []),
     ...galleryFiles,
   ];
@@ -1076,6 +1103,10 @@ export async function adminUpdateAdvertisementImagesAction(formData: FormData) {
   }
 
   try {
+    if (hasCardFile) {
+      await replaceAdvertisementCardImage(id, cardFile as File);
+    }
+
     if (hasCoverFile) {
       const existingCover = await prisma.advertisementImage.findFirst({
         where: {
@@ -1086,9 +1117,9 @@ export async function adminUpdateAdvertisementImagesAction(formData: FormData) {
       });
 
       if (existingCover) {
-        await replaceAdvertisementCover(id, coverFile);
+        await replaceAdvertisementCover(id, coverFile as File);
       } else {
-        await saveAdvertisementImages(id, coverFile, []);
+        await saveAdvertisementImages(id, coverFile as File, []);
       }
     }
 

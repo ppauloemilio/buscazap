@@ -204,7 +204,7 @@ export function AdvertisementProfileView({
         <AdvertisementCover
           title={advertisement.title}
           category={advertisement.category}
-          imageUrl={advertisement.imageUrl}
+          imageUrl={advertisement.bannerUrl ?? advertisement.imageUrl}
           priority
           fit="cover"
         />

@@ -1,6 +1,9 @@
 "use client";
 
-import { formatCoverImageSizeHint } from "@/config/advertisement-images";
+import {
+  formatBannerImageSizeHint,
+  formatCardImageSizeHint,
+} from "@/config/advertisement-images";
 import { PRICING } from "@/config/pricing";
 import { ImageFileInput } from "@/components/advertisement/image-file-input";
 import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
@@ -18,17 +21,33 @@ export function AdvertisementImageFields({
   return (
     <div className="space-y-2.5">
       <div>
+        <label htmlFor="cardImage" className="mb-1 block text-sm font-medium">
+          Imagem do card
+        </label>
+        <div className="flex items-center gap-2 rounded-lg border border-dashed p-2.5">
+          <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <ImageFileInput
+            id="cardImage"
+            name="cardImage"
+            label="Imagem do card"
+            required
+            hint={`Aparece na home e na busca. ${formatCardImageSizeHint()} JPG/PNG/WebP, máx. ${formatMaxImageSizeLabel()}.`}
+          />
+        </div>
+      </div>
+
+      <div>
         <label htmlFor="coverImage" className="mb-1 block text-sm font-medium">
-          Foto de capa
+          Banner do topo{" "}
+          <span className="font-normal text-muted-foreground">(opcional)</span>
         </label>
         <div className="flex items-center gap-2 rounded-lg border border-dashed p-2.5">
           <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
           <ImageFileInput
             id="coverImage"
             name="coverImage"
-            label="Foto de capa"
-            required
-            hint={`JPG, PNG ou WebP. Máximo ${formatMaxImageSizeLabel()}. ${formatCoverImageSizeHint()} Aparece na listagem e na página do anúncio.`}
+            label="Banner do topo"
+            hint={`Topo da página do anúncio. ${formatBannerImageSizeHint()} Se não enviar, usa a imagem do card.`}
           />
         </div>
       </div>

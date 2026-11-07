@@ -219,11 +219,13 @@ export default async function AdminEditAdvertisementPage({
 
       <Card className="mt-4 max-w-2xl">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Fotos (capa e galeria premium)</CardTitle>
+          <CardTitle className="text-base">
+            Fotos (card, banner e galeria premium)
+          </CardTitle>
           <p className="text-sm font-normal text-muted-foreground">
             {advertisement.premiumActive
-              ? "Premium ativo: você pode alterar a capa e a galeria."
-              : "Altere a capa e, se necessário, prepare a galeria (visível ao público só com premium ativo)."}
+              ? "Premium ativo: você pode alterar card, banner e galeria."
+              : "Altere card/banner e, se necessário, prepare a galeria (visível ao público só com premium ativo)."}
           </p>
         </CardHeader>
         <CardContent>
@@ -231,6 +233,7 @@ export default async function AdminEditAdvertisementPage({
             advertisementId={advertisement.id}
             title={advertisement.title}
             coverImage={advertisement.coverImage}
+            cardImage={advertisement.cardImage}
             galleryImages={advertisement.galleryImages}
             premiumActive={advertisement.premiumActive}
             forceGalleryEdit

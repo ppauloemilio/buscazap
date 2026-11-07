@@ -58,6 +58,7 @@ import {
   addAdvertisementGalleryImages,
   removeAdvertisementGalleryImage,
   removeAdvertisementLogo,
+  replaceAdvertisementCardImage,
   replaceAdvertisementCover,
   replaceAdvertisementLogo,
   saveAdvertisementImages,
@@ -548,22 +549,41 @@ export async function createAdvertisementAction(formData: FormData) {
   }
 
   let coverFile: File | null = null;
+  let cardFile: File | null = null;
   let logoFile: File | null = null;
   if (!simpleListing) {
+    const card = formData.get("cardImage");
     const cover = formData.get("coverImage");
-    if (!(cover instanceof File)) {
+    const hasCard = card instanceof File && card.size > 0;
+    const hasCover = cover instanceof File && cover.size > 0;
+
+    if (!hasCard && !hasCover) {
       redirect(
-        `/painel/anuncios/novo?error=${encodeURIComponent("A foto de capa é obrigatória")}`
+        `/painel/anuncios/novo?error=${encodeURIComponent(
+          "Envie a imagem do card (recomendado) ou o banner do topo"
+        )}`
       );
     }
 
-    const coverValidationError = validateImageFile(cover, "Foto de capa");
-    if (coverValidationError) {
-      redirect(
-        `/painel/anuncios/novo?error=${encodeURIComponent(coverValidationError)}`
-      );
+    if (hasCard) {
+      const cardValidationError = validateImageFile(card, "Imagem do card");
+      if (cardValidationError) {
+        redirect(
+          `/painel/anuncios/novo?error=${encodeURIComponent(cardValidationError)}`
+        );
+      }
+      cardFile = card;
     }
-    coverFile = cover;
+
+    if (hasCover) {
+      const coverValidationError = validateImageFile(cover, "Banner do topo");
+      if (coverValidationError) {
+        redirect(
+          `/painel/anuncios/novo?error=${encodeURIComponent(coverValidationError)}`
+        );
+      }
+      coverFile = cover;
+    }
 
     const logo = formData.get("logoImage");
     if (logo instanceof File && logo.size > 0) {
@@ -630,9 +650,17 @@ export async function createAdvertisementAction(formData: FormData) {
     redirect(`/painel/anuncios/novo?error=${encodeURIComponent(message)}`);
   }
 
-  if (coverFile) {
+  if (coverFile || cardFile) {
     try {
-      await saveAdvertisementImages(result.advertisement.id, coverFile, []);
+      // Se só houver card, grava também como COVER para o topo até o usuário
+      // enviar um banner dedicado (mantém o comportamento legado).
+      const coverToSave = coverFile ?? cardFile!;
+      await saveAdvertisementImages(
+        result.advertisement.id,
+        coverToSave,
+        [],
+        cardFile
+      );
     } catch (error) {
       await deleteProviderAdvertisement(provider.id, result.advertisement.id);
 
@@ -850,6 +878,7 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
     );
 
     const coverFile = formData.get("coverImage");
+    const cardFile = formData.get("cardImage");
     const logoFile = formData.get("logoImage");
     const galleryFiles = parseImageFiles(formData, "galleryImages");
 
@@ -878,10 +907,11 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
     }
 
     const hasCoverFile = coverFile instanceof File && coverFile.size > 0;
+    const hasCardFile = cardFile instanceof File && cardFile.size > 0;
     const hasLogoFile = logoFile instanceof File && logoFile.size > 0;
     const hasGalleryFiles = galleryFiles.length > 0;
 
-    if (!hasCoverFile && !hasLogoFile && !hasGalleryFiles) {
+    if (!hasCoverFile && !hasCardFile && !hasLogoFile && !hasGalleryFiles) {
       redirectToEditImages(
         advertisementId,
         { error: "Selecione ao menos uma foto para atualizar" },
@@ -889,8 +919,19 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
       );
     }
 
+    if (hasCardFile) {
+      const cardValidationError = validateImageFile(cardFile, "Imagem do card");
+      if (cardValidationError) {
+        redirectToEditImages(
+          advertisementId,
+          { error: cardValidationError },
+          formData
+        );
+      }
+    }
+
     if (hasCoverFile) {
-      const coverValidationError = validateImageFile(coverFile, "Foto de capa");
+      const coverValidationError = validateImageFile(coverFile, "Banner do topo");
       if (coverValidationError) {
         redirectToEditImages(
           advertisementId,
@@ -912,6 +953,7 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
     }
 
     const requestFiles = [
+      ...(hasCardFile ? [cardFile as File] : []),
       ...(hasCoverFile ? [coverFile as File] : []),
       ...(hasLogoFile ? [logoFile as File] : []),
       ...galleryFiles,
@@ -929,8 +971,12 @@ export async function updateAdvertisementImagesAction(formData: FormData) {
       );
     }
 
+    if (hasCardFile) {
+      await replaceAdvertisementCardImage(advertisementId, cardFile as File);
+    }
+
     if (hasCoverFile) {
-      await replaceAdvertisementCover(advertisementId, coverFile);
+      await replaceAdvertisementCover(advertisementId, coverFile as File);
     }
 
     if (hasLogoFile) {

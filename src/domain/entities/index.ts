@@ -59,7 +59,10 @@ export interface Advertisement {
   readonly businessHoursJson?: string;
   readonly rating: number;
   readonly reviewCount: number;
+  /** Imagem do card na listagem (CARD, com fallback para o banner). */
   readonly imageUrl?: string;
+  /** Banner do topo na página do anúncio (COVER, com fallback para o card). */
+  readonly bannerUrl?: string;
   readonly logoUrl?: string;
   readonly galleryImages?: readonly string[];
   readonly whatsappNumber: string;

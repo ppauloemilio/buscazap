@@ -16,6 +16,10 @@ import { AdvertisementType, ServiceArea } from "@/domain/enums";
 import { ImageFileInput } from "@/components/advertisement/image-file-input";
 import { ImagePlus } from "lucide-react";
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
+import {
+  formatBannerImageSizeHint,
+  formatCardImageSizeHint,
+} from "@/config/advertisement-images";
 import { formatMaxImageSizeLabel } from "@/shared/utils/image-file-validation";
 
 interface AdminCreateAdvertisementFormProps {
@@ -139,13 +143,28 @@ export function AdminCreateAdvertisementForm({
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium">Foto de capa (opcional)</label>
+              <label className="mb-1 block text-xs font-medium">
+                Imagem do card (opcional)
+              </label>
+              <div className="flex items-center gap-2 rounded-lg border border-dashed p-2">
+                <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <ImageFileInput
+                  name="cardImage"
+                  label="Imagem do card"
+                  hint={`${formatCardImageSizeHint()} Máx. ${formatMaxImageSizeLabel()}.`}
+                />
+              </div>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium">
+                Banner do topo (opcional)
+              </label>
               <div className="flex items-center gap-2 rounded-lg border border-dashed p-2">
                 <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <ImageFileInput
                   name="coverImage"
-                  label="Foto de capa"
-                  hint={`JPG, PNG ou WebP · máx. ${formatMaxImageSizeLabel()}. Você também pode adicionar/trocar depois na edição.`}
+                  label="Banner do topo"
+                  hint={`${formatBannerImageSizeHint()} Máx. ${formatMaxImageSizeLabel()}.`}
                 />
               </div>
             </div>
