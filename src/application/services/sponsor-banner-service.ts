@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { markDataFetchDynamic } from "@/lib/db";
+import { resolveAdvertisementImageUrl } from "@/lib/blob-access";
 
 export type SponsorBannerRecord = {
   readonly id: string;
@@ -25,7 +26,8 @@ function mapBanner(row: {
   return {
     id: row.id,
     title: row.title,
-    imageUrl: row.imageUrl,
+    // Blob privado precisa do proxy /api/media (igual às fotos de anúncio).
+    imageUrl: resolveAdvertisementImageUrl(row.imageUrl),
     linkUrl: row.linkUrl,
     sortOrder: row.sortOrder,
     isActive: row.isActive,
