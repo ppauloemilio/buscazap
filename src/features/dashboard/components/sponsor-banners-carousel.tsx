@@ -48,7 +48,7 @@ export function SponsorBannersCarousel({
   );
 
   return (
-    <section className="container mx-auto px-4 py-4 md:py-5">
+    <section className="container mx-auto px-4 pb-4 pt-2 md:pb-5 md:pt-2.5">
       <div className="relative overflow-hidden rounded-xl border bg-muted shadow-sm">
         <div className="relative aspect-[3/1] w-full">
           {current.linkUrl ? (

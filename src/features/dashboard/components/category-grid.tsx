@@ -161,7 +161,7 @@ export function CategoryGrid({
   }
 
   return (
-    <section className="py-6 md:py-8">
+    <section className="pb-3 pt-6 md:pb-4 md:pt-8">
       <div className="container mx-auto px-4">{content}</div>
     </section>
   );
