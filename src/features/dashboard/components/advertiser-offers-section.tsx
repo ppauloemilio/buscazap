@@ -20,7 +20,7 @@ export function AdvertiserOffersSection({
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
           <p className="text-sm text-muted-foreground">
             Cupons de desconto na mensalidade e planos do BuscaZapp
           </p>

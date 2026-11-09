@@ -91,8 +91,10 @@ export default async function HomePage() {
       ) : null,
     advertiserOffers: () =>
       homepageSettings.showAdvertiserOffers ? (
-        <div className="container mx-auto max-w-6xl px-4 py-4">
-          <AdvertiserOffersSection coupons={advertiserOffers.slice(0, 6)} />
+        <div className="py-4 md:py-5">
+          <div className="container mx-auto px-4">
+            <AdvertiserOffersSection coupons={advertiserOffers.slice(0, 6)} />
+          </div>
         </div>
       ) : null,
     premiumAds: () =>
