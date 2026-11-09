@@ -11,11 +11,10 @@ import {
 } from "lucide-react";
 import {
   cancelRecurringSubscriptionAction,
-  createSubscriptionPaymentAction,
   downgradeToBasicPlanAction,
-  startRecurringSubscriptionAction,
 } from "@/actions/provider-actions";
 import { getHomepageSettings } from "@/application/services/homepage-settings-service";
+import { getLivePricing } from "@/application/services/pricing-settings-service";
 import { getSubscriptionStatus } from "@/application/services/subscription-service";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import {
@@ -33,6 +32,11 @@ import {
   calculateProRataUpgradeAmount,
   isEligibleForProRataUpgrade,
 } from "@/lib/subscription-proration";
+import {
+  RecurringSubscribeButton,
+  SubscriptionCouponBox,
+  SubscriptionPayButton,
+} from "@/features/panel/components/subscription-pay-forms";
 import { PanelLayout } from "@/features/panel/components/panel-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,43 +48,9 @@ interface SubscriptionPageProps {
     readonly error?: string;
     readonly downgraded?: string;
     readonly recurringCancelled?: string;
+    readonly cupom?: string;
+    readonly coupon?: string;
   }>;
-}
-
-function SubscriptionPayButton({
-  tier,
-  label,
-  variant = "whatsapp",
-}: {
-  readonly tier: SubscriptionTier;
-  readonly label: string;
-  readonly variant?: "whatsapp" | "outline";
-}) {
-  return (
-    <form action={createSubscriptionPaymentAction}>
-      <input type="hidden" name="tier" value={tier} />
-      <Button type="submit" variant={variant} size="sm" className="w-full sm:w-auto">
-        {label}
-      </Button>
-    </form>
-  );
-}
-
-function RecurringSubscribeButton({
-  tier,
-  label,
-}: {
-  readonly tier: SubscriptionTier;
-  readonly label: string;
-}) {
-  return (
-    <form action={startRecurringSubscriptionAction}>
-      <input type="hidden" name="tier" value={tier} />
-      <Button type="submit" variant="outline" size="sm" className="w-full sm:w-auto">
-        {label}
-      </Button>
-    </form>
-  );
 }
 
 export default async function SubscriptionPage({
@@ -93,7 +63,10 @@ export default async function SubscriptionPage({
   const status = await getSubscriptionStatus(provider.id);
   const isAdmin = isAdminProvider(provider);
   const freemium = isNewAdProfileEnabled();
-  const homepage = await getHomepageSettings();
+  const [homepage, pricing] = await Promise.all([
+    getHomepageSettings(),
+    getLivePricing(),
+  ]);
   const plusOffer = homepage.plusPlanEnabled;
   const isPlus = status.subscriptionTier === SubscriptionTier.PLUS;
   const canActivateRecurring =
@@ -110,7 +83,10 @@ export default async function SubscriptionPage({
     });
   const proRataAmount =
     proRataUpgrade && status.expiresAt
-      ? calculateProRataUpgradeAmount(status.expiresAt)
+      ? calculateProRataUpgradeAmount(status.expiresAt, new Date(), {
+          basic: pricing.subscriptionAmount,
+          plus: pricing.subscriptionPlusAmount,
+        })
       : null;
 
   return (
@@ -192,6 +168,14 @@ export default async function SubscriptionPage({
             </div>
           )}
 
+          {params.cupom === "1" && (
+            <div className="rounded-lg bg-whatsapp/10 px-3 py-2 text-sm text-whatsapp">
+              Cupom aplicado — plano liberado sem cobrança PIX.
+            </div>
+          )}
+
+          <SubscriptionCouponBox defaultCode={params.coupon ?? ""} />
+
           {status.expiresAt && status.active && (
             <p className="text-xs text-muted-foreground">
               Assinatura válida até{" "}
@@ -221,7 +205,7 @@ export default async function SubscriptionPage({
               </CardHeader>
               <CardContent className="space-y-3 p-3 pt-0">
                 <p className="text-xl font-bold">
-                  {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}
+                  {formatPriceBRL(pricing.subscriptionAmount)}
                   <span className="text-sm font-normal text-muted-foreground">
                     /mês
                   </span>
@@ -308,7 +292,7 @@ export default async function SubscriptionPage({
                   <p className="text-xl font-bold text-whatsapp">
                     {proRataAmount != null
                       ? formatPriceBRL(proRataAmount)
-                      : formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}
+                      : formatPriceBRL(pricing.subscriptionPlusAmount)}
                     <span className="text-sm font-normal text-muted-foreground">
                       {proRataAmount != null ? " agora (proporcional)" : " /mês"}
                     </span>
@@ -379,7 +363,7 @@ export default async function SubscriptionPage({
                           <p>
                             Se pagar o upgrade com cartão, será cobrada a
                             mensalidade Pro cheia (
-                            {formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}
+                            {formatPriceBRL(pricing.subscriptionPlusAmount)}
                             ): o Pro ativa na hora, inicia um ciclo novo e fica
                             com renovação automática no cartão.
                           </p>
@@ -391,7 +375,7 @@ export default async function SubscriptionPage({
                           </p>
                           <RecurringSubscribeButton
                             tier={SubscriptionTier.PLUS}
-                            label={`Upgrade Pro no cartão (${formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}/mês)`}
+                            label={`Upgrade Pro no cartão (${formatPriceBRL(pricing.subscriptionPlusAmount)}/mês)`}
                           />
                         </div>
                       ) : null}
@@ -508,7 +492,7 @@ export default async function SubscriptionPage({
             <CardContent className="space-y-2 p-3 pt-3">
               <p className="flex items-center gap-2 text-sm font-medium">
                 <Crown className="h-3.5 w-3.5 text-whatsapp" />
-                Destaque premium — {formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/
+                Destaque premium — {formatPriceBRL(pricing.premiumBoostAmount)}/
                 {PRICING.PREMIUM_BOOST_DAYS} dias (opcional)
               </p>
               <p className="text-xs text-muted-foreground">

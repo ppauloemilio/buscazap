@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle, Gift, Megaphone, Sparkles, Tag } from "lucide-react";
+import { listPublicBillingCoupons } from "@/application/services/billing-coupon-service";
 import { getHomepageSettings } from "@/application/services/homepage-settings-service";
+import { getLivePricing } from "@/application/services/pricing-settings-service";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import {
   BASIC_PLAN_BENEFITS,
@@ -9,8 +11,9 @@ import {
   FREE_PLAN_TAGLINE,
   PRO_PLAN_EXTRA_BENEFITS,
 } from "@/config/plan-marketing";
-import { formatPriceBRL, PRICING } from "@/config/pricing";
+import { formatPriceBRL } from "@/config/pricing";
 import { getCurrentProvider } from "@/lib/provider-session";
+import { AdvertiserOffersSection } from "@/features/dashboard/components/advertiser-offers-section";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +26,11 @@ export const metadata: Metadata = {
 export default async function AdvertisePage() {
   const provider = await getCurrentProvider();
   const freemium = isNewAdProfileEnabled();
-  const homepage = await getHomepageSettings();
+  const [homepage, pricing, advertiserOffers] = await Promise.all([
+    getHomepageSettings(),
+    getLivePricing(),
+    listPublicBillingCoupons(),
+  ]);
   const plusOffer = homepage.plusPlanEnabled;
 
   const accountActions = provider ? (
@@ -57,10 +64,10 @@ export default async function AdvertisePage() {
             <h2 className="mb-2 text-lg font-semibold">Planos para anunciantes</h2>
             <ul className="mb-4 space-y-1.5">
               {[
-                `Assinatura ${formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}/mês via PIX para publicar`,
+                `Assinatura ${formatPriceBRL(pricing.subscriptionAmount)}/mês via PIX para publicar`,
                 "Disponível nas cidades ativas do catálogo (todo o Brasil)",
                 "Contato direto via WhatsApp",
-                `Destaque premium: ${formatPriceBRL(PRICING.PREMIUM_BOOST_AMOUNT)}/30 dias`,
+                `Destaque premium: ${formatPriceBRL(pricing.premiumBoostAmount)}/30 dias`,
               ].map((benefit) => (
                 <li
                   key={benefit}
@@ -162,7 +169,7 @@ export default async function AdvertisePage() {
             </div>
             <h3 className="text-base font-semibold">Plano Básico</h3>
             <p className="mt-1 text-2xl font-bold text-whatsapp">
-              {formatPriceBRL(PRICING.SUBSCRIPTION_AMOUNT)}
+              {formatPriceBRL(pricing.subscriptionAmount)}
               <span className="text-sm font-normal text-muted-foreground">
                 /mês
               </span>
@@ -213,7 +220,7 @@ export default async function AdvertisePage() {
               </div>
               <h3 className="text-base font-semibold">Plano Pro</h3>
               <p className="mt-1 text-2xl font-bold text-whatsapp">
-                {formatPriceBRL(PRICING.SUBSCRIPTION_PLUS_AMOUNT)}
+                {formatPriceBRL(pricing.subscriptionPlusAmount)}
                 <span className="text-sm font-normal text-muted-foreground">
                   /mês
                 </span>
@@ -259,6 +266,12 @@ export default async function AdvertisePage() {
           </Link>
           .
         </p>
+
+        {advertiserOffers.length > 0 && (
+          <div className="mt-8">
+            <AdvertiserOffersSection coupons={advertiserOffers} />
+          </div>
+        )}
       </section>
     </>
   );

@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronUp,
   Crown,
+  Gift,
   ImageIcon,
   LayoutGrid,
   MapPin,
@@ -33,6 +34,7 @@ const SECTION_ICONS: Record<
   urgentSearches: Zap,
   promotions: Tag,
   coupons: Ticket,
+  advertiserOffers: Gift,
   premiumAds: Crown,
   paidAds: Megaphone,
   freeAds: Megaphone,
@@ -45,6 +47,7 @@ const TOGGLEABLE: ReadonlySet<HomepageSectionId> = new Set([
   "urgentSearches",
   "promotions",
   "coupons",
+  "advertiserOffers",
   "premiumAds",
   "paidAds",
   "freeAds",
@@ -60,6 +63,8 @@ const DESCRIPTIONS: Record<HomepageSectionId, string> = {
     "Seção na home e menu Promoções no painel (Plano Pro).",
   coupons:
     "Seção na home e menu Cupons no painel (Plano Pro).",
+  advertiserOffers:
+    "Cupons de desconto na mensalidade/planos BuscaZapp (para atrair anunciantes).",
   premiumAds: "Anúncios com destaque premium ativo.",
   paidAds: "Anúncios de assinantes (Plano Básico ou Pro).",
   freeAds: "Listagens do Plano Grátis.",
@@ -72,6 +77,7 @@ type VisibilityState = {
   urgentSearches: boolean;
   promotions: boolean;
   coupons: boolean;
+  advertiserOffers: boolean;
   premiumAds: boolean;
   paidAds: boolean;
   freeAds: boolean;
@@ -92,6 +98,7 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
     urgentSearches: settings.showUrgentSearches,
     promotions: settings.showPromotions,
     coupons: settings.showCoupons,
+    advertiserOffers: settings.showAdvertiserOffers,
     premiumAds: settings.showPremiumAds,
     paidAds: settings.showPaidAds,
     freeAds: settings.showFreeAds,
@@ -131,6 +138,9 @@ export function HomepageSectionsForm({ settings }: HomepageSectionsFormProps) {
       )}
       {visibility.coupons && (
         <input type="hidden" name="showCoupons" value="on" />
+      )}
+      {visibility.advertiserOffers && (
+        <input type="hidden" name="showAdvertiserOffers" value="on" />
       )}
       {visibility.premiumAds && (
         <input type="hidden" name="showPremiumAds" value="on" />

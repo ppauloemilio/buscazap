@@ -58,6 +58,7 @@ model Provider {
   claimRequests         ProviderClaimRequest[]
   referralsMade         Referral[]      @relation("ReferralsMade")
   referralReceived      Referral?       @relation("ReferralReceived")
+  billingCouponRedemptions BillingCouponRedemption[]
 }
 
 /**
@@ -309,20 +310,31 @@ model Referral {
 }
 
 model Payment {
-  id           String        @id @default(cuid())
-  providerId   String
-  provider     Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  type         String
-  amount       Float
-  status       String        @default("PENDING")
-  pixTxId      String        @unique
-  pixCopyPaste String
-  referenceId  String?
-  paidAt       DateTime?
-  expiresAt    DateTime
-  createdAt    DateTime      @default(now())
-  subscription Subscription?
-  premiumBoost PremiumBoost?
+  id                String        @id @default(cuid())
+  providerId        String
+  provider          Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  type              String
+  amount            Float
+  /** Valor antes do cupom de pagamento (se houver). */
+  amountOriginal    Float?
+  billingCouponId   String?
+  billingCoupon     BillingCoupon? @relation(fields: [billingCouponId], references: [id], onDelete: SetNull)
+  billingCouponCode String?
+  /** PERCENT | FIXED | FREE */
+  discountKind      String?
+  discountValue     Float?
+  status            String        @default("PENDING")
+  pixTxId           String        @unique
+  pixCopyPaste      String
+  referenceId       String?
+  paidAt            DateTime?
+  expiresAt         DateTime
+  createdAt         DateTime      @default(now())
+  subscription      Subscription?
+  premiumBoost      PremiumBoost?
+  billingCouponRedemption BillingCouponRedemption?
+
+  @@index([billingCouponId])
 }
 
 model AuditLog {
@@ -397,14 +409,81 @@ model HomepageSetting {
   showCityExplorer      Boolean  @default(false)
   showPromotions        Boolean  @default(false)
   showCoupons           Boolean  @default(false)
+  showAdvertiserOffers  Boolean  @default(false)
   showPremiumAds        Boolean  @default(true)
   showPaidAds           Boolean  @default(true)
   showFreeAds           Boolean  @default(true)
   showSponsorBanners    Boolean  @default(false)
   /** JSON array de ids das seções da home */
-  sectionOrderJson      String   @default("[\"popularCategories\",\"sponsorBanners\",\"urgentSearches\",\"promotions\",\"coupons\",\"premiumAds\",\"paidAds\",\"freeAds\",\"cityExplorer\"]")
+  sectionOrderJson      String   @default("[\"popularCategories\",\"sponsorBanners\",\"urgentSearches\",\"promotions\",\"coupons\",\"advertiserOffers\",\"premiumAds\",\"paidAds\",\"freeAds\",\"cityExplorer\"]")
   plusPlanEnabled       Boolean  @default(false)
   updatedAt             DateTime @updatedAt
+}
+
+/** Preços cobrados pelo BuscaZapp (editáveis no admin). */
+model PricingSetting {
+  id                      String   @id @default("default")
+  subscriptionAmount      Float    @default(9.99)
+  subscriptionPlusAmount  Float    @default(14.99)
+  extraWhatsappAmount     Float    @default(3)
+  extraAdAmount           Float    @default(10)
+  premiumBoostAmount      Float    @default(5)
+  updatedAt               DateTime @updatedAt
+}
+
+/**
+ * Cupom de desconto na cobrança BuscaZapp (mensalidade, premium, extras).
+ * Diferente de ProviderCoupon (oferta da loja para o cliente final).
+ */
+model BillingCoupon {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  title             String
+  description       String
+  badgeLabel        String
+  /**
+   * SUBSCRIPTION_BASIC | SUBSCRIPTION_PLUS | EXTRA_AD | EXTRA_WHATSAPP | PREMIUM_BOOST
+   */
+  targetFeature     String
+  /** PERCENT | FIXED | FREE */
+  discountKind      String
+  /** % (1–100), R$ fixo, ou 0 se FREE. */
+  discountValue     Float    @default(0)
+  quantityTotal     Int
+  quantityRemaining Int
+  startsAt          DateTime
+  endsAt            DateTime
+  isEnabled         Boolean  @default(true)
+  /** Aparece em /ofertas-anunciantes, anunciar, home. */
+  isPublic          Boolean  @default(false)
+  /** JSON array de nomes de cidade; [] = todas. */
+  citiesJson        String   @default("[]")
+  onePerProvider    Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  redemptions       BillingCouponRedemption[]
+  payments          Payment[]
+
+  @@index([isEnabled, isPublic, endsAt])
+  @@index([targetFeature, isEnabled])
+}
+
+model BillingCouponRedemption {
+  id         String       @id @default(cuid())
+  couponId   String
+  coupon     BillingCoupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  providerId String
+  provider   Provider     @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  paymentId  String?      @unique
+  payment    Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  /** RESERVED | CONSUMED | RELEASED */
+  status     String       @default("RESERVED")
+  createdAt  DateTime     @default(now())
+  consumedAt DateTime?
+  releasedAt DateTime?
+
+  @@index([couponId, status])
+  @@index([providerId, couponId])
 }
 
 /** Banners rotativos da home (área comercial / patrocinadores). */

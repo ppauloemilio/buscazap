@@ -319,6 +319,7 @@ export async function updateHomepageSettingsAction(formData: FormData) {
     showCityExplorer: formData.get("showCityExplorer") === "on",
     showPromotions: formData.get("showPromotions") === "on",
     showCoupons: formData.get("showCoupons") === "on",
+    showAdvertiserOffers: formData.get("showAdvertiserOffers") === "on",
     showPremiumAds: formData.get("showPremiumAds") === "on",
     showPaidAds: formData.get("showPaidAds") === "on",
     showFreeAds: formData.get("showFreeAds") === "on",

@@ -372,13 +372,22 @@ export async function createSubscriptionPaymentAction(formData?: FormData) {
   }
 
   const tier = parseSubscriptionTierFromForm(formData?.get("tier") ?? null);
+  const couponCode = String(formData?.get("couponCode") ?? "").trim() || null;
 
   let payment;
 
   try {
-    payment = await createSubscriptionPayment(provider.id, { tier });
+    payment = await createSubscriptionPayment(provider.id, {
+      tier,
+      couponCode,
+    });
   } catch (error) {
     redirectWithPaymentError("/painel/assinatura", error);
+  }
+
+  // Cupom grátis: já ativado — volta ao painel
+  if (payment.amount <= 0 || payment.pixCopyPaste === "FREE_COUPON") {
+    redirect("/painel/assinatura?cupom=1");
   }
 
   redirect(`/pagamento/${payment.id}`);
@@ -458,7 +467,10 @@ export async function downgradeToBasicPlanAction() {
   redirect("/painel/assinatura?downgraded=1");
 }
 
-export async function createPremiumPaymentAction(advertisementId: string) {
+export async function createPremiumPaymentAction(
+  advertisementId: string,
+  couponCode?: string | null
+) {
   const provider = await requireCurrentProvider();
 
   if (!canPurchasePremiumBoost(provider)) {
@@ -478,9 +490,16 @@ export async function createPremiumPaymentAction(advertisementId: string) {
   let payment;
 
   try {
-    payment = await createPremiumBoostPayment(provider.id, advertisementId);
+    payment = await createPremiumBoostPayment(provider.id, advertisementId, {
+      couponCode: couponCode?.trim() || null,
+    });
   } catch (error) {
     redirectWithPaymentError("/painel/anuncios", error);
+  }
+
+  if (payment.amount <= 0 || payment.pixCopyPaste === "FREE_COUPON") {
+    revalidateAdvertisementPaths(advertisementId);
+    redirectToEditImages(advertisementId, { boosted: "1" });
   }
 
   redirect(`/pagamento/${payment.id}`);
@@ -488,12 +507,13 @@ export async function createPremiumPaymentAction(advertisementId: string) {
 
 export async function boostAdvertisementAction(formData: FormData) {
   const advertisementId = formData.get("advertisementId");
+  const couponCode = String(formData.get("couponCode") ?? "").trim() || null;
 
   if (typeof advertisementId !== "string" || !advertisementId) {
     redirect("/painel/anuncios");
   }
 
-  await createPremiumPaymentAction(advertisementId);
+  await createPremiumPaymentAction(advertisementId, couponCode);
 }
 
 export async function createAdvertisementAction(formData: FormData) {

@@ -34,7 +34,18 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     redirect("/painel");
   }
 
+  if (payment.pixCopyPaste === "FREE_COUPON" || payment.amount <= 0) {
+    redirect(
+      payment.type === PaymentType.PREMIUM_BOOST
+        ? "/painel/anuncios"
+        : "/painel/assinatura?cupom=1"
+    );
+  }
+
   const qrCodeDataUrl = await generatePaymentQrCode(payment.pixCopyPaste);
+  const typeLabel = payment.billingCouponCode
+    ? `${TYPE_LABELS[payment.type] ?? payment.type} · cupom ${payment.billingCouponCode}`
+    : (TYPE_LABELS[payment.type] ?? payment.type);
 
   return (
     <>
@@ -43,12 +54,28 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
         description="Escaneie o QR Code ou copie o código PIX para concluir"
       />
       <section className="container mx-auto px-4 py-10">
+        {payment.amountOriginal != null &&
+          payment.amountOriginal > payment.amount && (
+            <p className="mb-4 text-center text-sm text-muted-foreground">
+              De{" "}
+              <span className="line-through">
+                R$ {payment.amountOriginal.toFixed(2).replace(".", ",")}
+              </span>{" "}
+              por{" "}
+              <span className="font-semibold text-whatsapp">
+                R$ {payment.amount.toFixed(2).replace(".", ",")}
+              </span>
+              {payment.billingCouponCode
+                ? ` com cupom ${payment.billingCouponCode}`
+                : ""}
+            </p>
+          )}
         <PixPayment
           paymentId={payment.id}
           amount={payment.amount}
           pixCopyPaste={payment.pixCopyPaste}
           qrCodeDataUrl={qrCodeDataUrl}
-          typeLabel={TYPE_LABELS[payment.type] ?? payment.type}
+          typeLabel={typeLabel}
           status={payment.status}
           allowSimulate={PIX_CONFIG.enableSimulate}
           enablePolling={!PIX_CONFIG.enableSimulate && payment.status === "PENDING"}

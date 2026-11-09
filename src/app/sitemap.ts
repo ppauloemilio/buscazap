@@ -23,6 +23,7 @@ const STATIC_PATHS = [
   "/ajuda",
   "/promocoes",
   "/cupons",
+  "/ofertas-anunciantes",
   "/quem-somos",
   "/privacidade",
   "/termos",

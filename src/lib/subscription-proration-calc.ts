@@ -15,15 +15,21 @@ export function countSubscriptionDaysRemaining(
 
 export function calculateProRataUpgradeAmount(
   subscriptionExpiresAt: Date,
-  now = new Date()
+  now = new Date(),
+  amounts?: {
+    readonly basic: number;
+    readonly plus: number;
+  }
 ): number {
+  const basic = amounts?.basic ?? PRICING.SUBSCRIPTION_AMOUNT;
+  const plus = amounts?.plus ?? PRICING.SUBSCRIPTION_PLUS_AMOUNT;
+
   const daysLeft = countSubscriptionDaysRemaining(subscriptionExpiresAt, now);
   if (daysLeft <= 0) {
-    return PRICING.SUBSCRIPTION_PLUS_AMOUNT;
+    return plus;
   }
 
-  const monthlyDiff =
-    PRICING.SUBSCRIPTION_PLUS_AMOUNT - PRICING.SUBSCRIPTION_AMOUNT;
+  const monthlyDiff = plus - basic;
   const billableDays = Math.min(daysLeft, PRICING.SUBSCRIPTION_DAYS);
   const raw = (monthlyDiff * billableDays) / PRICING.SUBSCRIPTION_DAYS;
   const rounded = Math.round(raw * 100) / 100;

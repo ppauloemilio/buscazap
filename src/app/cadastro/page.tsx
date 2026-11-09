@@ -3,6 +3,7 @@ import Link from "next/link";
 import { UserPlus } from "lucide-react";
 import { registerProviderAction } from "@/actions/provider-actions";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
+import { PersistBillingCoupon } from "@/features/panel/components/persist-billing-coupon";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ interface RegisterPageProps {
   readonly searchParams: Promise<{
     readonly error?: string;
     readonly ref?: string;
+    readonly coupon?: string;
   }>;
 }
 
@@ -24,6 +26,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
 
   return (
     <>
+      <PersistBillingCoupon code={params.coupon} />
       <PageHeader
         compact
         title="Criar conta de anunciante"
@@ -38,6 +41,13 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-whatsapp/10">
             <UserPlus className="h-5 w-5 text-whatsapp" />
           </div>
+
+          {params.coupon && (
+            <p className="mb-3 rounded-lg bg-sky-50 p-2.5 text-sm text-sky-900">
+              Cupom <strong>{params.coupon.toUpperCase()}</strong> guardado — use
+              na assinatura após o cadastro.
+            </p>
+          )}
 
           {params.error && (
             <p className="mb-3 rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">

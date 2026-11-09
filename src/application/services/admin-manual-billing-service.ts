@@ -1,5 +1,4 @@
 import { randomBytes } from "crypto";
-import { PRICING } from "@/config/pricing";
 import {
   isManualPaymentMethod,
   type ManualPaymentMethod,
@@ -14,6 +13,10 @@ import {
 import { activatePremiumBoost } from "@/application/services/premium-service";
 import { activateSubscription } from "@/application/services/subscription-service";
 import { logAdminAction } from "@/application/services/admin-service";
+import {
+  getLivePricing,
+  type LivePricingAmounts,
+} from "@/application/services/pricing-settings-service";
 import { prisma } from "@/lib/prisma";
 import {
   calculateProRataUpgradeAmount,
@@ -29,20 +32,25 @@ function generateManualPixTxId(): string {
   return `MANUAL${Date.now()}${randomBytes(3).toString("hex").toUpperCase()}`;
 }
 
-function resolveManualAmount(type: PaymentType, method: ManualPaymentMethod): number {
+function resolveManualAmount(
+  type: PaymentType,
+  method: ManualPaymentMethod,
+  pricing: LivePricingAmounts
+): number {
   if (method !== "CASH") {
     return 0;
   }
 
   return type === PaymentType.SUBSCRIPTION
-    ? PRICING.SUBSCRIPTION_AMOUNT
-    : PRICING.PREMIUM_BOOST_AMOUNT;
+    ? pricing.subscriptionAmount
+    : pricing.premiumBoostAmount;
 }
 
 function resolveManualSubscriptionAmount(
   mode: ManualSubscriptionMode,
   method: ManualPaymentMethod,
-  subscriptionExpiresAt: Date | null
+  subscriptionExpiresAt: Date | null,
+  pricing: LivePricingAmounts
 ): number {
   if (method !== "CASH") {
     return 0;
@@ -52,14 +60,17 @@ function resolveManualSubscriptionAmount(
     if (!subscriptionExpiresAt) {
       throw new Error("Upgrade pro-rata exige assinatura básica vigente");
     }
-    return calculateProRataUpgradeAmount(subscriptionExpiresAt);
+    return calculateProRataUpgradeAmount(subscriptionExpiresAt, new Date(), {
+      basic: pricing.subscriptionAmount,
+      plus: pricing.subscriptionPlusAmount,
+    });
   }
 
   if (mode === "plus") {
-    return PRICING.SUBSCRIPTION_PLUS_AMOUNT;
+    return pricing.subscriptionPlusAmount;
   }
 
-  return PRICING.SUBSCRIPTION_AMOUNT;
+  return pricing.subscriptionAmount;
 }
 
 function resolveSubscriptionReferenceId(mode: ManualSubscriptionMode): string {
@@ -133,10 +144,12 @@ export async function registerManualSubscriptionAsAdmin(input: {
   }
 
   const paidAt = new Date();
+  const pricing = await getLivePricing();
   const amount = resolveManualSubscriptionAmount(
     mode,
     input.method,
-    provider.subscriptionExpiresAt
+    provider.subscriptionExpiresAt,
+    pricing
   );
   const referenceId = resolveSubscriptionReferenceId(mode);
 
@@ -233,7 +246,12 @@ export async function registerManualPremiumBoostAsAdmin(input: {
   }
 
   const paidAt = new Date();
-  const amount = resolveManualAmount(PaymentType.PREMIUM_BOOST, input.method);
+  const pricing = await getLivePricing();
+  const amount = resolveManualAmount(
+    PaymentType.PREMIUM_BOOST,
+    input.method,
+    pricing
+  );
 
   const result = await prisma.$transaction(async (tx) => {
     const payment = await tx.payment.create({

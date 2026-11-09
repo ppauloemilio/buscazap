@@ -57,6 +57,27 @@ export enum PaymentType {
   PREMIUM_BOOST = "PREMIUM_BOOST",
 }
 
+/** Alvo de cupom de cobrança BuscaZapp (admin). */
+export enum BillingCouponTarget {
+  SUBSCRIPTION_BASIC = "SUBSCRIPTION_BASIC",
+  SUBSCRIPTION_PLUS = "SUBSCRIPTION_PLUS",
+  EXTRA_AD = "EXTRA_AD",
+  EXTRA_WHATSAPP = "EXTRA_WHATSAPP",
+  PREMIUM_BOOST = "PREMIUM_BOOST",
+}
+
+export enum BillingDiscountKind {
+  PERCENT = "PERCENT",
+  FIXED = "FIXED",
+  FREE = "FREE",
+}
+
+export enum BillingCouponRedemptionStatus {
+  RESERVED = "RESERVED",
+  CONSUMED = "CONSUMED",
+  RELEASED = "RELEASED",
+}
+
 /** Valor em Payment.referenceId para assinaturas PIX. */
 export const SUBSCRIPTION_TIER_REFERENCE = {
   BASIC: "BASIC",

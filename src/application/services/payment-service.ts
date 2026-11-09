@@ -2,6 +2,8 @@ import { randomBytes } from "crypto";
 import QRCode from "qrcode";
 import { PRICING } from "@/config/pricing";
 import {
+  BillingCouponTarget,
+  BillingDiscountKind,
   PaymentStatus,
   PaymentType,
   SUBSCRIPTION_TIER_REFERENCE,
@@ -22,6 +24,16 @@ import {
 import { toLocalWhatsAppDigits } from "@/lib/whatsapp";
 import { activatePremiumBoost } from "@/application/services/premium-service";
 import { activateSubscription } from "@/application/services/subscription-service";
+import {
+  consumeBillingCouponForPayment,
+  previewBillingCoupon,
+  releaseBillingCouponForPayment,
+  releaseExpiredBillingCouponReservations,
+  reserveBillingCouponWithPayment,
+  resolveTargetForSubscriptionTier,
+  type AppliedBillingCoupon,
+} from "@/application/services/billing-coupon-service";
+import { getLivePricing } from "@/application/services/pricing-settings-service";
 
 function generatePlaceholderPixTxId(): string {
   return `BZ${Date.now()}${randomBytes(4).toString("hex").toUpperCase()}`;
@@ -31,31 +43,106 @@ async function initiatePayment(input: {
   providerId: string;
   providerEmail: string;
   providerName: string;
+  providerCity: string | null | undefined;
   type: PaymentType;
-  amount: number;
+  amountOriginal: number;
   description: string;
   referenceId?: string;
+  targetFeature: BillingCouponTarget;
+  couponPreview?: AppliedBillingCoupon | null;
 }) {
   const expiresAt = new Date(
     Date.now() + PRICING.PAYMENT_EXPIRATION_MINUTES * 60 * 1000
   );
 
-  const payment = await prisma.payment.create({
-    data: {
-      providerId: input.providerId,
-      type: input.type,
-      amount: input.amount,
-      status: PaymentStatus.PENDING,
-      pixTxId: generatePlaceholderPixTxId(),
-      pixCopyPaste: "pending",
-      referenceId: input.referenceId,
-      expiresAt,
-    },
+  const amountOriginal =
+    Math.round(Math.max(0, input.amountOriginal) * 100) / 100;
+  const previewFinal = input.couponPreview?.amountFinal ?? amountOriginal;
+  const isFree = previewFinal <= 0;
+
+  const payment = await prisma.$transaction(async (tx) => {
+    const created = await tx.payment.create({
+      data: {
+        providerId: input.providerId,
+        type: input.type,
+        amount: amountOriginal,
+        status: isFree ? PaymentStatus.PAID : PaymentStatus.PENDING,
+        pixTxId: generatePlaceholderPixTxId(),
+        pixCopyPaste: isFree ? "FREE_COUPON" : "pending",
+        referenceId: input.referenceId,
+        expiresAt: isFree ? new Date() : expiresAt,
+        paidAt: isFree ? new Date() : null,
+      },
+    });
+
+    if (input.couponPreview) {
+      const coupon = await reserveBillingCouponWithPayment({
+        couponId: input.couponPreview.couponId,
+        providerId: input.providerId,
+        paymentId: created.id,
+        providerCity: input.providerCity,
+        targetFeature: input.targetFeature,
+        amountOriginal,
+        tx,
+      });
+
+      return tx.payment.update({
+        where: { id: created.id },
+        data: {
+          amount: coupon.amountFinal,
+          amountOriginal,
+          billingCouponId: coupon.couponId,
+          billingCouponCode: coupon.code,
+          discountKind: coupon.discountKind,
+          discountValue: coupon.discountValue,
+        },
+      });
+    }
+
+    return created;
   });
+
+  const amount = payment.amount;
+  const hasCoupon = Boolean(payment.billingCouponId);
+
+  if (isFree || amount <= 0) {
+    const paidAt = payment.paidAt ?? new Date();
+    if (payment.status !== PaymentStatus.PAID) {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: PaymentStatus.PAID,
+          paidAt,
+          amount: 0,
+          pixCopyPaste: "FREE_COUPON",
+        },
+      });
+    }
+    await prisma.$transaction(async (tx) => {
+      if (input.type === PaymentType.SUBSCRIPTION) {
+        await activateSubscription(tx, input.providerId, payment.id, paidAt);
+      } else if (
+        input.type === PaymentType.PREMIUM_BOOST &&
+        input.referenceId
+      ) {
+        await activatePremiumBoost(
+          tx,
+          input.providerId,
+          input.referenceId,
+          payment.id,
+          paidAt
+        );
+      }
+    });
+    if (hasCoupon) {
+      await consumeBillingCouponForPayment(payment.id);
+    }
+    return prisma.payment.findUniqueOrThrow({ where: { id: payment.id } });
+  }
 
   try {
     const charge = await getPixProvider().createCharge({
-      amount: input.amount,
+      amount,
       description: input.description,
       payerEmail: input.providerEmail,
       payerName: input.providerName,
@@ -74,6 +161,9 @@ async function initiatePayment(input: {
       where: { id: payment.id },
       data: { status: PaymentStatus.CANCELLED },
     });
+    if (hasCoupon) {
+      await releaseBillingCouponForPayment(payment.id);
+    }
     throw error;
   }
 }
@@ -86,6 +176,7 @@ async function getProviderPaymentProfile(providerId: string) {
       name: true,
       whatsapp: true,
       role: true,
+      city: true,
       subscriptionExpiresAt: true,
       subscriptionTier: true,
     },
@@ -95,7 +186,6 @@ async function getProviderPaymentProfile(providerId: string) {
     throw new Error("PROVIDER_NOT_FOUND");
   }
 
-  // Mercado Pago exige e-mail do pagador; sem cadastro, usamos um proxy estável pelo WhatsApp.
   const payerEmail =
     provider.email?.trim() ||
     `${toLocalWhatsAppDigits(provider.whatsapp)}@pagadores.buscazapp.com.br`;
@@ -103,10 +193,37 @@ async function getProviderPaymentProfile(providerId: string) {
   return {
     name: provider.name,
     email: payerEmail,
+    city: provider.city,
     role: provider.role,
     subscriptionExpiresAt: provider.subscriptionExpiresAt,
     subscriptionTier: provider.subscriptionTier,
   };
+}
+
+async function resolveCouponPreview(input: {
+  readonly couponCode?: string | null;
+  readonly providerId: string;
+  readonly providerCity: string | null | undefined;
+  readonly targetFeature: BillingCouponTarget;
+  readonly amountOriginal: number;
+  /** Upgrade pró-rata não aceita cupom (valor já proporcional). */
+  readonly allowCoupon: boolean;
+}): Promise<AppliedBillingCoupon | null> {
+  const code = input.couponCode?.trim();
+  if (!code) return null;
+  if (!input.allowCoupon) {
+    throw new Error(
+      "Cupom não pode ser usado no upgrade proporcional. Use na mensalidade cheia."
+    );
+  }
+
+  return previewBillingCoupon({
+    code,
+    providerId: input.providerId,
+    providerCity: input.providerCity,
+    targetFeature: input.targetFeature,
+    amountOriginal: input.amountOriginal,
+  });
 }
 
 export async function createSubscriptionPayment(
@@ -121,9 +238,11 @@ export async function createSubscriptionPayment(
     readonly forceFullAmount?: boolean;
     /** Exige elegibilidade ao upgrade pro-rata Básico → Pro. */
     readonly requireProRataUpgrade?: boolean;
+    readonly couponCode?: string | null;
   }
 ) {
   const provider = await getProviderPaymentProfile(providerId);
+  const pricing = await getLivePricing();
   const tier = options?.tier ?? SubscriptionTier.BASIC;
 
   if (tier === SubscriptionTier.PLUS && !(await isPlusPlanOfferEnabled())) {
@@ -145,8 +264,7 @@ export async function createSubscriptionPayment(
     );
   }
 
-  const proRataUpgrade =
-    eligibleProRata && !options?.forceFullAmount;
+  const proRataUpgrade = eligibleProRata && !options?.forceFullAmount;
 
   const upgradingToPlusWhileActive = tier === SubscriptionTier.PLUS && hasActive;
 
@@ -163,8 +281,8 @@ export async function createSubscriptionPayment(
 
   let amount: number =
     tier === SubscriptionTier.PLUS
-      ? PRICING.SUBSCRIPTION_PLUS_AMOUNT
-      : PRICING.SUBSCRIPTION_AMOUNT;
+      ? pricing.subscriptionPlusAmount
+      : pricing.subscriptionAmount;
   let referenceId: string =
     tier === SubscriptionTier.PLUS
       ? SUBSCRIPTION_TIER_REFERENCE.PLUS
@@ -174,26 +292,47 @@ export async function createSubscriptionPayment(
   }`;
 
   if (proRataUpgrade && provider.subscriptionExpiresAt) {
-    amount = calculateProRataUpgradeAmount(provider.subscriptionExpiresAt);
+    amount = calculateProRataUpgradeAmount(provider.subscriptionExpiresAt, new Date(), {
+      basic: pricing.subscriptionAmount,
+      plus: pricing.subscriptionPlusAmount,
+    });
     referenceId = SUBSCRIPTION_TIER_REFERENCE.PLUS_UPGRADE;
     const validUntil = provider.subscriptionExpiresAt.toLocaleDateString("pt-BR");
     description = `Upgrade proporcional para Plano Pro (válido até ${validUntil})`;
+  }
+
+  const targetFeature = resolveTargetForSubscriptionTier(tier);
+  const couponPreview = await resolveCouponPreview({
+    couponCode: options?.couponCode,
+    providerId,
+    providerCity: provider.city,
+    targetFeature,
+    amountOriginal: amount,
+    allowCoupon: !proRataUpgrade,
+  });
+
+  if (couponPreview) {
+    description = `${description} (cupom ${couponPreview.code})`;
   }
 
   return initiatePayment({
     providerId,
     providerEmail: provider.email,
     providerName: provider.name,
+    providerCity: provider.city,
     type: PaymentType.SUBSCRIPTION,
-    amount,
+    amountOriginal: amount,
     description,
     referenceId,
+    targetFeature,
+    couponPreview,
   });
 }
 
 export async function createPremiumBoostPayment(
   providerId: string,
-  advertisementId: string
+  advertisementId: string,
+  options?: { readonly couponCode?: string | null }
 ) {
   const advertisement = await prisma.advertisement.findFirst({
     where: { id: advertisementId, providerId },
@@ -204,6 +343,7 @@ export async function createPremiumBoostPayment(
   }
 
   const provider = await getProviderPaymentProfile(providerId);
+  const pricing = await getLivePricing();
 
   if (
     !canPurchasePremiumBoost({
@@ -214,14 +354,29 @@ export async function createPremiumBoostPayment(
     throw new Error("PREMIUM_REQUIRES_PAID_PLAN");
   }
 
+  const amountOriginal = pricing.premiumBoostAmount;
+  const couponPreview = await resolveCouponPreview({
+    couponCode: options?.couponCode,
+    providerId,
+    providerCity: provider.city,
+    targetFeature: BillingCouponTarget.PREMIUM_BOOST,
+    amountOriginal,
+    allowCoupon: true,
+  });
+
   return initiatePayment({
     providerId,
     providerEmail: provider.email,
     providerName: provider.name,
+    providerCity: provider.city,
     type: PaymentType.PREMIUM_BOOST,
-    amount: PRICING.PREMIUM_BOOST_AMOUNT,
-    description: `Destaque premium: ${advertisement.title}`,
+    amountOriginal,
+    description: `Destaque premium: ${advertisement.title}${
+      couponPreview ? ` (cupom ${couponPreview.code})` : ""
+    }`,
     referenceId: advertisementId,
+    targetFeature: BillingCouponTarget.PREMIUM_BOOST,
+    couponPreview,
   });
 }
 
@@ -267,6 +422,7 @@ export async function confirmPayment(pixTxId: string) {
       where: { id: payment.id },
       data: { status: PaymentStatus.EXPIRED },
     });
+    await releaseBillingCouponForPayment(payment.id);
     throw new Error("PAYMENT_EXPIRED");
   }
 
@@ -297,17 +453,34 @@ export async function confirmPayment(pixTxId: string) {
     }
   });
 
+  await consumeBillingCouponForPayment(payment.id);
+
   return prisma.payment.findUnique({ where: { id: payment.id } });
 }
 
 export async function expirePendingPayments() {
   const now = new Date();
 
-  await prisma.payment.updateMany({
+  const expired = await prisma.payment.findMany({
     where: {
       status: PaymentStatus.PENDING,
       expiresAt: { lt: now },
     },
-    data: { status: PaymentStatus.EXPIRED },
+    select: { id: true },
   });
+
+  if (expired.length > 0) {
+    await prisma.payment.updateMany({
+      where: { id: { in: expired.map((item) => item.id) } },
+      data: { status: PaymentStatus.EXPIRED },
+    });
+
+    for (const payment of expired) {
+      await releaseBillingCouponForPayment(payment.id);
+    }
+  }
+
+  await releaseExpiredBillingCouponReservations();
 }
+
+export { BillingDiscountKind };

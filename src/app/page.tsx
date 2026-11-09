@@ -3,6 +3,7 @@ import { getDashboardData } from "@/application/services/dashboard-service";
 import type { HomepageSectionId } from "@/application/services/homepage-settings-service";
 import { listHomePromotionCards } from "@/application/services/public-promotions-service";
 import { listHomeCouponCards } from "@/application/services/public-coupons-service";
+import { listPublicBillingCoupons } from "@/application/services/billing-coupon-service";
 import { HeroSearch } from "@/features/dashboard/components/hero-search";
 import { UrgentSearches } from "@/features/dashboard/components/urgent-searches";
 import { StatsSection } from "@/features/dashboard/components/stats-section";
@@ -12,6 +13,7 @@ import { AdvertisementSection } from "@/features/dashboard/components/advertisem
 import { CityExplorer } from "@/features/dashboard/components/city-explorer";
 import { PromotionsSection } from "@/features/dashboard/components/promotions-section";
 import { CouponsSection } from "@/features/dashboard/components/coupons-section";
+import { AdvertiserOffersSection } from "@/features/dashboard/components/advertiser-offers-section";
 import { SponsorBannersCarousel } from "@/features/dashboard/components/sponsor-banners-carousel";
 import { isNewAdProfileEnabled } from "@/config/feature-flags";
 import { getCurrentProvider, isAdminProvider } from "@/lib/provider-session";
@@ -40,6 +42,9 @@ export default async function HomePage() {
   const homeCoupons = homepageSettings.showCoupons
     ? await listHomeCouponCards()
     : { items: [], total: 0 };
+  const advertiserOffers = homepageSettings.showAdvertiserOffers
+    ? await listPublicBillingCoupons()
+    : [];
   const sponsorBanners = homepageSettings.showSponsorBanners
     ? await listActiveSponsorBanners()
     : [];
@@ -83,6 +88,12 @@ export default async function HomePage() {
           total={homeCoupons.total}
           showWhenEmpty
         />
+      ) : null,
+    advertiserOffers: () =>
+      homepageSettings.showAdvertiserOffers ? (
+        <div className="container mx-auto max-w-6xl px-4 py-4">
+          <AdvertiserOffersSection coupons={advertiserOffers.slice(0, 6)} />
+        </div>
       ) : null,
     premiumAds: () =>
       homepageSettings.showPremiumAds && premium.length > 0 ? (

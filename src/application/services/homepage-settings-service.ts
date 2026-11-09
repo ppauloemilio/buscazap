@@ -7,6 +7,7 @@ export const HOMEPAGE_SECTION_IDS = [
   "urgentSearches",
   "promotions",
   "coupons",
+  "advertiserOffers",
   "premiumAds",
   "paidAds",
   "freeAds",
@@ -25,6 +26,7 @@ export type HomepageSettings = {
   readonly showCityExplorer: boolean;
   readonly showPromotions: boolean;
   readonly showCoupons: boolean;
+  readonly showAdvertiserOffers: boolean;
   readonly showPremiumAds: boolean;
   readonly showPaidAds: boolean;
   readonly showFreeAds: boolean;
@@ -38,6 +40,7 @@ export const DEFAULT_SECTION_ORDER: readonly HomepageSectionId[] = [
   "urgentSearches",
   "promotions",
   "coupons",
+  "advertiserOffers",
   "premiumAds",
   "paidAds",
   "freeAds",
@@ -51,6 +54,7 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   showCityExplorer: false,
   showPromotions: false,
   showCoupons: false,
+  showAdvertiserOffers: false,
   showPremiumAds: true,
   showPaidAds: true,
   showFreeAds: true,
@@ -64,6 +68,7 @@ export const HOMEPAGE_SECTION_LABELS: Record<HomepageSectionId, string> = {
   urgentSearches: "Precisa agora?",
   promotions: "Promoções Ativas",
   coupons: "Cupons Ativos",
+  advertiserOffers: "Ofertas para anunciantes",
   premiumAds: "Destaques Premium",
   paidAds: "Anúncios pagos",
   freeAds: "Plano Grátis",
@@ -173,6 +178,7 @@ export async function getHomepageSettings(): Promise<HomepageSettings> {
       showCityExplorer: settings.showCityExplorer,
       showPromotions: settings.showPromotions,
       showCoupons: settings.showCoupons,
+      showAdvertiserOffers: settings.showAdvertiserOffers,
       showPremiumAds: settings.showPremiumAds,
       showPaidAds: settings.showPaidAds,
       showFreeAds: settings.showFreeAds,
@@ -197,6 +203,7 @@ export async function updateHomepageSettings(input: HomepageSettings) {
       showCityExplorer: input.showCityExplorer,
       showPromotions: input.showPromotions,
       showCoupons: input.showCoupons,
+      showAdvertiserOffers: input.showAdvertiserOffers,
       showPremiumAds: input.showPremiumAds,
       showPaidAds: input.showPaidAds,
       showFreeAds: input.showFreeAds,
@@ -210,6 +217,7 @@ export async function updateHomepageSettings(input: HomepageSettings) {
       showCityExplorer: input.showCityExplorer,
       showPromotions: input.showPromotions,
       showCoupons: input.showCoupons,
+      showAdvertiserOffers: input.showAdvertiserOffers,
       showPremiumAds: input.showPremiumAds,
       showPaidAds: input.showPaidAds,
       showFreeAds: input.showFreeAds,

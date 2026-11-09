@@ -20,6 +20,8 @@ import {
   Gift,
   Zap,
   ShieldCheck,
+  CircleDollarSign,
+  TicketPercent,
 } from "lucide-react";
 import { getCurrentAdmin } from "@/lib/admin-session";
 import { cn } from "@/lib/utils";
@@ -29,6 +31,8 @@ const NAV_ITEMS = [
   { href: "/admin/busca", label: "Busca", icon: Search },
   { href: "/admin/home", label: "Home", icon: Home },
   { href: "/admin/banners", label: "Banners", icon: ImageIcon },
+  { href: "/admin/precos", label: "Preços", icon: CircleDollarSign },
+  { href: "/admin/cupons-pagamento", label: "Cupons pagamento", icon: TicketPercent },
   { href: "/admin/leads", label: "Leads", icon: Handshake },
   { href: "/admin/cadastro-rapido", label: "Cadastro rápido", icon: Zap },
   { href: "/admin/reivindicacoes", label: "Reivindicações", icon: ShieldCheck },
